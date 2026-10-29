@@ -96,6 +96,19 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                   <p>{leg.instructions}</p>
                 </div>
 
+                {/* Leg Fare & Tariff Details */}
+                {leg.fare_details && (
+                  <div className="text-xs font-bold text-[#2A4D38] bg-[#64836D]/15 rounded-xl px-3 py-2 border border-[#64836D]/30 mb-2.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span>🏷️</span>
+                      <span>{leg.fare_details}</span>
+                    </span>
+                    {leg.fare_inr !== undefined && leg.fare_inr > 0 && (
+                      <span className="font-extrabold text-[#1F231F] text-sm shrink-0 ml-2">₹{leg.fare_inr.toFixed(0)}</span>
+                    )}
+                  </div>
+                )}
+
                 {/* Intermediate Stops Toggle */}
                 {hasStops && (
                   <div>

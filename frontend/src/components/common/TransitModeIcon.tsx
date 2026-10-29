@@ -1,5 +1,5 @@
 import React from 'react';
-import { Footprints, Train, Bus, Landmark } from 'lucide-react';
+import { Footprints, Train, Bus, Landmark, CarTaxiFront, Car, Zap } from 'lucide-react';
 import { TransitMode } from '../../types/transit';
 
 interface Props {
@@ -16,6 +16,14 @@ export const TransitModeIcon: React.FC<Props> = ({ mode, className = '', size = 
       return <Train size={size} className={`text-[#64836D] ${className}`} />;
     case 'bus':
       return <Bus size={size} className={`text-[#C8795A] ${className}`} />;
+    case 'ebus':
+      return <Bus size={size} className={`text-[#00A86B] ${className}`} />;
+    case 'auto':
+      return <CarTaxiFront size={size} className={`text-[#E68A00] ${className}`} />;
+    case 'taxi':
+      return <Car size={size} className={`text-[#3B5360] ${className}`} />;
+    case 'erickshaw':
+      return <Zap size={size} className={`text-[#00897B] ${className}`} />;
     case 'rail':
       return <Landmark size={size} className={`text-[#304B3C] ${className}`} />;
     default:

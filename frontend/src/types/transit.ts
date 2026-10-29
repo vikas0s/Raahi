@@ -1,4 +1,4 @@
-export type TransitMode = 'walk' | 'metro' | 'bus' | 'rail';
+export type TransitMode = 'walk' | 'metro' | 'bus' | 'rail' | 'auto' | 'taxi' | 'erickshaw' | 'ebus';
 export type CrowdLevel = 'Low' | 'Moderate' | 'High' | 'Very High';
 export type SeverityLevel = 'minor' | 'moderate' | 'severe';
 export type AppLanguage = 'en' | 'hi';
@@ -10,6 +10,9 @@ export interface GeoLocation {
   category: string;
   city: string;
   aliases?: string[];
+  has_direct_metro?: boolean;
+  nearest_metro?: string;
+  metro_dist_km?: number;
 }
 
 export type float = number;
@@ -21,6 +24,10 @@ export interface TravelPreferences {
   fewer_transfers: boolean;
   less_walking: boolean;
   accessible: boolean;
+  prefer_ebus?: boolean;
+  allow_auto?: boolean;
+  allow_taxi?: boolean;
+  pink_pass?: boolean; // Delhi Govt free bus travel for women
 }
 
 export interface TransitLeg {
@@ -44,17 +51,22 @@ export interface TransitLeg {
   delay_minutes: number;
   is_delayed: boolean;
   accessibility: boolean;
+  fare_inr?: number;
+  fare_details?: string;
 }
 
 export interface RouteItinerary {
   id: string;
   title: string;
-  tag: 'Fastest' | 'Lowest Fare' | 'Least Crowded' | 'Direct Transit' | 'Accessible';
+  tag: string;
   tag_reason: string;
   total_duration_minutes: number;
   departure_time: string;
   arrival_time: string;
   total_fare_inr: number;
+  pink_pass_fare_inr?: number;
+  fare_breakdown?: string;
+  route_type?: string;
   transfers_count: number;
   walking_duration_minutes: number;
   walking_distance_meters: number;

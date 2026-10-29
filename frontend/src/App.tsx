@@ -43,7 +43,11 @@ export const App: React.FC = () => {
     less_crowded: false,
     fewer_transfers: false,
     less_walking: false,
-    accessible: false
+    accessible: false,
+    prefer_ebus: false,
+    allow_auto: true,
+    allow_taxi: true,
+    pink_pass: false
   });
 
   // Routing Results

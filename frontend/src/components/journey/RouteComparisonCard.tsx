@@ -23,6 +23,12 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
         return 'bg-[#C8795A]/18 text-[#8C3D1E] border-[#C8795A]/40 font-bold';
       case 'Least Crowded':
         return 'bg-[#E7B75B]/30 text-[#6B4905] border-[#E7B75B]/50 font-bold';
+      case 'DTC Electric Bus':
+        return 'bg-[#00A86B]/15 text-[#006A44] border-[#00A86B]/40 font-bold';
+      case 'Govt Metered Auto':
+        return 'bg-[#E68A00]/15 text-[#8F5500] border-[#E68A00]/40 font-bold';
+      case 'Direct Cab':
+        return 'bg-[#3B5360]/15 text-[#24353E] border-[#3B5360]/40 font-bold';
       default:
         return 'bg-[#EEECE3] text-[#1F231F] border-[#D8D4C7] font-bold';
     }
@@ -53,20 +59,30 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
       </div>
 
       {/* Main Metric Row: Duration & Total Fare */}
-      <div className="flex items-baseline justify-between gap-3 mb-3.5">
+      <div className="flex items-baseline justify-between gap-3 mb-2.5">
         <div>
           <h3 className="font-heading font-extrabold text-2xl text-[#1F231F] tracking-tight">
             {route.total_duration_minutes} <span className="text-xs font-bold uppercase tracking-wider text-[#52544D] ml-0.5">{t('mins')}</span>
           </h3>
           <p className="text-xs font-semibold text-[#454841] mt-0.5 line-clamp-1">{route.title}</p>
+          {route.fare_breakdown && (
+            <p className="text-[11px] font-bold text-[#64836D] mt-1 line-clamp-1">
+              📊 {route.fare_breakdown}
+            </p>
+          )}
         </div>
 
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div className="flex items-center justify-end font-heading font-extrabold text-2xl text-[#304B3C]">
             <IndianRupee size={18} className="mt-0.5 stroke-[2.5]" />
             <span>{route.total_fare_inr.toFixed(0)}</span>
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-[#52544D]">{t('totalFare')}</span>
+          <span className="text-[11px] font-bold uppercase tracking-wide text-[#52544D] block">{t('totalFare')}</span>
+          {route.pink_pass_fare_inr !== undefined && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C2185B] bg-[#FCE4EC] px-2 py-0.5 rounded-full border border-[#F8BBD0] mt-1">
+              🌸 Pink Pass: ₹0
+            </span>
+          )}
         </div>
       </div>
 

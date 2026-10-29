@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Globe, MapPin, Accessibility, Shield, Zap } from 'lucide-react';
+import { Settings, Globe, MapPin, Accessibility, Shield, Zap, Key, CheckCircle2 } from 'lucide-react';
 import type { AppLanguage } from '../types/transit';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -137,6 +137,80 @@ export const SettingsView: React.FC<Props> = ({
             onChange={(e) => onReducedMotionChange(e.target.checked)}
             className="w-5 h-5 accent-[#253D30] rounded cursor-pointer"
           />
+        </div>
+      </div>
+
+      {/* Transit API Keys & Mobility Networks Integration Card */}
+      <div className="rounded-2xl border border-[#D8D4C7] bg-[#FFFEFA] p-5 shadow-[0_2px_12px_rgba(41,45,41,0.04)] space-y-4">
+        <div className="flex items-center justify-between border-b border-[#D8D4C7] pb-3">
+          <div className="flex items-center gap-2">
+            <Key size={18} className="text-[#304B3C]" />
+            <h3 className="font-heading font-bold text-base text-[#1F231F]">
+              Transit API Credentials & Fare Calculation Engines
+            </h3>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#2A4D38] bg-[#64836D]/15 px-2.5 py-1 rounded-full border border-[#64836D]/30">
+            <CheckCircle2 size={13} />
+            <span>3 Active Services</span>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+          {/* OTD Delhi */}
+          <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1F231F]">1. Open Transit Data Delhi (OTD)</span>
+              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">Configured (.env)</span>
+            </div>
+            <p className="text-[#52544D] leading-relaxed">
+              Live GPS telemetry for 7,000+ DTC & DIMTS cluster electric/CNG buses, route IDs, agency feeds, and arrival estimates.
+            </p>
+            <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#304B3C] border border-[#D8D4C7]">
+              OTD_DELHI_API_KEY=hAGgv0...H3a
+            </code>
+          </div>
+
+          {/* Delhi Govt Fare Tariff Engine */}
+          <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1F231F]">2. Delhi Govt Gazetted Fare Engine</span>
+              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">Built-in & Active</span>
+            </div>
+            <p className="text-[#52544D] leading-relaxed">
+              Auto meter tariff (₹30 first 1.5km + ₹11/km), DTC E-Bus slabs (₹10/₹15/₹20/₹25), DTC Non-AC (₹5/₹10/₹15), and Pink Ticket (₹0 Free for Women).
+            </p>
+            <div className="text-[11px] font-bold text-[#64836D]">
+              Auto TSR + E-Rickshaw + DTC Bus + DMRC Metro
+            </div>
+          </div>
+
+          {/* Google Maps Directions */}
+          <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1F231F]">3. Google Maps Road Traffic API</span>
+              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">Optional Key</span>
+            </div>
+            <p className="text-[#52544D] leading-relaxed">
+              Provides live congestion road duration for Auto/Cab navigation. <em>(Built-in OpenStreetMap OSRM engine active as default)</em>.
+            </p>
+            <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#52544D] border border-[#D8D4C7]">
+              GOOGLE_MAPS_API_KEY (optional)
+            </code>
+          </div>
+
+          {/* ONDC & Mobility */}
+          <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1F231F]">4. ONDC / Ride-Hailing Cab API</span>
+              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">Optional Key</span>
+            </div>
+            <p className="text-[#52544D] leading-relaxed">
+              Enables real-time dynamic booking estimates with BluSmart EV and open-mobility auto networks via Beckn protocol.
+            </p>
+            <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#52544D] border border-[#D8D4C7]">
+              UBER_SERVER_TOKEN / ONDC_BAP_KEY (optional)
+            </code>
+          </div>
         </div>
       </div>
 

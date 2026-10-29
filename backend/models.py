@@ -17,6 +17,10 @@ class TravelPreference(BaseModel):
     fewer_transfers: bool = False
     less_walking: bool = False
     accessible: bool = False
+    prefer_ebus: bool = False
+    allow_auto: bool = True
+    allow_taxi: bool = True
+    pink_pass: bool = False # Delhi Govt free travel for women on DTC/cluster buses
 
 class PlanRequest(BaseModel):
     origin: str
@@ -27,9 +31,9 @@ class PlanRequest(BaseModel):
 
 class TransitLeg(BaseModel):
     id: str
-    mode: Literal["walk", "metro", "bus", "rail"]
-    line_name: Optional[str] = None # e.g. "Yellow Line", "Blue Line", "DTC Bus 534", "Airport Express"
-    line_color: Optional[str] = None # Hex color e.g. "#F4B400", "#1E88E5"
+    mode: Literal["walk", "metro", "bus", "rail", "auto", "taxi", "erickshaw", "ebus"]
+    line_name: Optional[str] = None # e.g. "Yellow Line", "Blue Line", "DTC Electric Bus 534", "Delhi Govt Metered Auto"
+    line_color: Optional[str] = None # Hex color
     origin_name: str
     destination_name: str
     origin_coords: List[float] # [lon, lat]
@@ -46,16 +50,21 @@ class TransitLeg(BaseModel):
     delay_minutes: int = 0
     is_delayed: bool = False
     accessibility: bool = True
+    fare_inr: float = 0.0
+    fare_details: Optional[str] = None # e.g. "Govt notified: ₹30 first 1.5km + ₹11/km"
 
 class RouteItinerary(BaseModel):
     id: str
-    title: str # e.g. "Via Yellow Line & Magenta Line"
-    tag: Literal["Fastest", "Lowest Fare", "Least Crowded", "Direct Transit", "Accessible"]
-    tag_reason: str # "Saves 12 mins compared to bus options"
+    title: str # e.g. "DTC Electric Bus Corridor" or "Metro + First-Mile Auto"
+    tag: str # "Fastest", "Lowest Fare", "Least Crowded", "DTC Electric Bus", "Govt Metered Auto", "Direct Cab", etc.
+    tag_reason: str
     total_duration_minutes: int
     departure_time: str
     arrival_time: str
     total_fare_inr: float
+    pink_pass_fare_inr: Optional[float] = None # ₹0 for women on DTC bus routes
+    fare_breakdown: Optional[str] = None # e.g. "Auto (₹45) + Metro (₹40)"
+    route_type: Optional[str] = "transit" # "metro_multimodal", "dtc_ebus", "auto_rickshaw", "cab_taxi", "budget_bus"
     transfers_count: int
     walking_duration_minutes: int
     walking_distance_meters: int

@@ -134,7 +134,63 @@ PLACES_DATABASE: Dict[str, List[Dict[str, Any]]] = {
             "lon": 77.2144,
             "category": "metro_station",
             "aliases": ["du north campus", "vishwavidyalaya", "arts faculty", "university"],
-            "lines": ["Yellow Line"]
+            "lines": ["Yellow Line"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Vasant Kunj (Sector C-9)",
+            "lat": 28.5284,
+            "lon": 77.1512,
+            "category": "landmark",
+            "aliases": ["vasant kunj", "promenade", "ambience vasant kunj", "vk sector c"],
+            "lines": ["DTC Electric Bus 534", "Auto / E-Rickshaw to Chhatarpur Metro"],
+            "has_direct_metro": False,
+            "nearest_metro": "Chhatarpur",
+            "metro_dist_km": 3.8
+        },
+        {
+            "name": "Sangam Vihar (Devli More)",
+            "lat": 28.5020,
+            "lon": 77.2410,
+            "category": "landmark",
+            "aliases": ["sangam vihar", "devli", "tigdri", "hamdard"],
+            "lines": ["DTC Electric Bus 419", "Auto / E-Rickshaw to Saket Metro"],
+            "has_direct_metro": False,
+            "nearest_metro": "Saket (Select Citywalk)",
+            "metro_dist_km": 4.1
+        },
+        {
+            "name": "Najafgarh (BDO Complex)",
+            "lat": 28.6130,
+            "lon": 76.9850,
+            "category": "landmark",
+            "aliases": ["najafgarh", "thana road", "dehat", "dichau kalan"],
+            "lines": ["DTC Bus 729", "Auto to Dhansa Bus Stand Metro"],
+            "has_direct_metro": False,
+            "nearest_metro": "Janakpuri West",
+            "metro_dist_km": 6.8
+        },
+        {
+            "name": "Bawana Industrial Area Sector 1",
+            "lat": 28.7980,
+            "lon": 77.0510,
+            "category": "landmark",
+            "aliases": ["bawana", "bawana industrial", "dsiidc bawana", "outer delhi"],
+            "lines": ["DTC Bus 114", "DTC Electric Express", "Auto to Samaypur Badli"],
+            "has_direct_metro": False,
+            "nearest_metro": "Kashmere Gate ISBT",
+            "metro_dist_km": 14.2
+        },
+        {
+            "name": "Burari (Transport Authority)",
+            "lat": 28.7420,
+            "lon": 77.2020,
+            "category": "landmark",
+            "aliases": ["burari", "burari crossing", "sant nagar burari"],
+            "lines": ["DTC Bus 185", "Auto to Vishwavidyalaya Metro"],
+            "has_direct_metro": False,
+            "nearest_metro": "Vishwavidyalaya (Delhi University)",
+            "metro_dist_km": 4.6
         }
     ],
     "Mumbai": [
@@ -271,5 +327,149 @@ TRANSIT_LINES: Dict[str, Dict[str, Any]] = {
         "fare_type": "railway",
         "avg_speed_kmh": 40,
         "operator": "Indian Railways (Northern Zone)"
+    },
+    "Delhi Govt Metered Auto (TSR)": {
+        "color": "#E68A00",
+        "mode": "auto",
+        "fare_type": "govt_meter",
+        "avg_speed_kmh": 26,
+        "operator": "Delhi Transport Dept (Regulated Auto)"
+    },
+    "Shared E-Rickshaw Feeder": {
+        "color": "#00897B",
+        "mode": "erickshaw",
+        "fare_type": "fixed_hop",
+        "avg_speed_kmh": 16,
+        "operator": "Delhi Metro Last-Mile E-Rickshaw"
+    },
+    "BluSmart / Ride-Hailing Cab": {
+        "color": "#3B5360",
+        "mode": "taxi",
+        "fare_type": "app_cab",
+        "avg_speed_kmh": 32,
+        "operator": "BluSmart EV / On-Demand Taxi"
+    },
+    "Delhi Metro E-Feeder Bus": {
+        "color": "#00A86B",
+        "mode": "ebus",
+        "fare_type": "dmrc_feeder",
+        "avg_speed_kmh": 22,
+        "operator": "Delhi Metro Rail Corporation"
     }
 }
+
+# ==============================================================================
+# Official Delhi Government Fare Regimes & Gazetted Fare Slabs
+# ==============================================================================
+
+DELHI_GOVT_FARES = {
+    # DTC AC Low-Floor & Electric Buses (Tata Ultra EV, JBM Ecolife, PMI Electro)
+    "dtc_ebus": {
+        "slabs": [
+            (4.0, 10.0),
+            (8.0, 15.0),
+            (12.0, 20.0),
+            (999.0, 25.0),
+        ],
+        "pink_ticket_free": True,
+        "operator": "Delhi Transport Corporation (DTC)",
+    },
+    # DTC Non-AC / Cluster Green Buses
+    "dtc_non_ac": {
+        "slabs": [
+            (4.0, 5.0),
+            (10.0, 10.0),
+            (999.0, 15.0),
+        ],
+        "pink_ticket_free": True,
+        "operator": "Delhi Transport Corporation (DTC)",
+    },
+    # Delhi Metro E-Feeder Buses (DMRC D-Line)
+    "metro_feeder": {
+        "slabs": [
+            (4.0, 10.0),
+            (8.0, 15.0),
+            (999.0, 20.0),
+        ],
+        "pink_ticket_free": False,
+        "operator": "DMRC Feeder EV",
+    },
+    # Delhi Govt Auto-Rickshaw (TSR - Three-Wheeler Scooter Rickshaw)
+    # Gazetted Tariff: Base ₹30 for first 1.5 km, ₹11 per km thereafter
+    "auto_rickshaw": {
+        "base_fare": 30.0,
+        "base_km": 1.5,
+        "per_km": 11.0,
+        "waiting_per_min": 0.75,
+        "night_surcharge_pct": 25,
+    },
+    # E-Rickshaw (Shared Metro Last-Mile / Local Hopper)
+    "erickshaw": {
+        "short_hop_km": 1.5,
+        "short_hop_fare": 10.0,
+        "extended_hop_fare": 15.0,
+    },
+    # App-based Cab / Taxi (BluSmart Electric / Economy Cab)
+    "taxi_cab": {
+        "base_fare": 50.0,
+        "base_km": 2.0,
+        "per_km": 14.50,
+        "per_min": 1.50,
+    }
+}
+
+def calculate_dtc_fare(dist_km: float, is_electric: bool = True, is_pink_pass: bool = False):
+    """Calculates official Delhi Govt DTC bus fare based on gazetted distance slabs."""
+    if is_pink_pass:
+        return 0.0, "Delhi Govt Pink Ticket (₹0 Free for Women Commuters)"
+    mode_key = "dtc_ebus" if is_electric else "dtc_non_ac"
+    slabs = DELHI_GOVT_FARES[mode_key]["slabs"]
+    for max_km, fare in slabs:
+        if dist_km <= max_km:
+            bus_type = "DTC Electric Bus (Govt Slab)" if is_electric else "DTC Non-AC (Govt Slab)"
+            return fare, f"{bus_type}: ₹{int(fare)} (up to {int(max_km)} km)"
+    return 25.0 if is_electric else 15.0, "DTC Max Fare Slab"
+
+def calculate_auto_fare(dist_km: float, is_night: bool = False):
+    """Calculates official Delhi Government regulated metered TSR Auto-Rickshaw fare."""
+    rates = DELHI_GOVT_FARES["auto_rickshaw"]
+    base_km = rates["base_km"]
+    base_fare = rates["base_fare"]
+    per_km = rates["per_km"]
+    
+    if dist_km <= base_km:
+        fare = base_fare
+    else:
+        fare = base_fare + (dist_km - base_km) * per_km
+        
+    if is_night:
+        fare *= 1.25
+        night_str = " (incl. 25% Night Surcharge 11PM-5AM)"
+    else:
+        night_str = ""
+        
+    rounded_fare = round(fare)
+    return float(rounded_fare), f"Delhi Govt Meter: ₹{base_fare:.0f} (first 1.5km) + ₹{per_km:.0f}/km{night_str}"
+
+def calculate_erickshaw_fare(dist_km: float):
+    """Calculates shared E-Rickshaw fare for metro first/last mile hopper."""
+    rates = DELHI_GOVT_FARES["erickshaw"]
+    if dist_km <= rates["short_hop_km"]:
+        return rates["short_hop_fare"], "Shared E-Rickshaw Feeder: Flat ₹10"
+    return rates["extended_hop_fare"], "Shared E-Rickshaw Hopper: ₹15"
+
+def calculate_cab_fare(dist_km: float, duration_mins: int):
+    """Calculates realistic BluSmart / app-based ride-hailing taxi fare."""
+    rates = DELHI_GOVT_FARES["taxi_cab"]
+    base_fare = rates["base_fare"]
+    base_km = rates["base_km"]
+    per_km = rates["per_km"]
+    per_min = rates["per_min"]
+    
+    fare = base_fare
+    if dist_km > base_km:
+        fare += (dist_km - base_km) * per_km
+    fare += max(0, duration_mins - 10) * per_min
+    rounded = round(fare / 5) * 5 # Round to nearest 5
+    return float(rounded), f"BluSmart / App Taxi: ₹{base_fare:.0f} base + ₹{per_km:.1f}/km"
+

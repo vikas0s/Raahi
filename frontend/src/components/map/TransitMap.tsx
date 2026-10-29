@@ -182,15 +182,19 @@ export const TransitMap: React.FC<Props> = ({
       if (map.getSource(id)) map.removeSource(id);
     });
 
+    for (let i = 0; i < 20; i++) {
+      if (map.getLayer(`active-leg-line-${i}`)) map.removeLayer(`active-leg-line-${i}`);
+      if (map.getSource(`active-leg-source-${i}`)) map.removeSource(`active-leg-source-${i}`);
+    }
+
     const bounds = new maplibregl.LngLatBounds();
     let hasCoords = false;
 
     // Draw Selected Route
     if (selectedRoute && selectedRoute.legs.length > 0) {
-      const transitCoords: [number, number][] = [];
       const walkCoords: [number, number][] = [];
 
-      selectedRoute.legs.forEach(leg => {
+      selectedRoute.legs.forEach((leg, legIdx) => {
         const coords = leg.path_coords && leg.path_coords.length > 0
           ? leg.path_coords
           : [leg.origin_coords, leg.destination_coords];
@@ -202,40 +206,43 @@ export const TransitMap: React.FC<Props> = ({
 
         if (leg.mode === 'walk') {
           walkCoords.push(...coords);
-        } else {
-          transitCoords.push(...coords);
+        } else if (coords.length > 1) {
+          const legColor = leg.line_color || (
+            leg.mode === 'auto' ? '#E68A00' :
+            leg.mode === 'erickshaw' ? '#00897B' :
+            leg.mode === 'ebus' ? '#00A86B' :
+            leg.mode === 'taxi' ? '#3B5360' :
+            leg.mode === 'bus' ? '#C8795A' : '#304B3C'
+          );
+
+          map.addSource(`active-leg-source-${legIdx}`, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: coords
+              }
+            }
+          });
+
+          map.addLayer({
+            id: `active-leg-line-${legIdx}`,
+            type: 'line',
+            source: `active-leg-source-${legIdx}`,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': legColor,
+              'line-width': 5.5,
+              'line-opacity': 0.95
+            }
+          });
         }
       });
-
-      // Active Transit Polyline
-      if (transitCoords.length > 0) {
-        map.addSource('active-transit-source', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: transitCoords
-            }
-          }
-        });
-
-        map.addLayer({
-          id: 'active-transit-line',
-          type: 'line',
-          source: 'active-transit-source',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#304B3C',
-            'line-width': 5,
-            'line-opacity': 0.95
-          }
-        });
-      }
 
       // Walking Dashed Polyline
       if (walkCoords.length > 0) {
