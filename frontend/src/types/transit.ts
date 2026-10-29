@@ -28,6 +28,7 @@ export interface TravelPreferences {
   allow_auto?: boolean;
   allow_taxi?: boolean;
   pink_pass?: boolean; // Delhi Govt free bus travel for women
+  prefer_multimodal?: boolean;
 }
 
 export interface TransitLeg {
@@ -74,6 +75,8 @@ export interface RouteItinerary {
   total_delay_minutes: number;
   legs: TransitLeg[];
   eco_carbon_savings_kg: number;
+  service_available?: boolean;       // Whether this transit mode is currently operational
+  unavailable_reason?: string;       // e.g. "Metro closed (11 PM – 6 AM)"
 }
 
 export interface PlanResponse {

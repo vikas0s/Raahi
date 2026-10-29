@@ -65,6 +65,7 @@ export const SettingsView: React.FC<Props> = ({
             className="px-3.5 py-2 text-xs font-bold rounded-xl bg-[#EEECE3] text-[#1F231F] border border-[#D8D4C7] outline-none cursor-pointer"
           >
             <option value="Delhi NCR">Delhi NCR (DMRC Metro, DTC Electric Bus)</option>
+            <option value="Mathura & Vrindavan">Mathura & Vrindavan (ई-रिक्शा, शेयरिंग टेम्पो, इलेक्ट्रिक बस)</option>
             <option value="Mumbai">Mumbai (Local Rail, Mumbai Metro, BEST)</option>
             <option value="Bengaluru">Bengaluru (Namma Metro, BMTC)</option>
           </select>

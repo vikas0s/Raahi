@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
+import { config } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+
+if (typeof window !== 'undefined') {
+  config.WORKER_URL = maplibreWorkerUrl;
+}
 import { RouteItinerary, GeoLocation, LiveVehicle } from '../../types/transit';
 import { fetchLiveVehicles } from '../../services/api';
 import { Radio, Bus, Navigation2, CheckCircle2 } from 'lucide-react';
@@ -11,6 +18,7 @@ interface Props {
   destination?: GeoLocation | null;
   onSelectRoute?: (route: RouteItinerary) => void;
   className?: string;
+  city?: string;
 }
 
 export const TransitMap: React.FC<Props> = ({
@@ -18,7 +26,8 @@ export const TransitMap: React.FC<Props> = ({
   allRoutes = [],
   origin,
   destination,
-  className = ''
+  className = '',
+  city
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -34,8 +43,11 @@ export const TransitMap: React.FC<Props> = ({
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
+    const isMathura = (city && city.toLowerCase().includes('mathura')) || (origin && origin.city.toLowerCase().includes('mathura'));
     const initialCenter: [number, number] = origin
       ? [origin.lon, origin.lat]
+      : isMathura
+      ? [77.6737, 27.4855]
       : [77.2197, 28.6328];
 
     const map = new maplibregl.Map({
@@ -97,7 +109,8 @@ export const TransitMap: React.FC<Props> = ({
 
     const loadVehicles = async () => {
       try {
-        const data = await fetchLiveVehicles('Delhi NCR');
+        const targetCity = city || (origin && origin.city) || 'Delhi NCR';
+        const data = await fetchLiveVehicles(targetCity);
         setLiveVehicles(data);
         setLastTelemetryUpdate(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       } catch (e) {
@@ -108,7 +121,7 @@ export const TransitMap: React.FC<Props> = ({
     loadVehicles();
     const interval = setInterval(loadVehicles, 3500);
     return () => clearInterval(interval);
-  }, [showLiveGPS]);
+  }, [showLiveGPS, city, origin]);
 
   // 3. Render / Update Live Vehicle GPS Markers on the Map
   useEffect(() => {
@@ -182,19 +195,69 @@ export const TransitMap: React.FC<Props> = ({
       if (map.getSource(id)) map.removeSource(id);
     });
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       if (map.getLayer(`active-leg-line-${i}`)) map.removeLayer(`active-leg-line-${i}`);
+      if (map.getLayer(`active-leg-casing-${i}`)) map.removeLayer(`active-leg-casing-${i}`);
       if (map.getSource(`active-leg-source-${i}`)) map.removeSource(`active-leg-source-${i}`);
+    }
+
+    for (let r = 0; r < 10; r++) {
+      if (map.getLayer(`alt-route-line-${r}`)) map.removeLayer(`alt-route-line-${r}`);
+      if (map.getSource(`alt-route-source-${r}`)) map.removeSource(`alt-route-source-${r}`);
     }
 
     const bounds = new maplibregl.LngLatBounds();
     let hasCoords = false;
 
-    // Draw Selected Route
-    if (selectedRoute && selectedRoute.legs.length > 0) {
-      const walkCoords: [number, number][] = [];
+    const activeRoute = selectedRoute || (allRoutes && allRoutes.length > 0 ? allRoutes[0] : null);
 
-      selectedRoute.legs.forEach((leg, legIdx) => {
+    // 1. Draw subtle background paths for alternate routes
+    if (allRoutes && allRoutes.length > 1) {
+      allRoutes.forEach((altRoute, altIdx) => {
+        if (activeRoute && altRoute.id === activeRoute.id) return;
+        const altCoords: [number, number][] = [];
+        altRoute.legs.forEach(leg => {
+          const coords = leg.path_coords && leg.path_coords.length > 0
+            ? leg.path_coords
+            : [leg.origin_coords, leg.destination_coords];
+          coords.forEach(pt => altCoords.push(pt));
+        });
+
+        if (altCoords.length > 1) {
+          map.addSource(`alt-route-source-${altIdx}`, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: altCoords
+              }
+            }
+          });
+
+          map.addLayer({
+            id: `alt-route-line-${altIdx}`,
+            type: 'line',
+            source: `alt-route-source-${altIdx}`,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#8B949E',
+              'line-width': 3,
+              'line-dasharray': [2, 2],
+              'line-opacity': 0.45
+            }
+          });
+        }
+      });
+    }
+
+    // 2. Draw Active/Selected Route with Outer Casing + Bold Colors
+    if (activeRoute && activeRoute.legs.length > 0) {
+      activeRoute.legs.forEach((leg, legIdx) => {
         const coords = leg.path_coords && leg.path_coords.length > 0
           ? leg.path_coords
           : [leg.origin_coords, leg.destination_coords];
@@ -204,17 +267,7 @@ export const TransitMap: React.FC<Props> = ({
           hasCoords = true;
         });
 
-        if (leg.mode === 'walk') {
-          walkCoords.push(...coords);
-        } else if (coords.length > 1) {
-          const legColor = leg.line_color || (
-            leg.mode === 'auto' ? '#E68A00' :
-            leg.mode === 'erickshaw' ? '#00897B' :
-            leg.mode === 'ebus' ? '#00A86B' :
-            leg.mode === 'taxi' ? '#3B5360' :
-            leg.mode === 'bus' ? '#C8795A' : '#304B3C'
-          );
-
+        if (coords.length > 1) {
           map.addSource(`active-leg-source-${legIdx}`, {
             type: 'geojson',
             data: {
@@ -227,65 +280,78 @@ export const TransitMap: React.FC<Props> = ({
             }
           });
 
-          map.addLayer({
-            id: `active-leg-line-${legIdx}`,
-            type: 'line',
-            source: `active-leg-source-${legIdx}`,
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': legColor,
-              'line-width': 5.5,
-              'line-opacity': 0.95
-            }
-          });
+          if (leg.mode === 'walk') {
+            // Distinct walking segment (dashed, dark charcoal)
+            map.addLayer({
+              id: `active-leg-line-${legIdx}`,
+              type: 'line',
+              source: `active-leg-source-${legIdx}`,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': '#52544D',
+                'line-width': 3.5,
+                'line-dasharray': [1.8, 2],
+                'line-opacity': 0.85
+              }
+            });
+          } else {
+            const legColor = leg.line_color || (
+              leg.mode === 'auto' ? '#E68A00' :
+              leg.mode === 'erickshaw' ? '#00897B' :
+              leg.mode === 'ebus' ? '#00A86B' :
+              leg.mode === 'taxi' ? '#3B5360' :
+              leg.mode === 'bus' ? '#C8795A' : '#304B3C'
+            );
+
+            // High-contrast outer casing (Apple/Google Maps style)
+            map.addLayer({
+              id: `active-leg-casing-${legIdx}`,
+              type: 'line',
+              source: `active-leg-source-${legIdx}`,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': '#FFFFFF',
+                'line-width': 8,
+                'line-opacity': 0.95
+              }
+            });
+
+            // Vibrant mode color core line
+            map.addLayer({
+              id: `active-leg-line-${legIdx}`,
+              type: 'line',
+              source: `active-leg-source-${legIdx}`,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': legColor,
+                'line-width': 5.5,
+                'line-opacity': 1.0
+              }
+            });
+          }
         }
       });
 
-      // Walking Dashed Polyline
-      if (walkCoords.length > 0) {
-        map.addSource('active-walk-source', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: walkCoords
-            }
-          }
-        });
-
-        map.addLayer({
-          id: 'active-walk-line',
-          type: 'line',
-          source: 'active-walk-source',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#77776F',
-            'line-width': 3,
-            'line-dasharray': [2, 2],
-            'line-opacity': 0.85
-          }
-        });
-      }
-
       // Stop / Interchange Pins
-      selectedRoute.legs.forEach((leg) => {
+      activeRoute.legs.forEach((leg) => {
         if (leg.mode !== 'walk') {
           const el = document.createElement('div');
-          el.className = 'w-3 h-3 rounded-full bg-[#E5A919] border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-125';
+          el.className = 'w-3.5 h-3.5 rounded-full bg-[#E5A919] border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-125';
           el.title = leg.origin_name;
 
           const popup = new maplibregl.Popup({ offset: 12 }).setHTML(`
-            <div class="text-xs">
+            <div class="text-xs p-1">
               <p class="font-bold text-[#304B3C]">${leg.line_name || 'Transit Line'}</p>
-              <p class="text-[#77776F]">${leg.origin_name}</p>
+              <p class="text-[#77776F] font-semibold">${leg.origin_name}</p>
               <p class="text-[11px] text-[#292D29] mt-1">${leg.instructions}</p>
             </div>
           `);
@@ -300,20 +366,20 @@ export const TransitMap: React.FC<Props> = ({
       });
     }
 
-    // Origin Marker
+    // Origin Marker (A)
     if (origin) {
       bounds.extend([origin.lon, origin.lat]);
       hasCoords = true;
 
       const originEl = document.createElement('div');
-      originEl.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-[#64836D] text-white font-bold text-xs shadow-lg border-2 border-[#F7F5EF]';
+      originEl.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-[#2E5A3D] text-white font-extrabold text-xs shadow-lg border-2 border-white ring-2 ring-[#2E5A3D]/30';
       originEl.innerHTML = 'A';
 
       const originMarker = new maplibregl.Marker({ element: originEl })
         .setLngLat([origin.lon, origin.lat])
         .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(`
           <div class="text-xs">
-            <span class="text-[10px] uppercase font-bold text-[#64836D]">Origin</span>
+            <span class="text-[10px] uppercase font-bold text-[#2E5A3D]">Origin</span>
             <h4 class="font-bold text-[#292D29]">${origin.name}</h4>
           </div>
         `))
@@ -322,13 +388,13 @@ export const TransitMap: React.FC<Props> = ({
       markersRef.current.push(originMarker);
     }
 
-    // Destination Marker
+    // Destination Marker (B)
     if (destination) {
       bounds.extend([destination.lon, destination.lat]);
       hasCoords = true;
 
       const destEl = document.createElement('div');
-      destEl.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-[#C8795A] text-white font-bold text-xs shadow-lg border-2 border-[#F7F5EF]';
+      destEl.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-[#C8795A] text-white font-extrabold text-xs shadow-lg border-2 border-white ring-2 ring-[#C8795A]/30';
       destEl.innerHTML = 'B';
 
       const destMarker = new maplibregl.Marker({ element: destEl })
@@ -355,7 +421,7 @@ export const TransitMap: React.FC<Props> = ({
 
   useEffect(() => {
     updateMapLayers();
-  }, [selectedRoute, origin, destination]);
+  }, [selectedRoute, allRoutes, origin, destination]);
 
   return (
     <div className={`relative w-full h-full rounded-2xl overflow-hidden border border-[#E3E0D6] shadow-sm bg-[#EEECE3] ${className}`}>

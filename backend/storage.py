@@ -117,6 +117,55 @@ def get_all_saved_routes(city: Optional[str] = None) -> List[SavedRoute]:
             current_delay_minutes=r["current_delay_minutes"],
             active_status=r["active_status"]
         ))
+
+    # If city is Mathura and no saved routes exist in DB yet, return default authentic Braj commutes
+    if (not routes) and city and ("mathura" in city.lower() or "vrindavan" in city.lower()):
+        now_str = datetime.now().isoformat()
+        routes = [
+            SavedRoute(
+                id="mathura-saved-1",
+                name="Mathura Jn to Bankey Bihari Ji (Darshan)",
+                origin="Mathura Junction Railway Station (MTJ)",
+                destination="Shri Bankey Bihari Ji Mandir (Vrindavan)",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=32,
+                typical_fare_inr=45.0,
+                typical_transfers=1,
+                current_delay_minutes=0,
+                active_status="Normal Service (E-Rickshaw Running)"
+            ),
+            SavedRoute(
+                id="mathura-saved-2",
+                name="Janmabhoomi to Prem Mandir (Evening Light Show)",
+                origin="Shri Krishna Janmabhoomi (Janmasthan)",
+                destination="Prem Mandir (Vrindavan)",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=24,
+                typical_fare_inr=35.0,
+                typical_transfers=1,
+                current_delay_minutes=0,
+                active_status="Normal Service"
+            ),
+            SavedRoute(
+                id="mathura-saved-3",
+                name="Mathura Jn to Govardhan (Daan Ghati Parikrama)",
+                origin="Mathura Junction Railway Station (MTJ)",
+                destination="Govardhan - Daan Ghati Mandir & Mansi Ganga",
+                city=city,
+                preferred_mode="cheapest",
+                created_at=now_str,
+                typical_duration_minutes=42,
+                typical_fare_inr=45.0,
+                typical_transfers=0,
+                current_delay_minutes=0,
+                active_status="Normal Service (Tempo Available)"
+            )
+        ]
+        
     return routes
 
 def create_saved_route(item: SavedRouteCreate, duration: int = 35, fare: float = 40.0, transfers: int = 1) -> SavedRoute:

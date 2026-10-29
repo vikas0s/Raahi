@@ -1,5 +1,5 @@
 import React from 'react';
-import { IndianRupee, ArrowLeftRight, Footprints, Sparkles, ChevronRight, Check } from 'lucide-react';
+import { IndianRupee, ArrowLeftRight, Footprints, Sparkles, ChevronRight, Check, MoonStar, Ban } from 'lucide-react';
 import type { RouteItinerary } from '../../types/transit';
 import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../common/CrowdLevelIndicator';
@@ -14,11 +14,21 @@ interface Props {
 
 export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSelect }) => {
   const { t } = useTranslation();
+  const isUnavailable = route.service_available === false;
 
   const getTagBadgeClass = () => {
+    if (isUnavailable) {
+      return 'bg-[#78716C]/15 text-[#57534E] border-[#A8A29E]/50 font-bold';
+    }
     switch (route.tag) {
       case 'Fastest':
         return 'bg-[#64836D]/18 text-[#253D30] border-[#64836D]/40 font-bold';
+      case 'Multi-Transport (Auto + Metro)':
+        return 'bg-[#7C3AED]/20 text-[#5B21B6] border-[#7C3AED]/50 font-extrabold ring-1 ring-[#7C3AED]/30';
+      case 'Multi-Transport (E-Rickshaw + Metro)':
+        return 'bg-[#059669]/20 text-[#065F46] border-[#059669]/50 font-bold';
+      case 'Multi-Transport (Braj Feeder)':
+        return 'bg-[#D97706]/20 text-[#92400E] border-[#D97706]/50 font-bold';
       case 'Lowest Fare':
         return 'bg-[#C8795A]/18 text-[#8C3D1E] border-[#C8795A]/40 font-bold';
       case 'Least Crowded':
@@ -27,8 +37,24 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
         return 'bg-[#00A86B]/15 text-[#006A44] border-[#00A86B]/40 font-bold';
       case 'Govt Metered Auto':
         return 'bg-[#E68A00]/15 text-[#8F5500] border-[#E68A00]/40 font-bold';
+      case 'Short Distance Recommended':
+        return 'bg-[#E68A00]/22 text-[#78350F] border-[#E68A00]/50 font-extrabold ring-1 ring-[#E68A00]/30';
+      case 'Local E-Rickshaw Hop':
+        return 'bg-[#00897B]/20 text-[#004D40] border-[#00897B]/50 font-bold';
+      case 'Metro (Alternative)':
+        return 'bg-[#1976D2]/15 text-[#0D47A1] border-[#1976D2]/40 font-bold';
       case 'Direct Cab':
         return 'bg-[#3B5360]/15 text-[#24353E] border-[#3B5360]/40 font-bold';
+      case 'Most Popular':
+        return 'bg-[#00897B]/18 text-[#004D40] border-[#00897B]/40 font-bold';
+      case 'Green Electric Bus':
+        return 'bg-[#00A86B]/15 text-[#006A44] border-[#00A86B]/40 font-bold';
+      case 'Direct Reserved Auto':
+        return 'bg-[#D97706]/15 text-[#92400E] border-[#D97706]/40 font-bold';
+      case 'Private Taxi (Limited)':
+        return 'bg-[#475569]/15 text-[#334155] border-[#475569]/40 font-bold';
+      case 'Metro Closed':
+        return 'bg-[#EF4444]/12 text-[#991B1B] border-[#EF4444]/30 font-bold';
       default:
         return 'bg-[#EEECE3] text-[#1F231F] border-[#D8D4C7] font-bold';
     }
@@ -36,18 +62,30 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
 
   return (
     <div
-      onClick={onSelect}
-      className={`relative w-full rounded-2xl p-5 transition-all duration-200 cursor-pointer border text-left ${
-        isSelected
-          ? 'bg-[#FFFEFA] border-[#304B3C] shadow-[0_4px_22px_-2px_rgba(48,75,60,0.14)] ring-2 ring-[#304B3C]'
-          : 'bg-[#FFFEFA] hover:bg-white border-[#D8D4C7] hover:border-[#304B3C]/50 shadow-[0_1px_4px_rgba(41,45,41,0.03)] hover:shadow-[0_4px_18px_rgba(48,75,60,0.08)]'
+      onClick={isUnavailable ? undefined : onSelect}
+      className={`relative w-full rounded-2xl p-5 transition-all duration-200 border text-left ${
+        isUnavailable
+          ? 'bg-[#F5F5F4] border-[#D6D3D1] opacity-65 cursor-not-allowed'
+          : isSelected
+          ? 'bg-[#FFFEFA] border-[#304B3C] shadow-[0_4px_22px_-2px_rgba(48,75,60,0.14)] ring-2 ring-[#304B3C] cursor-pointer'
+          : 'bg-[#FFFEFA] hover:bg-white border-[#D8D4C7] hover:border-[#304B3C]/50 shadow-[0_1px_4px_rgba(41,45,41,0.03)] hover:shadow-[0_4px_18px_rgba(48,75,60,0.08)] cursor-pointer'
       }`}
     >
+      {/* Unavailable banner */}
+      {isUnavailable && (
+        <div className="flex items-center gap-2 px-3.5 py-2 mb-3.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
+          <MoonStar size={15} className="shrink-0 stroke-[2.5]" />
+          <span className="text-xs font-bold leading-snug">
+            {route.unavailable_reason || 'Service currently unavailable'}
+          </span>
+        </div>
+      )}
+
       {/* Header: Recommendation Tag, Timings & Delay badge */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border tracking-tight shadow-2xs ${getTagBadgeClass()}`}>
-            <Sparkles size={12} className="shrink-0" />
+            {isUnavailable ? <Ban size={12} className="shrink-0" /> : <Sparkles size={12} className="shrink-0" />}
             <span>{route.tag}</span>
           </span>
           <span className="text-xs font-semibold text-[#52544D] font-mono tracking-tight">

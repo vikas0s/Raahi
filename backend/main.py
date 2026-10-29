@@ -189,13 +189,19 @@ def get_stop_departures(stop_id: str):
     ]
 
 @app.get("/transit/live-vehicles", response_model=List[LiveVehicle])
-async def get_live_vehicles(city: str = Query("Delhi NCR")):
+async def get_live_vehicles(
+    city: str = Query("Delhi NCR", description="Selected city"),
+    limit: int = Query(120, ge=1, le=500, description="Max vehicles to return for map rendering")
+):
     """
-    Returns real-time GPS coordinates of active transit vehicles (DTC & electric buses)
-    using the Open Transit Data Delhi (OTD) API key.
+    Returns real-time GPS coordinates of active transit vehicles (DTC buses / Mathura E-Buses & Tempos)
+    using the live Delhi Transport Stack (DTS) GTFS-RT feed or Mathura Smart City Telemetry.
     """
-    if "delhi" in city.lower():
-        return await otd_service_instance.fetch_live_vehicles()
+    c = city.lower()
+    if "mathura" in c or "vrindavan" in c or "braj" in c:
+        return await otd_service_instance.fetch_mathura_live_vehicles()
+    elif "delhi" in c:
+        return await otd_service_instance.fetch_live_vehicles(limit=limit)
     return []
 
 @app.websocket("/ws/telemetry")

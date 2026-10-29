@@ -38,6 +38,7 @@ export type TranslationKey =
   | 'prefEBus'
   | 'prefAutoTaxi'
   | 'prefPinkPass'
+  | 'prefMultiTransport'
   | 'live3dTransitGrid'
   | 'frequentCommutes'
   | 'oneTapReplan'
@@ -173,6 +174,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     prefEBus: 'DTC Electric Bus',
     prefAutoTaxi: 'Auto & Taxi',
     prefPinkPass: 'Pink Ticket (Women Free)',
+    prefMultiTransport: 'Multi-Transport (Auto + Metro)',
 
     // 3D Scene
     live3dTransitGrid: 'Live 3D Transit Grid',
@@ -323,6 +325,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     prefEBus: 'डीटीसी ई-बस',
     prefAutoTaxi: 'ऑटो और टैक्सी',
     prefPinkPass: 'गुलाबी टिकट (महिलाएं मुफ्त)',
+    prefMultiTransport: 'मल्टी-ट्रांसपोर्ट (ऑटो + मेट्रो)',
 
     // 3D Scene
     live3dTransitGrid: 'लाइव 3D ट्रांजिट मॉडल',

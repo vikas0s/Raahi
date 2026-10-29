@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, IndianRupee, Users, ArrowLeftRight, Footprints, Accessibility, Bus, CarTaxiFront, Sparkles } from 'lucide-react';
+import { Zap, IndianRupee, Users, ArrowLeftRight, Footprints, Accessibility, Bus, CarTaxiFront, Sparkles, Layers } from 'lucide-react';
 import type { TravelPreferences } from '../../types/transit';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -28,6 +28,7 @@ export const TravelPreferenceChips: React.FC<Props> = ({ preferences, onChange, 
   };
 
   const chips: { key: keyof TravelPreferences; label: string; icon: React.ReactNode; isPink?: boolean }[] = [
+    { key: 'prefer_multimodal', label: t('prefMultiTransport'), icon: <Layers size={13} /> },
     { key: 'fastest', label: t('prefFastest'), icon: <Zap size={13} /> },
     { key: 'cheapest', label: t('prefCheapest'), icon: <IndianRupee size={13} /> },
     { key: 'prefer_ebus', label: t('prefEBus'), icon: <Bus size={13} /> },

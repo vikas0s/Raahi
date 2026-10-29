@@ -21,6 +21,7 @@ class TravelPreference(BaseModel):
     allow_auto: bool = True
     allow_taxi: bool = True
     pink_pass: bool = False # Delhi Govt free travel for women on DTC/cluster buses
+    prefer_multimodal: bool = False # Doorstep Auto/E-Rickshaw + Metro chaining
 
 class PlanRequest(BaseModel):
     origin: str
@@ -72,6 +73,8 @@ class RouteItinerary(BaseModel):
     total_delay_minutes: int = 0
     legs: List[TransitLeg]
     eco_carbon_savings_kg: float = 1.4
+    service_available: bool = True  # Whether this transit mode is currently operational
+    unavailable_reason: Optional[str] = None  # e.g. "Metro closed (11 PM – 6 AM)"
 
 class PlanResponse(BaseModel):
     origin: GeoLocation

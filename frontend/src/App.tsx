@@ -37,6 +37,23 @@ export const App: React.FC = () => {
   // Journey Search State
   const [origin, setOrigin] = useState<string>('Rajiv Chowk (Connaught Place)');
   const [destination, setDestination] = useState<string>('Cyber City (Gurugram)');
+
+  const handleCityChange = (newCity: string) => {
+    setSelectedCity(newCity);
+    if (newCity.toLowerCase().includes('mathura')) {
+      setOrigin('Mathura Junction Railway Station (MTJ)');
+      setDestination('Shri Bankey Bihari Ji Mandir (Vrindavan)');
+    } else if (newCity.includes('Delhi')) {
+      setOrigin('Rajiv Chowk (Connaught Place)');
+      setDestination('Cyber City (Gurugram)');
+    } else if (newCity.includes('Mumbai')) {
+      setOrigin('Chhatrapati Shivaji Maharaj Terminus (CSMT)');
+      setDestination('Bandra Kurla Complex (BKC)');
+    } else if (newCity.includes('Bengaluru')) {
+      setOrigin('Majestic (KSR Bengaluru)');
+      setDestination('Whitefield (Kadugodi)');
+    }
+  };
   const [preferences, setPreferences] = useState<TravelPreferences>({
     fastest: true,
     cheapest: false,
@@ -174,7 +191,7 @@ export const App: React.FC = () => {
       {/* Top Bar */}
       <TopBar
         selectedCity={selectedCity}
-        onCityChange={(city) => setSelectedCity(city)}
+        onCityChange={handleCityChange}
         language={language}
         onLanguageChange={(lang) => setLanguage(lang)}
         disruptionsCount={incidents.length}
@@ -253,7 +270,7 @@ export const App: React.FC = () => {
           {activeTab === 'settings' && (
             <SettingsView
               selectedCity={selectedCity}
-              onCityChange={setSelectedCity}
+              onCityChange={handleCityChange}
               language={language}
               onLanguageChange={setLanguage}
               accessibleOnly={accessibleOnly}

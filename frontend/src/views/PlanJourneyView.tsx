@@ -156,6 +156,7 @@ export const PlanJourneyView: React.FC<Props> = ({
               allRoutes={routes}
               origin={originLocation}
               destination={destLocation}
+              city={city}
             />
           </div>
 

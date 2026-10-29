@@ -68,6 +68,7 @@ export const TopBar: React.FC<Props> = ({
             className="pl-7 pr-7 py-1.5 bg-[#EEECE3] hover:bg-[#E3E0D6] focus:bg-[#FFFEFA] text-xs font-bold text-[#1F231F] rounded-xl border border-[#D8D4C7] focus:border-[#4E7C5F] outline-none appearance-none cursor-pointer transition-all shadow-2xs"
           >
             <option value="Delhi NCR">Delhi NCR</option>
+            <option value="Mathura & Vrindavan">Mathura & Vrindavan</option>
             <option value="Mumbai">Mumbai</option>
             <option value="Bengaluru">Bengaluru</option>
           </select>
