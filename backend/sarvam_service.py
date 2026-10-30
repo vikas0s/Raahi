@@ -20,7 +20,7 @@ SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
 
 DEFAULT_MODEL = os.getenv("SARVAM_MODEL", "sarvam-105b")
-DEFAULT_TIMEOUT_SEC = 25.0
+DEFAULT_TIMEOUT_SEC = 12.0
 
 class SarvamConfigurationError(Exception):
     """Raised when SARVAM_API_KEY is missing or invalid in environment."""

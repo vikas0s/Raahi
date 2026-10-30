@@ -40,6 +40,13 @@ GLOBAL_ALIAS_MAP: Dict[str, Dict[str, Any]] = {
     "govardhan": {"name": "Govardhan - Daan Ghati Mandir & Mansi Ganga", "lat": 27.5020, "lon": 77.4640, "city": "Govardhan", "state": "Uttar Pradesh", "country": "India", "category": "landmark"},
     
     # Delhi NCR
+    "rohini": {"name": "Rohini (Delhi NCR)", "lat": 28.7150, "lon": 77.1160, "city": "Delhi NCR", "state": "Delhi", "country": "India", "category": "locality"},
+    "rohni": {"name": "Rohini (Delhi NCR)", "lat": 28.7150, "lon": 77.1160, "city": "Delhi NCR", "state": "Delhi", "country": "India", "category": "locality"},
+    "pari chowk": {"name": "Pari Chowk (Greater Noida)", "lat": 28.4631, "lon": 77.5081, "city": "Delhi NCR", "state": "Uttar Pradesh", "country": "India", "category": "landmark"},
+    "greater noida": {"name": "Greater Noida (Pari Chowk)", "lat": 28.4631, "lon": 77.5081, "city": "Delhi NCR", "state": "Uttar Pradesh", "country": "India", "category": "locality"},
+    "noida": {"name": "Noida City Centre", "lat": 28.5747, "lon": 77.3560, "city": "Delhi NCR", "state": "Uttar Pradesh", "country": "India", "category": "locality"},
+    "gurugram": {"name": "Cyber City (Gurugram)", "lat": 28.4950, "lon": 77.0890, "city": "Delhi NCR", "state": "Haryana", "country": "India", "category": "locality"},
+    "gurgaon": {"name": "Cyber City (Gurugram)", "lat": 28.4950, "lon": 77.0890, "city": "Delhi NCR", "state": "Haryana", "country": "India", "category": "locality"},
     "rajiv chowk": {"name": "Rajiv Chowk (Connaught Place)", "lat": 28.6328, "lon": 77.2197, "city": "Delhi", "state": "Delhi", "country": "India", "category": "metro_station"},
     "cp": {"name": "Rajiv Chowk (Connaught Place)", "lat": 28.6328, "lon": 77.2197, "city": "Delhi", "state": "Delhi", "country": "India", "category": "metro_station"},
     "connaught place": {"name": "Rajiv Chowk (Connaught Place)", "lat": 28.6328, "lon": 77.2197, "city": "Delhi", "state": "Delhi", "country": "India", "category": "landmark"},
@@ -290,6 +297,10 @@ class GeocodingService:
     def _geocode_nominatim(self, query: str, context_city: Optional[str]) -> Optional[ResolvedPlace]:
         """Query OpenStreetMap Nominatim with retry and timeout."""
         clean_q = query.strip()
+        VERB_STOPWORDS = {"travel", "go", "reach", "get", "commute", "from", "to", "want", "need", "please", "route", "rasta"}
+        if clean_q.lower() in VERB_STOPWORDS:
+            return None
+
         if context_city and context_city.lower() not in clean_q.lower():
             search_str = f"{clean_q}, {context_city}"
         else:

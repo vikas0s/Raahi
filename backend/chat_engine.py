@@ -111,9 +111,20 @@ class RaahiAIAssistant:
         orig_raw, dest_raw, prefs = self._extract_journey_parameters(raw_text)
 
         if orig_raw and dest_raw:
+            # Detect explicit city context in query text (e.g. "in delhi ...", "in mathura ...")
+            inferred_city = req.city
+            if any(w in lower_text for w in ["in delhi", "delhi me", "delhi mein"]):
+                inferred_city = "Delhi NCR"
+            elif any(w in lower_text for w in ["in mathura", "mathura me", "mathura mein", "in vrindavan"]):
+                inferred_city = "Mathura & Vrindavan"
+            elif any(w in lower_text for w in ["in mumbai", "mumbai me", "mumbai mein"]):
+                inferred_city = "Mumbai"
+            elif any(w in lower_text for w in ["in bengaluru", "in bangalore", "bangalore me", "bengaluru me"]):
+                inferred_city = "Bengaluru"
+
             # Resolve origin and destination using global geocoding with cross-city context propagation
-            orig_place = self.geocoder.resolve_place(orig_raw, req.city)
-            context_for_dest = orig_place.city if (orig_place and orig_place.city and not orig_place.is_ambiguous) else req.city
+            orig_place = self.geocoder.resolve_place(orig_raw, inferred_city)
+            context_for_dest = orig_place.city if (orig_place and orig_place.city and not orig_place.is_ambiguous) else inferred_city
             dest_place = self.geocoder.resolve_place(dest_raw, context_for_dest)
 
             # Check for ambiguity
@@ -284,53 +295,73 @@ class RaahiAIAssistant:
         lower = text.lower()
 
         # Preference flags
-        if any(w in lower for w in ["sasta", "cheapest", "lowest fare", "kam kharch", "kam paise", "budget"]):
+        if any(w in lower for w in ["sasta", "cheapest", "lowest fare", "minimum cost", "min cost", "kam kharch", "kam paise", "budget"]):
             prefs.cheapest = True
             prefs.fastest = False
+        if any(w in lower for w in ["fastest", "minimum time", "min time", "jaldi", "quickest", "sabse tez"]):
+            prefs.fastest = True
         if any(w in lower for w in ["less walk", "kam chalna", "minimal walk", "no walking"]):
             prefs.less_walking = True
         if any(w in lower for w in ["less crowd", "kam bheed", "peaceful"]):
             prefs.less_crowded = True
-            prefs.fastest = False
         if any(w in lower for w in ["wheelchair", "accessible", "divyang"]):
             prefs.accessible = True
 
+        # Pre-clean sentence framing noise:
+        # e.g. "in delhi i want to travel from rohni to pari chowk with minimum cost and minimum time"
+        cleaned_query = lower
+        # Remove city prefixes like "in delhi ", "in mathura: ", "in mumbai, "
+        cleaned_query = re.sub(r'^(?:in\s+[a-zA-Z\s]+?[\,\:\-]\s*|in\s+(?:delhi|mumbai|bengaluru|bangalore|mathura|vrindavan)\s+)', '', cleaned_query)
+        # Remove intent prefixes like "i want to travel ", "i want to go ", "how to travel ", "how to reach ", "please tell me route "
+        cleaned_query = re.sub(r'^(?:i\s+want\s+to\s+|i\s+need\s+to\s+|can\s+you\s+|please\s+)?(?:travel|go|reach|commute|navigate|get|take\s+me)\s+', '', cleaned_query)
+        # Remove trailing preference clauses like "with minimum cost and minimum time"
+        cleaned_query = re.sub(r'\s+with\s+(?:minimum|least|lowest|min|max|no|less|cheapest|fastest).*$', '', cleaned_query)
+        cleaned_query = re.sub(r'\s+(?:minimum|least|lowest|min)\s+(?:cost|fare|time|duration|walking).*$', '', cleaned_query)
+        cleaned_query = re.sub(r'\s+(?:with\s+)?(?:less|minimal|no)\s+(?:walking|crowd|transfers).*$', '', cleaned_query)
+        cleaned_query = re.sub(r'\s+(?:sabse\s+)?(?:sasta|fastest|tez|jaldi|kam\s+kharch|kam\s+samay).*$', '', cleaned_query)
+
         orig_raw, dest_raw = None, None
 
-        # Pattern 1: 'to Y from X' or 'how to get/reach to Y from X'
-        m_to_from = re.search(r'(?:to|reach)\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+from\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', lower)
-        if m_to_from:
-            dest_raw = self._clean_place_tokens(m_to_from.group(1))
-            orig_raw = self._clean_place_tokens(m_to_from.group(2))
-            return orig_raw, dest_raw, prefs
-
-        # Pattern 2: 'Y jana hai X se' or 'Y kaise jaun X se' (Hindi Reverse)
-        m_hindi_rev = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:jana|pahunch|jaun|pahunchna|jaana|jaye|jaaye|जाना|पहुँच|जाएँ|जाएं|जाए)\s*.*?\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:se|से)', lower)
-        if m_hindi_rev:
-            dest_raw = self._clean_place_tokens(m_hindi_rev.group(1))
-            orig_raw = self._clean_place_tokens(m_hindi_rev.group(2))
-            return orig_raw, dest_raw, prefs
-
-        # Pattern 3: 'from X to Y' or 'from X ... to Y'
-        m_from_to = re.search(r'from\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+to\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', lower)
+        # Pattern 1: 'from X to Y' (Primary English forward pattern)
+        m_from_to = re.search(r'\bfrom\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+to\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', cleaned_query)
         if m_from_to:
             orig_raw = self._clean_place_tokens(m_from_to.group(1))
             dest_raw = self._clean_place_tokens(m_from_to.group(2))
-            return orig_raw, dest_raw, prefs
+            if orig_raw and dest_raw and orig_raw not in {"travel", "go", "reach"} and dest_raw not in {"travel", "go", "reach"}:
+                return orig_raw, dest_raw, prefs
 
-        # Pattern 4: 'X se Y' (Hindi Forward)
-        m_se = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:se|से)\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', lower)
+        # Pattern 2: 'X se Y' (Primary Hindi forward pattern)
+        m_se = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:se|से)\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', cleaned_query)
         if m_se:
             orig_raw = self._clean_place_tokens(m_se.group(1))
             dest_raw = self._clean_place_tokens(m_se.group(2))
-            return orig_raw, dest_raw, prefs
+            if orig_raw and dest_raw and orig_raw not in {"travel", "go", "reach"} and dest_raw not in {"travel", "go", "reach"}:
+                return orig_raw, dest_raw, prefs
 
-        # Pattern 5: 'X to Y' (Direct English)
-        m_direct_to = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+to\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', lower)
+        # Pattern 3: 'Y jana hai X se' or 'Y kaise jaun X se' (Hindi Reverse)
+        m_hindi_rev = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:jana|pahunch|jaun|pahunchna|jaana|jaye|jaaye|जाना|पहुँच|जाएँ|जाएं|जाए)\s*.*?\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+(?:se|से)', cleaned_query)
+        if m_hindi_rev:
+            dest_raw = self._clean_place_tokens(m_hindi_rev.group(1))
+            orig_raw = self._clean_place_tokens(m_hindi_rev.group(2))
+            if orig_raw and dest_raw and orig_raw not in {"travel", "go", "reach"} and dest_raw not in {"travel", "go", "reach"}:
+                return orig_raw, dest_raw, prefs
+
+        # Pattern 4: 'to Y from X' or 'how to get/reach to Y from X'
+        m_to_from = re.search(r'(?:to|reach)\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+from\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', cleaned_query)
+        if m_to_from:
+            cand_dest = self._clean_place_tokens(m_to_from.group(1))
+            cand_orig = self._clean_place_tokens(m_to_from.group(2))
+            # Strict safety check: destination cannot be an action verb!
+            if cand_dest and cand_orig and cand_dest not in {"travel", "go", "reach", "get", "commute", "journey", "walk", "drive"}:
+                return cand_orig, cand_dest, prefs
+
+        # Pattern 5: 'X to Y' (Direct English shorthand)
+        m_direct_to = re.search(r'([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+?)\s+to\s+([a-zA-Z0-9\u0900-\u097F\s\.\-\'\(\)]+)', cleaned_query)
         if m_direct_to:
             orig_raw = self._clean_place_tokens(m_direct_to.group(1))
             dest_raw = self._clean_place_tokens(m_direct_to.group(2))
-            return orig_raw, dest_raw, prefs
+            if orig_raw and dest_raw and orig_raw not in {"travel", "go", "reach", "want"} and dest_raw not in {"travel", "go", "reach"}:
+                return orig_raw, dest_raw, prefs
 
         return None, None, prefs
 
@@ -350,6 +381,11 @@ class RaahiAIAssistant:
         cleaned = re.sub(r'[?!.,;:"\'`\\/<>{}()\[\]]+', ' ', text)
         # Remove common query noise tokens (English, Hinglish, Hindi)
         noise = [
+            # Trailing preference noise
+            r'\b(?:with|at|and)\s+(?:minimum|lowest|least|min|fastest|cheapest|maximum)\s+(?:cost|fare|time|duration|walking|crowd)\b',
+            r'\b(?:minimum|lowest|least|min|fastest|cheapest)\s+(?:cost|fare|time|duration|walking|crowd)\b',
+            r'\b(?:in\s+delhi|in\s+mumbai|in\s+bengaluru|in\s+mathura)\b',
+            r'\b(?:travel|go|reach|commute|trip)\b',
             # Hinglish / English
             r'\bkaise\b', r'\bjaun\b', r'\bjana\b', r'\bjaana\b', r'\bjaye\b', r'\bjaaye\b', r'\bjao\b',
             r'\bpahunchun\b', r'\bpahuche\b', r'\bpahunchna\b', r'\bpahuche\b', r'\bpahunchein\b',
