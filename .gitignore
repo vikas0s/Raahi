@@ -1,3 +1,15 @@
 .env
 .env.*
 !.env.example
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Node & Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
