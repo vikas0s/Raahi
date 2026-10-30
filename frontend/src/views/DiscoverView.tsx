@@ -79,7 +79,7 @@ export const DiscoverView: React.FC<Props> = ({
       {/* Main Grid: Search & Preferences + 3D Isometric Mini City */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Search & Preferences */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-8 space-y-4">
           <JourneySearch
             origin={origin}
             destination={destination}
@@ -105,7 +105,7 @@ export const DiscoverView: React.FC<Props> = ({
         </div>
 
         {/* Right Column: 3D Miniature City Scene */}
-        <div className="lg:col-span-5 h-[340px] lg:h-[380px]">
+        <div className="lg:col-span-4 h-[340px] lg:h-[380px]">
           <MiniCityScene />
         </div>
       </div>

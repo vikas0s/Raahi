@@ -972,101 +972,28 @@ class TransitRouter:
 
 
 
-        # Intelligent auto-detection of city based on user query
-
-
-
-        q_o = (request.origin or "").strip().lower()
-
-
-
-        q_d = (request.destination or "").strip().lower()
-
-
-
-
-
-
-
-        def _check_city(city_key):
-
-
-
-            p_list = self.places.get(city_key, [])
-
-
-
-            for q in (q_o, q_d):
-
-
-
-                if not q:
-
-
-
-                    continue
-
-
-
-                for p in p_list:
-
-
-
-                    if q == p["name"].lower() or q in p["name"].lower():
-
-
-
-                        return True
-
-
-
-                    for a in p.get("aliases", []):
-
-
-
-                        if q == a.lower() or q in a.lower():
-
-
-
+        # Intelligent auto-detection of city based on user query ONLY if request.city not explicitly set
+        if not (request.city and request.city.strip()):
+            q_o = (request.origin or "").strip().lower()
+            q_d = (request.destination or "").strip().lower()
+            def _check_city(city_key):
+                p_list = self.places.get(city_key, [])
+                for q in (q_o, q_d):
+                    if not q:
+                        continue
+                    for p in p_list:
+                        if q == p["name"].lower() or q in p["name"].lower():
                             return True
-
-
-
-            return False
-
-
-
-
-
-
-
-        if _check_city("Mumbai"):
-
-
-
-            city = "Mumbai"
-
-
-
-        elif _check_city("Mathura & Vrindavan"):
-
-
-
-            city = "Mathura & Vrindavan"
-
-
-
-        elif _check_city("Bengaluru"):
-
-
-
-            city = "Bengaluru"
-
-
-
-
-
-
+                        for a in p.get("aliases", []):
+                            if q == a.lower() or q in a.lower():
+                                return True
+                return False
+            if _check_city("Mumbai"):
+                city = "Mumbai"
+            elif _check_city("Mathura & Vrindavan"):
+                city = "Mathura & Vrindavan"
+            elif _check_city("Bengaluru"):
+                city = "Bengaluru"
 
         is_mathura = (city == "Mathura & Vrindavan")
 
@@ -12384,6 +12311,14 @@ class TransitRouter:
 
 
         routes.append(self._build_direct_cab_route(origin_dict, dest_dict, dist_km, base_time))
+
+        # 5. SWR Bengaluru Commuter / Suburban Rail (MEMU/DEMU)
+        try:
+            from .rail.service import rail_service_instance
+            rail_routes = rail_service_instance.find_rail_routes_sync(origin_dict, dest_dict, base_time, dist_km, 'Bengaluru')
+            routes.extend(rail_routes)
+        except Exception:
+            pass
 
 
 

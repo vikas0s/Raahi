@@ -200,7 +200,8 @@ export async function resetAssistantSession(sessionId: string): Promise<void> {
 
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const formData = new FormData();
-  formData.append('file', audioBlob, 'voice_query.webm');
+  const ext = audioBlob.type.includes('wav') ? 'wav' : (audioBlob.type.includes('mp3') ? 'mp3' : 'wav');
+  formData.append('file', audioBlob, `voice_query.${ext}`);
   const res = await fetch(`${API_BASE}/api/assistant/transcribe`, {
     method: 'POST',
     body: formData

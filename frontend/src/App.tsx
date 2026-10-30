@@ -87,9 +87,9 @@ export const App: React.FC = () => {
 
   const [origin, setOrigin] = useState<string>(() => {
     try {
-      return localStorage.getItem('raahi_origin') || 'Mathura Junction Railway Station (MTJ)';
+      return localStorage.getItem('raahi_origin') || 'Mathura Junction (MTJ)';
     } catch {
-      return 'Mathura Junction Railway Station (MTJ)';
+      return 'Mathura Junction (MTJ)';
     }
   });
 
@@ -143,9 +143,9 @@ export const App: React.FC = () => {
 
     if (cLow.includes('mathura') || cLow.includes('vrindavan')) {
 
-      newOrigin = detectedLocality && isAuto ? `${detectedLocality} (Mathura)` : 'Mathura Junction Railway Station (MTJ)';
+      newOrigin = detectedLocality && isAuto ? `${detectedLocality} (Mathura)` : 'Mathura Junction (MTJ)';
 
-      newDest = 'Shri Bankey Bihari Ji Mandir (Vrindavan)';
+      newDest = 'Shri Bankey Bihari Mandir (Vrindavan)';
 
     } else if (cLow.includes('delhi')) {
 
@@ -175,6 +175,7 @@ export const App: React.FC = () => {
 
     }
 
+    setSelectedRoute(null);
     setOrigin(newOrigin);
 
     setDestination(newDest);
@@ -473,7 +474,7 @@ export const App: React.FC = () => {
         setSelectedRoute(prev => {
           if (!prev) return res.routes[0];
           const matched = res.routes.find(r => r.id === prev.id || r.title === prev.title || r.tag === prev.tag);
-          return matched || prev;
+          return matched || res.routes[0];
         });
 
       }

@@ -7,6 +7,9 @@ import os
 import logging
 from typing import List, Optional
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from ..provider_interface import RailProviderInterface
 from ..schemas import (
@@ -36,7 +39,7 @@ class RailRadarProvider(RailProviderInterface):
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
-    async def search_stations(self, query: str) -> List[RailStation]:
+    async def search_stations(self, query: str, city: Optional[str] = None) -> List[RailStation]:
         """Search stations via RailRadar API or fallback directory."""
         if not query or len(query.strip()) < 2:
             return []
@@ -74,7 +77,7 @@ class RailRadarProvider(RailProviderInterface):
                 logger.debug(f"RailRadar stations API unavailable: {e}")
 
         # Fallback to authentic ground-truth station directory
-        return find_station_by_query(query)
+        return find_station_by_query(query, city=city)
 
     async def get_trains_between(
         self, from_code: str, to_code: str, date: Optional[str] = None

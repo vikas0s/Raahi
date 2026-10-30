@@ -329,6 +329,8 @@ class RaahiAIAssistant:
             prefs.less_crowded = True
         if any(w in lower for w in ["wheelchair", "accessible", "divyang"]):
             prefs.accessible = True
+        if any(w in lower for w in ["local train", "suburban", "emu", "memu", "ring railway", "local gaadi", "rail bus", "local"]):
+            prefs.prefer_rail = True
 
         # Pre-clean sentence framing noise:
         # e.g. "in delhi i want to travel from rohni to pari chowk with minimum cost and minimum time"
@@ -787,10 +789,13 @@ class RaahiAIAssistant:
             prompt = (
                 f"उपयोगकर्ता का प्रश्न: '{raw_text}'\n"
                 f"संबंधित शहर/क्षेत्र: {target_city}\n\n"
-                f"कृपया इस प्रश्न का विस्तृत, बिंदुवार और संपूर्ण उत्तर हिंदी में दें। "
-                f"यदि उपयोगकर्ता मंदिर (जैसे प्रेम मंदिर, बांके बिहारी, श्रीकृष्ण जन्मस्थान आदि), लाइट शो, आरती या दर्शन के बारे में पूछ रहा है, "
-                f"तो सटीक समय, प्रवेश नियम, और वहाँ पहुँचने के लिए सर्वोत्तम स्थानीय साधन (ई-बस, टेम्पो, ई-रिक्शा, किराया और समय) विस्तार से बताएं। "
-                f"यदि वह किसी रूट के बारे में पूछ रहा है, तो स्पष्ट मार्गदर्शन प्रदान करें।"
+                f"कृपया इस प्रश्न का विस्तृत, बिंदुवार और संपूर्ण उत्तर हिंदी में दें।\n"
+                f"यदि उपयोगकर्ता लोकल ट्रेन, उपनगरीय रेलवे नेटवर्क, ईएमयू, मेमू, या मेट्रो-ट्रेन-बस के मल्टीमॉडल संयोजन के बारे में पूछ रहा है:\n"
+                f"1. संबंधित शहर (दिल्ली एनसीआर, मुंबई, बेंगलुरु, या मथुरा) के वास्तविक उपनगरीय रेलवे नेटवर्क (जैसे मुंबई की वेस्टर्न/सेंट्रल/हार्बर लाइन, दिल्ली की रिंग रेलवे और ईएमयू, बेंगलुरु की एसडब्ल्यूआर मेमू कम्यूटर रेल, या मथुरा-वृंदावन रेल बस) का सटीक विवरण दें।\n"
+                f"2. प्रमुख इंटरचेंज स्टेशन बताएं (जैसे दादर, कुर्ला, नई दिल्ली, हज़रत निज़ामुद्दीन, केएसआर बेंगलुरु मैजेस्टिक)।\n"
+                f"3. लोकल ट्रेन को मेट्रो व अंतिम मील (ऑटो/रिक्शा) से जोड़ने का चरणबद्ध तरीका बताएं।\n"
+                f"4. यदि किसी ऐसे शहर के बारे में पूछा गया है जहाँ उपनगरीय रेलवे सेवा उपलब्ध नहीं है या राही में सक्रिय नहीं है (जैसे चेन्नई या कोलकाता), तो स्पष्ट रूप से बताएं कि राही वर्तमान में दिल्ली एनसीआर, मुंबई, बेंगलुरु और मथुरा को कवर करता है, तथा वहाँ उपलब्ध वैकल्पिक परिवहन बताएं।\n"
+                f"5. यदि मंदिर दर्शन/लाइट शो का प्रश्न है तो सटीक समय, प्रवेश नियम और स्थानीय साधन बताएं।"
             )
         else:
             sys_instruct = (
@@ -801,10 +806,13 @@ class RaahiAIAssistant:
             prompt = (
                 f"User Question: '{raw_text}'\n"
                 f"City/Region: {target_city}\n\n"
-                f"Provide a comprehensive, detailed, and well-structured answer with bullet points. "
-                f"If the user is asking about temple timings (such as Prem Mandir light show, Bankey Bihari, Janmabhoomi), "
-                f"provide exact schedules, entry guidelines, and step-by-step local transit options (e-bus, auto, cab with fares and durations). "
-                f"If asking about transit or route planning, give clear and actionable directions."
+                f"Provide a comprehensive, detailed, and well-structured answer with bullet points.\n"
+                f"If the user is asking about local trains, suburban railways, or multimodal metro+train+bus combinations:\n"
+                f"1. Explain the real suburban railway lines for the city (Mumbai Western/Central/Harbour, Delhi Ring Railway & EMU trunks, Bengaluru SWR MEMU, Mathura Rail Bus).\n"
+                f"2. Mention key interchange hubs (e.g. Dadar, Kurla, New Delhi, Hazrat Nizamuddin, KSR Bengaluru Majestic).\n"
+                f"3. Provide step-by-step transfer instructions between metro, suburban railway, and last-mile feeder auto/e-rickshaw with realistic tariffs (e.g. unreserved ₹10-₹20).\n"
+                f"4. If the user asks about an unsupported city (such as Chennai or Kolkata), clearly state that Raahi currently powers local commuter networks in Delhi NCR, Mumbai, Bengaluru, and Mathura, and suggest available alternatives.\n"
+                f"5. Distinguish scheduled timetables from real-time operational status and never fabricate train numbers."
             )
 
         try:

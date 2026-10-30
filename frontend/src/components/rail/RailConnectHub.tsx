@@ -34,33 +34,163 @@ interface Props {
 
 type HubTab = 'between' | 'live' | 'board';
 
-const POPULAR_STATIONS = [
-  { code: 'MTJ', name: 'Mathura Junction', region: 'Mathura & Vrindavan' },
-  { code: 'BDB', name: 'Vrindavan', region: 'Mathura & Vrindavan' },
-  { code: 'MRT', name: 'Mathura Cantt', region: 'Mathura & Vrindavan' },
-  { code: 'NDLS', name: 'New Delhi', region: 'Delhi NCR' },
-  { code: 'NZM', name: 'Hazrat Nizamuddin', region: 'Delhi NCR' },
-  { code: 'DLI', name: 'Old Delhi Jn', region: 'Delhi NCR' },
-  { code: 'GZB', name: 'Ghaziabad Jn', region: 'Delhi NCR' },
-  { code: 'FDB', name: 'Faridabad', region: 'Delhi NCR' }
-];
+interface CityRailConfig {
+  defaultFrom: string;
+  defaultTo: string;
+  defaultBoard: string;
+  defaultLiveTrain: string;
+  networkTitle: string;
+  networkBadge: string;
+  networkSubtitle: string;
+  popularStations: Array<{ code: string; name: string; region: string }>;
+  quickCorridors: Array<{ from: string; to: string; label: string }>;
+  quickPresets: Array<{ no: string; name: string }>;
+}
 
-const QUICK_TRAIN_PRESETS = [
-  { no: '04419', name: 'Mathura - Vrindavan Rail Bus' },
-  { no: '12002', name: 'NDLS - BPL Shatabdi' },
-  { no: '12280', name: 'Taj Express Superfast' },
-  { no: '04408', name: 'Mathura - NDLS EMU Local' },
-  { no: '14212', name: 'NDLS - Agra Intercity' }
-];
+const CITY_RAIL_CONFIGS: Record<string, CityRailConfig> = {
+  'mumbai': {
+    defaultFrom: 'CCG',
+    defaultTo: 'BVI',
+    defaultBoard: 'CSMT',
+    defaultLiveTrain: '99001',
+    networkTitle: 'Mumbai Suburban Railway Network',
+    networkBadge: 'Western · Central · Harbour Lines',
+    networkSubtitle: 'Lifeline of Mumbai — High-frequency suburban commuter EMU services carrying 7.5M+ daily passengers.',
+    popularStations: [
+      { code: 'CCG', name: 'Churchgate (Western Terminal)', region: 'Mumbai' },
+      { code: 'CSMT', name: 'CSMT (Central/Harbour Terminus)', region: 'Mumbai' },
+      { code: 'DDR', name: 'Dadar (Western & Central Interchange)', region: 'Mumbai' },
+      { code: 'BVI', name: 'Borivali (Western Fast Corridor)', region: 'Mumbai' },
+      { code: 'ADH', name: 'Andheri (Western & Metro Line 1)', region: 'Mumbai' },
+      { code: 'TNA', name: 'Thane (Central Main Line & Trans-Harbour)', region: 'Mumbai' },
+      { code: 'KYN', name: 'Kalyan Jn (Central Trunk)', region: 'Mumbai' },
+      { code: 'VSH', name: 'Vashi (Harbour Line / Navi Mumbai)', region: 'Mumbai' },
+      { code: 'PNVL', name: 'Panvel (Harbour Line Terminal)', region: 'Mumbai' }
+    ],
+    quickCorridors: [
+      { from: 'CCG', to: 'BVI', label: 'Churchgate ➔ Borivali (WR Fast)' },
+      { from: 'CSMT', to: 'TNA', label: 'CSMT ➔ Thane (CR Fast)' },
+      { from: 'CSMT', to: 'PNVL', label: 'CSMT ➔ Panvel (Harbour)' },
+      { from: 'DDR', to: 'KYN', label: 'Dadar ➔ Kalyan (CR Fast)' }
+    ],
+    quickPresets: [
+      { no: '99001', name: 'Churchgate - Borivali Fast Local' },
+      { no: '99002', name: 'CSMT - Kalyan Fast Local' },
+      { no: '99003', name: 'CSMT - Panvel Harbour Local' },
+      { no: '99004', name: 'Churchgate - Virar AC Local' },
+      { no: '99005', name: 'Dadar - Thane Slow Local' }
+    ]
+  },
+  'bengaluru': {
+    defaultFrom: 'SBC',
+    defaultTo: 'WFD',
+    defaultBoard: 'SBC',
+    defaultLiveTrain: '06551',
+    networkTitle: 'Bengaluru Commuter Rail Network (SWR)',
+    networkBadge: 'South Western Railway Commuter MEMU',
+    networkSubtitle: 'Suburban MEMU/DEMU services connecting Majestic, Whitefield, Yesvantpur, and tech corridors at flat ₹10–₹25.',
+    popularStations: [
+      { code: 'SBC', name: 'KSR Bengaluru City (Majestic)', region: 'Bengaluru' },
+      { code: 'BNC', name: 'Bengaluru Cantt', region: 'Bengaluru' },
+      { code: 'BYPL', name: 'Baiyyappanahalli (Purple Metro Link)', region: 'Bengaluru' },
+      { code: 'WFD', name: 'Whitefield (Kadugodi Tech Corridor)', region: 'Bengaluru' },
+      { code: 'YPR', name: 'Yesvantpur Junction (Green Metro Link)', region: 'Bengaluru' },
+      { code: 'BAND', name: 'Banaswadi', region: 'Bengaluru' },
+      { code: 'CRLM', name: 'Karmelaram (Sarjapur / ORR Link)', region: 'Bengaluru' },
+      { code: 'HSRA', name: 'Hosur (Interstate Commuter)', region: 'Bengaluru' }
+    ],
+    quickCorridors: [
+      { from: 'SBC', to: 'WFD', label: 'KSR Bengaluru ➔ Whitefield (SWR MEMU)' },
+      { from: 'YPR', to: 'BYPL', label: 'Yesvantpur ➔ Baiyyappanahalli' },
+      { from: 'SBC', to: 'HSRA', label: 'KSR Bengaluru ➔ Hosur' },
+      { from: 'WFD', to: 'BNC', label: 'Whitefield ➔ Bengaluru Cantt' }
+    ],
+    quickPresets: [
+      { no: '06551', name: 'SBC - Whitefield Commuter MEMU' },
+      { no: '06593', name: 'Yesvantpur - Baiyyappanahalli MEMU' },
+      { no: '06591', name: 'KSR Bengaluru - Hosur Commuter' },
+      { no: '06552', name: 'Whitefield - KSR Bengaluru MEMU' }
+    ]
+  },
+  'delhi': {
+    defaultFrom: 'NDLS',
+    defaultTo: 'GZB',
+    defaultBoard: 'NDLS',
+    defaultLiveTrain: '04408',
+    networkTitle: 'Delhi NCR Suburban & Ring Railway',
+    networkBadge: 'Northern Railway Suburban EMUs',
+    networkSubtitle: 'Unreserved suburban EMUs along Ghaziabad, Palwal, Shakurbasti, plus the 35-km Ring Railway loop.',
+    popularStations: [
+      { code: 'NDLS', name: 'New Delhi (Yellow & Airport Metro)', region: 'Delhi NCR' },
+      { code: 'NZM', name: 'Hazrat Nizamuddin (Pink Metro Link)', region: 'Delhi NCR' },
+      { code: 'DLI', name: 'Old Delhi Jn (Chandni Chowk)', region: 'Delhi NCR' },
+      { code: 'GZB', name: 'Ghaziabad Junction', region: 'Delhi NCR' },
+      { code: 'FDB', name: 'Faridabad (Violet Metro Link)', region: 'Delhi NCR' },
+      { code: 'SOJ', name: 'Sarojini Nagar (Ring Railway)', region: 'Delhi NCR' },
+      { code: 'LPN', name: 'Lajpat Nagar (Ring Railway & Metro)', region: 'Delhi NCR' },
+      { code: 'TKJ', name: 'Tilak Bridge (Suburban Hub)', region: 'Delhi NCR' }
+    ],
+    quickCorridors: [
+      { from: 'NDLS', to: 'GZB', label: 'New Delhi ➔ Ghaziabad (EMU)' },
+      { from: 'NZM', to: 'NDLS', label: 'Nizamuddin ➔ New Delhi (EMU Trunk)' },
+      { from: 'SOJ', to: 'LPN', label: 'Sarojini Nagar ➔ Lajpat Nagar (Ring Rail)' },
+      { from: 'FDB', to: 'NDLS', label: 'Faridabad ➔ New Delhi (Southern EMU)' }
+    ],
+    quickPresets: [
+      { no: '04408', name: 'Delhi - Ghaziabad Suburban EMU' },
+      { no: '04415', name: 'Delhi Ring Railway Circular Local' },
+      { no: '04422', name: 'Palwal - New Delhi Suburban EMU' },
+      { no: '12002', name: 'NDLS - Bhopal Shatabdi Express' },
+      { no: '12280', name: 'Taj Express Superfast' }
+    ]
+  },
+  'mathura': {
+    defaultFrom: 'MTJ',
+    defaultTo: 'BDB',
+    defaultBoard: 'MTJ',
+    defaultLiveTrain: '04419',
+    networkTitle: 'Braj Heritage & Regional Rail Network',
+    networkBadge: 'Heritage Rail Bus & NCR Commuter',
+    networkSubtitle: 'Mathura-Vrindavan Heritage Rail Bus (#04419/#04420) & regional commuter passenger shuttles at flat ₹10.',
+    popularStations: [
+      { code: 'MTJ', name: 'Mathura Junction', region: 'Mathura & Vrindavan' },
+      { code: 'BDB', name: 'Vrindavan (Heritage Rail Bus)', region: 'Mathura & Vrindavan' },
+      { code: 'MRT', name: 'Mathura Cantt', region: 'Mathura & Vrindavan' },
+      { code: 'BTSR', name: 'Bhuteshwar', region: 'Mathura & Vrindavan' },
+      { code: 'CHJ', name: 'Chhata Commuter Halt', region: 'Mathura & Vrindavan' },
+      { code: 'KSV', name: 'Kosi Kalan', region: 'Mathura & Vrindavan' }
+    ],
+    quickCorridors: [
+      { from: 'MTJ', to: 'BDB', label: 'Mathura Jn ➔ Vrindavan (Heritage Rail Bus)' },
+      { from: 'MTJ', to: 'KSV', label: 'Mathura Jn ➔ Kosi Kalan (Commuter Shuttle)' },
+      { from: 'BTSR', to: 'MTJ', label: 'Bhuteshwar ➔ Mathura Jn' }
+    ],
+    quickPresets: [
+      { no: '04419', name: 'Mathura - Vrindavan Rail Bus' },
+      { no: '04420', name: 'Vrindavan - Mathura Rail Bus' },
+      { no: '04408', name: 'Mathura - NDLS EMU Local' },
+      { no: '14212', name: 'NDLS - Agra Intercity' },
+      { no: '12280', name: 'Taj Express Superfast' }
+    ]
+  }
+};
+
+function getCityConfig(city: string): CityRailConfig {
+  const c = city.toLowerCase();
+  if (c.includes('mumbai') || c.includes('bombay')) return CITY_RAIL_CONFIGS['mumbai'];
+  if (c.includes('bengaluru') || c.includes('bangalore')) return CITY_RAIL_CONFIGS['bengaluru'];
+  if (c.includes('mathura') || c.includes('vrindavan') || c.includes('braj')) return CITY_RAIL_CONFIGS['mathura'];
+  return CITY_RAIL_CONFIGS['delhi'];
+}
 
 export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainForJourney }) => {
   const [activeTab, setActiveTab] = useState<HubTab>('between');
 
+  const cityConfig = getCityConfig(selectedCity);
+
   // Trains Between Stations State
-  const defaultFrom = selectedCity.toLowerCase().includes('mathura') ? 'MTJ' : 'NDLS';
-  const defaultTo = selectedCity.toLowerCase().includes('mathura') ? 'BDB' : 'MTJ';
-  const [fromCode, setFromCode] = useState<string>(defaultFrom);
-  const [toCode, setToCode] = useState<string>(defaultTo);
+  const [fromCode, setFromCode] = useState<string>(cityConfig.defaultFrom);
+  const [toCode, setToCode] = useState<string>(cityConfig.defaultTo);
   const [travelDate, setTravelDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [trains, setTrains] = useState<TrainSummary[]>([]);
   const [isSearchingTrains, setIsSearchingTrains] = useState<boolean>(false);
@@ -69,14 +199,47 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
   const [loadingSchedule, setLoadingSchedule] = useState<Record<string, boolean>>({});
 
   // Live Running Status State
-  const [searchTrainNo, setSearchTrainNo] = useState<string>('04419');
+  const [searchTrainNo, setSearchTrainNo] = useState<string>(cityConfig.defaultLiveTrain);
   const [liveStatus, setLiveStatus] = useState<LiveRunningStatus | null>(null);
   const [isFetchingLive, setIsFetchingLive] = useState<boolean>(false);
 
   // Live Station Board State
-  const [boardStation, setBoardStation] = useState<string>(selectedCity.toLowerCase().includes('mathura') ? 'MTJ' : 'NDLS');
+  const [boardStation, setBoardStation] = useState<string>(cityConfig.defaultBoard);
   const [boardItems, setBoardItems] = useState<StationBoardItem[]>([]);
   const [isFetchingBoard, setIsFetchingBoard] = useState<boolean>(false);
+
+  // Update state whenever selectedCity changes
+  useEffect(() => {
+    const cfg = getCityConfig(selectedCity);
+    setFromCode(cfg.defaultFrom);
+    setToCode(cfg.defaultTo);
+    setBoardStation(cfg.defaultBoard);
+    setSearchTrainNo(cfg.defaultLiveTrain);
+
+    // Fetch trains between default stations for city
+    setIsSearchingTrains(true);
+    getTrainsBetweenStations(cfg.defaultFrom, cfg.defaultTo, travelDate)
+      .then(res => {
+        setTrains(res.trains);
+        setDataSource(res.data_source);
+      })
+      .catch(err => console.error('Failed to search trains on city change:', err))
+      .finally(() => setIsSearchingTrains(false));
+
+    // Fetch live status for city's signature train
+    setIsFetchingLive(true);
+    getLiveTrainStatus(cfg.defaultLiveTrain, travelDate)
+      .then(setLiveStatus)
+      .catch(err => console.error('Failed to fetch live status:', err))
+      .finally(() => setIsFetchingLive(false));
+
+    // Fetch station board for city's hub
+    setIsFetchingBoard(true);
+    getStationLiveBoard(cfg.defaultBoard, 4)
+      .then(res => setBoardItems(res.departures))
+      .catch(err => console.error('Failed to fetch station board:', err))
+      .finally(() => setIsFetchingBoard(false));
+  }, [selectedCity]);
 
   // Search trains between stations
   const handleSearchTrains = async () => {
@@ -140,13 +303,6 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    handleSearchTrains();
-    handleFetchLiveStatus('04419');
-    handleFetchStationBoard(boardStation);
-  }, []);
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* RailConnect Header Card */}
@@ -157,23 +313,23 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
               <Train size={26} className="stroke-[2.2]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-heading font-extrabold text-2xl text-[#1F231F] tracking-tight">
-                  Raahi RailConnect
+                  {cityConfig.networkTitle}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-[#8B1E1E]/12 text-[#8B1E1E] border border-[#8B1E1E]/25">
-                  Indian Railways
+                  {cityConfig.networkBadge}
                 </span>
               </div>
               <p className="text-xs text-[#52544D] font-medium mt-1">
-                Suburban EMUs, regional passenger shuttles, long-distance express & live platform telemetry.
+                {cityConfig.networkSubtitle}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl bg-[#EEECE3] text-[#253D30] border border-[#D8D4C7]">
             <ShieldCheck size={15} className="text-[#4E7C5F] stroke-[2.5]" />
-            <span>{dataSource === 'railradar_live' ? 'RailRadar Live API' : 'Verified IR Schedules'}</span>
+            <span>{dataSource === 'railradar_live' ? 'RailRadar Live API' : 'Verified IR Timetables'}</span>
           </div>
         </div>
 
@@ -235,9 +391,9 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                   onChange={(e) => setFromCode(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] text-xs font-bold text-[#1F231F] focus:outline-none focus:ring-2 focus:ring-[#8B1E1E]"
                 >
-                  {POPULAR_STATIONS.map((s) => (
+                  {cityConfig.popularStations.map((s) => (
                     <option key={s.code} value={s.code}>
-                      {s.name} ({s.code}) — {s.region}
+                      {s.name} ({s.code})
                     </option>
                   ))}
                 </select>
@@ -252,9 +408,9 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                   onChange={(e) => setToCode(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] text-xs font-bold text-[#1F231F] focus:outline-none focus:ring-2 focus:ring-[#8B1E1E]"
                 >
-                  {POPULAR_STATIONS.map((s) => (
+                  {cityConfig.popularStations.map((s) => (
                     <option key={s.code} value={s.code}>
-                      {s.name} ({s.code}) — {s.region}
+                      {s.name} ({s.code})
                     </option>
                   ))}
                 </select>
@@ -285,37 +441,26 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
               </div>
             </div>
 
-            {/* Quick Route Shortcuts */}
+            {/* Quick Route Shortcuts for selectedCity */}
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#D8D4C7]/60 text-xs">
               <span className="font-bold text-[#52544D] text-[11px]">Popular Corridors:</span>
-              <button
-                type="button"
-                onClick={() => { setFromCode('MTJ'); setToCode('BDB'); }}
-                className="px-2.5 py-1 rounded-lg bg-[#EEECE3] hover:bg-[#E3DFD4] font-bold text-[#253D30] border border-[#D8D4C7] cursor-pointer"
-              >
-                Mathura Jn ➔ Vrindavan (Rail Bus)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setFromCode('NDLS'); setToCode('MTJ'); }}
-                className="px-2.5 py-1 rounded-lg bg-[#EEECE3] hover:bg-[#E3DFD4] font-bold text-[#253D30] border border-[#D8D4C7] cursor-pointer"
-              >
-                New Delhi ➔ Mathura Jn (Shatabdi/Taj)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setFromCode('NZM'); setToCode('MTJ'); }}
-                className="px-2.5 py-1 rounded-lg bg-[#EEECE3] hover:bg-[#E3DFD4] font-bold text-[#253D30] border border-[#D8D4C7] cursor-pointer"
-              >
-                Nizamuddin ➔ Mathura Jn
-              </button>
-              <button
-                type="button"
-                onClick={() => { setFromCode('GZB'); setToCode('DLI'); }}
-                className="px-2.5 py-1 rounded-lg bg-[#EEECE3] hover:bg-[#E3DFD4] font-bold text-[#253D30] border border-[#D8D4C7] cursor-pointer"
-              >
-                Ghaziabad ➔ Old Delhi (EMU)
-              </button>
+              {cityConfig.quickCorridors.map((c, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setFromCode(c.from);
+                    setToCode(c.to);
+                    getTrainsBetweenStations(c.from, c.to, travelDate).then(res => {
+                      setTrains(res.trains);
+                      setDataSource(res.data_source);
+                    });
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-[#EEECE3] hover:bg-[#E3DFD4] font-bold text-[#253D30] border border-[#D8D4C7] cursor-pointer"
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -333,7 +478,7 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
             {trains.length === 0 ? (
               <div className="bg-[#FFFEFA] rounded-2xl border border-[#D8D4C7] p-8 text-center space-y-2">
                 <p className="font-heading font-bold text-base text-[#1F231F]">No direct trains found between these stations</p>
-                <p className="text-xs text-[#52544D]">Try switching stations or check Mathura ➔ Vrindavan or New Delhi ➔ Mathura.</p>
+                <p className="text-xs text-[#52544D]">Try switching stations from the popular corridors above.</p>
               </div>
             ) : (
               trains.map((t) => {
@@ -378,38 +523,40 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                     <div className="grid grid-cols-3 gap-2 py-3 px-4 rounded-xl bg-[#EEECE3]/60 border border-[#D8D4C7] mb-3 text-center">
                       <div className="text-left">
                         <p className="font-heading font-extrabold text-lg text-[#1F231F]">{t.departure_time}</p>
-                        <p className="text-xs font-bold text-[#52544D] truncate">{t.origin_name}</p>
-                        <p className="text-[11px] font-mono text-[#8B1E1E] font-bold">{t.platform_origin || 'PF 1'}</p>
+                        <p className="text-xs font-bold text-[#52544D]">{t.origin_name} ({t.origin_code})</p>
+                        {t.platform_origin && (
+                          <span className="text-[10px] font-bold text-[#8B1E1E]">PF {t.platform_origin}</span>
+                        )}
                       </div>
 
                       <div className="flex flex-col items-center justify-center">
                         <span className="text-xs font-bold text-[#52544D]">{t.duration_minutes}m</span>
                         <div className="w-full flex items-center gap-1 my-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#8B1E1E]" />
-                          <div className="h-0.5 flex-1 bg-[#8B1E1E]/40" />
-                          <ArrowRight size={12} className="text-[#8B1E1E]" />
+                          <div className="h-0.5 w-full bg-[#8B1E1E]/40" />
+                          <ArrowRight size={12} className="text-[#8B1E1E] shrink-0" />
                         </div>
-                        <span className="text-[10px] font-semibold text-[#52544D]">{t.distance_km} km</span>
+                        <span className="text-[10px] text-[#52544D]">Direct Service</span>
                       </div>
 
                       <div className="text-right">
                         <p className="font-heading font-extrabold text-lg text-[#1F231F]">{t.arrival_time}</p>
-                        <p className="text-xs font-bold text-[#52544D] truncate">{t.destination_name}</p>
-                        <p className="text-[11px] font-mono text-[#8B1E1E] font-bold">{t.platform_dest || 'PF 1'}</p>
+                        <p className="text-xs font-bold text-[#52544D]">{t.destination_name} ({t.destination_code})</p>
+                        {t.platform_dest && (
+                          <span className="text-[10px] font-bold text-[#8B1E1E]">PF {t.platform_dest}</span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Available Classes & Fares */}
+                    {/* Classes & Fares */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#52544D]">Classes & Fares:</span>
                         {Object.entries(t.fares).map(([cls, fare]) => (
                           <span
                             key={cls}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FFFEFA] border border-[#D8D4C7] text-[#1F231F] shadow-2xs"
+                            className="px-2.5 py-1 rounded-lg bg-[#EEECE3] font-bold text-xs text-[#1F231F] border border-[#D8D4C7]"
                           >
-                            <span className="text-[#8B1E1E] font-extrabold">{cls}</span>
-                            <span className="text-[#52544D]">₹{fare}</span>
+                            <span className="text-[#52544D] mr-1">{cls}:</span>
+                            <span className="text-[#8B1E1E]">₹{Math.round(fare)}</span>
                           </span>
                         ))}
                       </div>
@@ -418,9 +565,10 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                         <button
                           type="button"
                           onClick={() => toggleTrainSchedule(t.train_number)}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[#304B3C] hover:underline cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] hover:bg-[#EEECE3] text-xs font-bold text-[#253D30] transition-all cursor-pointer flex items-center gap-1.5"
                         >
-                          <span>{sched ? 'Hide Halts' : (isLoadingSched ? 'Loading...' : 'View Halts')}</span>
+                          <Layers size={13} />
+                          <span>{sched ? 'Hide Halts' : 'View Timetable'}</span>
                           {sched ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                         </button>
 
@@ -428,47 +576,30 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                           <button
                             type="button"
                             onClick={() => onSelectTrainForJourney(t.origin_name, t.destination_name)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#253D30] text-white hover:bg-[#1a2b22] transition-all cursor-pointer shadow-xs active:scale-95"
+                            className="px-3 py-1.5 rounded-xl bg-[#8B1E1E] hover:bg-[#721818] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                           >
-                            <Layers size={12} />
-                            <span>Plan Multimodal</span>
+                            Plan Journey
                           </button>
                         )}
                       </div>
                     </div>
 
-                    {/* Expanded Timetable / Halts Sequence */}
+                    {/* Expandable Timetable / Halts */}
                     {sched && (
-                      <div className="mt-4 pt-3 border-t border-[#D8D4C7] space-y-2">
-                        <p className="text-xs font-extrabold text-[#1F231F] flex items-center gap-1.5">
-                          <MapPin size={13} className="text-[#8B1E1E]" />
-                          <span>Complete Intermediate Halts & Timetable</span>
-                        </p>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs text-left">
-                            <thead>
-                              <tr className="border-b border-[#D8D4C7] text-[#52544D] font-bold text-[11px]">
-                                <th className="py-1.5 px-2">Station</th>
-                                <th className="py-1.5 px-2">Arrival</th>
-                                <th className="py-1.5 px-2">Departure</th>
-                                <th className="py-1.5 px-2">Halt</th>
-                                <th className="py-1.5 px-2">Distance</th>
-                                <th className="py-1.5 px-2">Platform</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {sched.halts.map((h, hIdx) => (
-                                <tr key={hIdx} className="border-b border-[#EEECE3] hover:bg-[#EEECE3]/40">
-                                  <td className="py-1.5 px-2 font-bold text-[#1F231F]">{h.station_name} ({h.station_code})</td>
-                                  <td className="py-1.5 px-2 font-mono">{h.arrival_time}</td>
-                                  <td className="py-1.5 px-2 font-mono font-bold text-[#8B1E1E]">{h.departure_time}</td>
-                                  <td className="py-1.5 px-2">{h.halt_minutes > 0 ? `${h.halt_minutes}m` : '-'}</td>
-                                  <td className="py-1.5 px-2 text-[#52544D]">{h.distance_km} km</td>
-                                  <td className="py-1.5 px-2 font-bold text-[#304B3C]">{h.platform || 'PF 1'}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      <div className="mt-4 pt-4 border-t border-[#D8D4C7] space-y-2">
+                        <h5 className="font-heading font-bold text-xs text-[#1F231F] uppercase tracking-wider">
+                          Intermediate Halts & Platform Telemetry:
+                        </h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                          {sched.halts.map((h, hIdx) => (
+                            <div key={hIdx} className="p-2.5 rounded-xl bg-[#EEECE3]/60 border border-[#D8D4C7] text-xs">
+                              <p className="font-bold text-[#1F231F]">{h.station_name} ({h.station_code})</p>
+                              <p className="text-[11px] text-[#52544D] mt-0.5">
+                                Arr: {h.arrival_time} • Dep: {h.departure_time}
+                              </p>
+                              <p className="text-[10px] text-[#8B1E1E] font-semibold">{h.platform || 'Platform 1'}</p>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -487,15 +618,15 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="flex-1 w-full">
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#52544D] mb-1.5">
-                  Enter 5-Digit Train Number
+                  Train Number or Name
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={searchTrainNo}
                     onChange={(e) => setSearchTrainNo(e.target.value)}
-                    placeholder="e.g., 04419, 12002, 12280"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] text-sm font-bold text-[#1F231F] focus:outline-none focus:ring-2 focus:ring-[#8B1E1E]"
+                    placeholder="Enter 5-digit Train Number, e.g. 99001 or 04419"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] text-xs font-bold text-[#1F231F] focus:outline-none focus:ring-2 focus:ring-[#8B1E1E]"
                   />
                   <Train size={16} className="absolute left-3 top-3 text-[#52544D]" />
                 </div>
@@ -514,10 +645,10 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
               </div>
             </div>
 
-            {/* Presets */}
+            {/* Presets for selectedCity */}
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#D8D4C7]/60 text-xs">
               <span className="font-bold text-[#52544D] text-[11px]">Quick Track:</span>
-              {QUICK_TRAIN_PRESETS.map((p) => (
+              {cityConfig.quickPresets.map((p) => (
                 <button
                   key={p.no}
                   type="button"
@@ -609,9 +740,9 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D8D4C7] bg-[#FFFEFA] text-xs font-bold text-[#1F231F] focus:outline-none focus:ring-2 focus:ring-[#8B1E1E]"
                 >
-                  {POPULAR_STATIONS.map((s) => (
+                  {cityConfig.popularStations.map((s) => (
                     <option key={s.code} value={s.code}>
-                      {s.name} ({s.code}) — {s.region}
+                      {s.name} ({s.code})
                     </option>
                   ))}
                 </select>
@@ -699,4 +830,3 @@ export const RailConnectHub: React.FC<Props> = ({ selectedCity, onSelectTrainFor
     </div>
   );
 };
-

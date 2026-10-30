@@ -151,8 +151,12 @@ class SarvamAIService:
             mime_type = "audio/mpeg"
         elif filename.endswith(".m4a"):
             mime_type = "audio/mp4"
-        elif filename.endswith(".ogg") or filename.endswith(".webm"):
+        elif filename.endswith(".ogg"):
             mime_type = "audio/ogg"
+        elif filename.endswith(".flac"):
+            mime_type = "audio/flac"
+        elif filename.endswith(".wav"):
+            mime_type = "audio/wav" 
 
         files = {
             "file": (filename, audio_bytes, mime_type)

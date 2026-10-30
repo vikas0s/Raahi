@@ -1,6 +1,6 @@
 """
-Indian Railways RailConnect Provider for Intercity & Regional Trains.
-Connects all Indian Railways stations using Raahi RailConnect service.
+Indian Railways RailConnect Provider for Intercity & Suburban Commuter Rail.
+Connects Indian Railways and Suburban networks across Mumbai, Bengaluru, Delhi NCR, and Mathura.
 """
 import math
 import logging
@@ -33,14 +33,14 @@ class RailConnectProvider(BaseRoutingProvider):
             return False
 
         dist = haversine_km(origin.lat, origin.lon, destination.lat, destination.lon)
-        # Must be at least 15 km apart and within India distance (< 3500 km)
-        if dist < 12.0 or dist > 3500.0:
+        # Must be at least 3 km apart (for suburban commuter hops) and within India distance (< 3500 km)
+        if dist < 3.0 or dist > 3500.0:
             return False
 
-        # Check if stations can be found or if endpoints are near stations
-        s1 = rail_service_instance.find_nearest_rail_station(origin.lat, origin.lon, max_dist_km=45.0)
-        s2 = rail_service_instance.find_nearest_rail_station(destination.lat, destination.lon, max_dist_km=45.0)
-        return s1 is not None and s2 is not None and s1.code != s2.code
+        city_hint = origin.city or destination.city
+        s1 = rail_service_instance.find_nearest_rail_station(origin.lat, origin.lon, max_dist_km=30.0, city=city_hint)
+        s2 = rail_service_instance.find_nearest_rail_station(destination.lat, destination.lon, max_dist_km=30.0, city=city_hint)
+        return s1 is not None and s2 is not None and s1[0].code != s2[0].code
 
     def plan_route(self, request: CanonicalJourneyRequest) -> List[RouteItinerary]:
         origin = request.origin
@@ -58,16 +58,17 @@ class RailConnectProvider(BaseRoutingProvider):
         except Exception:
             base_time = now
 
-        origin_dict = {"name": origin.name, "lat": origin.lat, "lon": origin.lon}
-        dest_dict = {"name": dest.name, "lat": dest.lat, "lon": dest.lon}
+        origin_dict = {"name": origin.name, "lat": origin.lat, "lon": origin.lon, "city": origin.city}
+        dest_dict = {"name": dest.name, "lat": dest.lat, "lon": dest.lon, "city": dest.city}
+        target_city = origin.city or dest.city or "Delhi NCR"
 
         try:
             rail_routes = rail_service_instance.find_rail_routes_sync(
-                origin_place=origin_dict,
-                dest_place=dest_dict,
+                orig_dict=origin_dict,
+                dest_dict=dest_dict,
                 base_time=base_time,
-                distance_km=dist_km,
-                city=origin.city or "Indian Railways"
+                dist_km=dist_km,
+                city=target_city
             )
             for r in rail_routes:
                 r.data_source = "indian_railways_irctc"
@@ -79,4 +80,3 @@ class RailConnectProvider(BaseRoutingProvider):
             return []
 
 rail_connect_provider_instance = RailConnectProvider()
-

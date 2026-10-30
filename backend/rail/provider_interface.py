@@ -11,7 +11,7 @@ from .schemas import (
 
 class RailProviderInterface(ABC):
     @abstractmethod
-    async def search_stations(self, query: str) -> List[RailStation]:
+    async def search_stations(self, query: str, city: Optional[str] = None) -> List[RailStation]:
         """Search railway stations by name or code."""
         pass
 
@@ -40,4 +40,3 @@ class RailProviderInterface(ABC):
     ) -> List[StationBoardItem]:
         """Fetch live station departure/arrival board."""
         pass
-

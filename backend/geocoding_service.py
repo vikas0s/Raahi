@@ -21,6 +21,8 @@ logger = logging.getLogger("raahi.geocoding")
 # Common Global Landmark & Station Aliases
 GLOBAL_ALIAS_MAP: Dict[str, Dict[str, Any]] = {
     # Mathura & Vrindavan
+    "mathura junction (mtj)": {"name": "Mathura Junction (MTJ)", "lat": 27.4924, "lon": 77.6737, "city": "Mathura", "state": "Uttar Pradesh", "country": "India", "category": "railway_station"},
+    "shri bankey bihari mandir (vrindavan)": {"name": "Shri Bankey Bihari Mandir (Vrindavan)", "lat": 27.5815, "lon": 77.7018, "city": "Vrindavan", "state": "Uttar Pradesh", "country": "India", "category": "landmark"},
     "mathura junction": {"name": "Mathura Junction Railway Station (MTJ)", "lat": 27.4924, "lon": 77.6737, "city": "Mathura", "state": "Uttar Pradesh", "country": "India", "category": "railway_station"},
     "mtj": {"name": "Mathura Junction Railway Station (MTJ)", "lat": 27.4924, "lon": 77.6737, "city": "Mathura", "state": "Uttar Pradesh", "country": "India", "category": "railway_station"},
     "mathura stn": {"name": "Mathura Junction Railway Station (MTJ)", "lat": 27.4924, "lon": 77.6737, "city": "Mathura", "state": "Uttar Pradesh", "country": "India", "category": "railway_station"},

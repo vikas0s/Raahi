@@ -26,6 +26,12 @@ import {
   synthesizeSpeech
 } from '../../services/api';
 import type { ChatMessage, RouteItinerary, AppLanguage } from '../../types/transit';
+import {
+  startLiveSpeechRecognition,
+  isWebSpeechSupported,
+  startWavRecording,
+  type WavRecorder
+} from '../../utils/audio';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 interface Props {
@@ -173,6 +179,10 @@ export const RaahiAssistant: React.FC<Props> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const [micPermissionBlocked, setMicPermissionBlocked] = useState(false);
+  const liveRecognitionRef = useRef<{ stop: () => void } | null>(null);
+  const wavRecorderRef = useRef<WavRecorder | null>(null);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
 
@@ -207,8 +217,13 @@ export const RaahiAssistant: React.FC<Props> = ({
   useEffect(() => {
     return () => {
       if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
+      if (liveRecognitionRef.current) {
+        liveRecognitionRef.current.stop();
+        liveRecognitionRef.current = null;
+      }
+      if (wavRecorderRef.current) {
+        wavRecorderRef.current.cancel();
+        wavRecorderRef.current = null;
       }
       if (activeAudioRef.current) {
         activeAudioRef.current.pause();
@@ -296,79 +311,112 @@ export const RaahiAssistant: React.FC<Props> = ({
     }
   };
 
-  // Voice Recording Toggle
-  const handleToggleVoice = async () => {
-    if (isRecording) {
-      // Stop recording
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
+  // Fallback to WAV Audio Recording via AudioContext + Sarvam Saaras AI
+  const fallbackToWavRecording = async () => {
+    try {
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      const recorder = await startWavRecording();
+      wavRecorderRef.current = recorder;
+      recordIntervalRef.current = window.setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
+    } catch (err: any) {
+      console.warn('Microphone permission error:', err);
       setIsRecording(false);
       if (recordIntervalRef.current) {
         clearInterval(recordIntervalRef.current);
         recordIntervalRef.current = null;
       }
-      return;
-    }
-
-    // Start recording on explicit user click only
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert(language === 'hi' ? 'आपका ब्राउज़र वॉइस रिकॉर्डिंग का समर्थन नहीं करता।' : 'Your browser does not support voice recording.');
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-
-      let mimeType = 'audio/webm';
-      if (!MediaRecorder.isTypeSupported('audio/webm')) {
-        if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
-        else mimeType = '';
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setMicPermissionBlocked(true);
+      } else {
+        alert(language === 'hi' ? 'माइक्रोफ़ोन शुरू करने में समस्या आई।' : 'Could not access microphone.');
       }
+    }
+  };
 
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
+  // Dual-Tier Voice Handling (Web Speech API live streaming + Sarvam Saaras WAV fallback)
+  const handleToggleVoice = async () => {
+    // If currently listening or recording, stop immediately
+    if (isListening || isRecording) {
+      if (liveRecognitionRef.current) {
+        liveRecognitionRef.current.stop();
+        liveRecognitionRef.current = null;
+      }
+      setIsListening(false);
 
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+      if (wavRecorderRef.current) {
+        const recorder = wavRecorderRef.current;
+        wavRecorderRef.current = null;
+        setIsRecording(false);
+        if (recordIntervalRef.current) {
+          clearInterval(recordIntervalRef.current);
+          recordIntervalRef.current = null;
         }
-      };
-
-      recorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop());
-        const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
-        if (audioBlob.size > 0) {
-          setIsTranscribing(true);
-          try {
-            const transcript = await transcribeAudio(audioBlob);
+        setIsTranscribing(true);
+        try {
+          const wavBlob = await recorder.stop();
+          if (wavBlob && wavBlob.size > 2000) {
+            const transcript = await transcribeAudio(wavBlob);
             if (transcript.trim()) {
               setInput(transcript);
               await handleSend(transcript);
             }
-          } catch (err) {
-            console.warn('Transcription failed:', err);
-          } finally {
-            setIsTranscribing(false);
           }
+        } catch (err) {
+          console.warn('WAV Transcription error:', err);
+        } finally {
+          setIsTranscribing(false);
         }
-      };
-
-      recorder.start(250);
-      setIsRecording(true);
-      setRecordingSeconds(0);
-      recordIntervalRef.current = window.setInterval(() => {
-        setRecordingSeconds(s => s + 1);
-      }, 1000);
-    } catch (err) {
-      console.warn('Microphone permission denied:', err);
-      alert(
-        language === 'hi'
-          ? 'माइक्रोफ़ोन की अनुमति अस्वीकृत की गई। आवाज़ से बोलने के लिए कृपया माइक्रोफ़ोन की अनुमति दें।'
-          : 'Microphone permission was denied. Please allow microphone access to speak.'
-      );
+      }
+      return;
     }
+
+    setMicPermissionBlocked(false);
+
+    // Tier 1: Instant Native Browser Speech Recognition (Google Chrome / Edge)
+    if (isWebSpeechSupported()) {
+      try {
+        setIsListening(true);
+        const rec = startLiveSpeechRecognition(
+          language === 'hi' ? 'hi' : 'en',
+          {
+            onInterim: (text) => {
+              setInput(text);
+            },
+            onFinal: (text) => {
+              setInput(text);
+              setIsListening(false);
+              liveRecognitionRef.current = null;
+              handleSend(text);
+            },
+            onError: (errCode) => {
+              console.warn('Speech recognition error:', errCode);
+              setIsListening(false);
+              liveRecognitionRef.current = null;
+              if (errCode === 'not-allowed' || errCode === 'permission-denied') {
+                setMicPermissionBlocked(true);
+              } else if (errCode !== 'no-speech' && errCode !== 'aborted') {
+                fallbackToWavRecording();
+              }
+            },
+            onEnd: () => {
+              setIsListening(false);
+              liveRecognitionRef.current = null;
+            }
+          }
+        );
+        liveRecognitionRef.current = rec;
+        return;
+      } catch (err: any) {
+        console.warn('Live speech recognition failed to start:', err);
+        setIsListening(false);
+      }
+    }
+
+    // Tier 2: 16kHz PCM WAV Recording with Sarvam Saaras AI
+    await fallbackToWavRecording();
   };
 
   // Text-To-Speech Playback
@@ -761,14 +809,65 @@ export const RaahiAssistant: React.FC<Props> = ({
 
       {/* Input Composer */}
       <div className="p-3 bg-[#FFFEFA] border-t border-[#D8D4C7]">
-        {/* Active recording state banner */}
-        {isRecording && (
+        {/* Microphone Permission Blocked Notice */}
+        {micPermissionBlocked && (
+          <div className="mb-2.5 p-3 rounded-xl bg-[#FEF2F2] border border-[#F87171] text-xs text-[#991B1B] space-y-1.5 animate-in fade-in">
+            <div className="flex items-center justify-between font-bold">
+              <span className="flex items-center gap-1.5">
+                <MicOff size={14} className="text-[#DC2626]" />
+                {language === 'hi' ? 'माइक्रोफ़ोन अनुमति ब्लॉक है' : 'Microphone Permission Blocked'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMicPermissionBlocked(false)}
+                className="text-[#991B1B] hover:text-[#7F1D1D] font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-[11px] leading-relaxed text-[#7F1D1D]">
+              {language === 'hi'
+                ? 'Chrome के URL बार में सबसे ऊपर दाईं ओर दिए गए कैमरा/माइक आइकन (🚫) पर क्लिक करें, "Always allow" चुनें और नीचे Retry पर क्लिक करें।'
+                : 'Click the camera/mic icon (🚫) at the right end of Chrome address bar, select "Always allow", and click Retry.'}
+            </p>
+            <div className="pt-1 flex gap-2">
+              <button
+                type="button"
+                onClick={handleToggleVoice}
+                className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white font-bold text-[11px] hover:bg-[#B91C1C] transition-colors cursor-pointer"
+              >
+                {language === 'hi' ? 'पुनः प्रयास करें (Retry Mic)' : 'Retry Mic Access'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Live Listening Banner */}
+        {isListening && (
+          <div className="mb-2 px-3 py-2 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between text-xs text-[#065F46] animate-pulse">
+            <div className="flex items-center gap-2 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-ping" />
+              <span>{language === 'hi' ? 'सुन रहे हैं... बोलिए (बोलते ही ट्रांसक्राइब होगा)' : 'Listening... speak now (real-time transcribe)'}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleVoice}
+              className="px-2.5 py-1 rounded-lg bg-[#059669] text-white font-bold text-[11px] hover:bg-[#047857] transition-colors cursor-pointer"
+            >
+              {language === 'hi' ? 'समाप्त' : 'Done'}
+            </button>
+          </div>
+        )}
+
+        {/* Active WAV recording state banner */}
+        {isRecording && !isListening && (
           <div className="mb-2 px-3 py-2 rounded-xl bg-[#FEE2E2] border border-[#FCA5A5] flex items-center justify-between text-xs text-[#991B1B] animate-pulse">
             <div className="flex items-center gap-2 font-bold">
               <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-ping" />
               <span>{language === 'hi' ? 'आवाज़ रिकॉर्ड हो रही है...' : 'Recording voice...'} ({recordingSeconds}s)</span>
             </div>
             <button
+              type="button"
               onClick={handleToggleVoice}
               className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white font-bold text-[11px] hover:bg-[#B91C1C] transition-colors cursor-pointer"
             >
@@ -789,14 +888,16 @@ export const RaahiAssistant: React.FC<Props> = ({
             type="button"
             onClick={handleToggleVoice}
             disabled={isLoading || isTranscribing}
-            title={isRecording ? 'Stop recording' : 'Speak your query (Sarvam Saaras)'}
+            title={isListening || isRecording ? 'Stop listening' : 'Speak your query (Mic)'}
             className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              isRecording
+              isListening
+                ? 'bg-[#059669] text-white border-[#059669] animate-pulse'
+                : isRecording
                 ? 'bg-[#DC2626] text-white border-[#DC2626] animate-pulse'
                 : 'bg-[#EEECE3]/70 text-[#253D30] border-[#D8D4C7] hover:bg-[#E3DFD4]'
             }`}
           >
-            {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+            {isListening || isRecording ? <MicOff size={16} /> : <Mic size={16} />}
           </button>
 
           <input
@@ -809,13 +910,13 @@ export const RaahiAssistant: React.FC<Props> = ({
                 ? (isMathura ? 'मथुरा-वृंदावन का कोई भी रूट या सवाल पूछें...' : 'कोई भी रूट या देरी के बारे में पूछें...')
                 : (isMathura ? 'Ask about any Mathura-Vrindavan route or temple...' : t('aiInputPlaceholder'))
             }
-            disabled={isLoading || isRecording}
+            disabled={isLoading || isRecording || isListening}
             className="flex-1 px-3.5 py-2.5 bg-[#EEECE3]/60 focus:bg-[#FFFEFA] rounded-xl border border-[#D8D4C7] focus:border-[#253D30] focus:ring-1 focus:ring-[#253D30]/20 text-xs font-medium text-[#1F231F] outline-none transition-all placeholder:text-[#8C8A80]"
           />
 
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || isRecording}
+            disabled={!input.trim() || isLoading || isRecording || isListening}
             className="p-2.5 rounded-xl bg-[#253D30] hover:bg-[#1A2E24] text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-xs hover:shadow-sm"
           >
             <Send size={15} />
