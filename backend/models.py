@@ -29,6 +29,8 @@ class PlanRequest(BaseModel):
     destination: str
     city: str = "Delhi NCR"
     departure_time: Optional[str] = None # ISO format or HH:MM
+    arrival_time: Optional[str] = None # ISO format or HH:MM when Arrive By is chosen
+    time_mode: Optional[Literal["now", "depart_at", "arrive_by"]] = "now"
     preferences: TravelPreference = Field(default_factory=TravelPreference)
 
 class TransitLeg(BaseModel):
@@ -93,7 +95,7 @@ class PlanResponse(BaseModel):
 class TransitIncident(BaseModel):
     id: str
     line_name: str
-    mode: Literal["metro", "bus", "rail"]
+    mode: Literal["walk", "metro", "bus", "rail", "auto", "taxi", "erickshaw", "ebus"]
     severity: Literal["minor", "moderate", "severe"]
     delay_minutes: int
     crowd_level: Literal["Low", "Moderate", "High", "Very High"]
@@ -104,9 +106,22 @@ class TransitIncident(BaseModel):
     is_simulated: bool = False
 
 class SimulateDelayRequest(BaseModel):
-    scenario: Literal["metro_signal_delay", "bus_breakdown", "peak_hour_surge", "monsoon_rain", "reset"]
+    scenario: str
+    city: Optional[str] = "Delhi NCR"
     target_line: Optional[str] = None
     delay_minutes: Optional[int] = None
+
+class CityRealtimeContext(BaseModel):
+    city: str
+    day_name: str
+    day_type: str
+    current_time_str: str
+    time_window: str
+    status_headline: str
+    status_description: str
+    crowd_level: str
+    recommended_mode: str
+    special_advisory: Optional[str] = None
 
 class SavedRouteCreate(BaseModel):
     name: str # e.g. "Home to Cyber City"

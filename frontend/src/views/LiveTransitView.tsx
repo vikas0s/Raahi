@@ -1,7 +1,7 @@
 import React from 'react';
-import { Radio, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Radio, Clock, ArrowRight, CheckCircle2, Calendar, Compass, AlertCircle, Info } from 'lucide-react';
 import { DemoControls } from '../components/live/DemoControls';
-import type { TransitIncident } from '../types/transit';
+import type { TransitIncident, CityRealtimeContext } from '../types/transit';
 import { DelayStatusBadge } from '../components/common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../components/common/CrowdLevelIndicator';
 import { TransitModeIcon } from '../components/common/TransitModeIcon';
@@ -10,6 +10,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 interface Props {
   incidents: TransitIncident[];
   city: string;
+  realtimeContext?: CityRealtimeContext | null;
   onRefreshIncidents: () => void;
   onPlanAlternative: (lineName: string) => void;
 }
@@ -17,10 +18,25 @@ interface Props {
 export const LiveTransitView: React.FC<Props> = ({
   incidents,
   city,
+  realtimeContext,
   onRefreshIncidents,
   onPlanAlternative
 }) => {
   const { t } = useTranslation();
+
+  const getCityEmptyStateDesc = (cityName: string) => {
+    const c = (cityName || '').toLowerCase();
+    if (c.includes('mumbai')) {
+      return 'All Mumbai Suburban corridors (Western, Central & Harbour Lines), Metro Line 3 Aqua Line, and BEST electric buses are running normally. Use the Incident Simulator above to test simulated rush hour or mega block scenarios.';
+    }
+    if (c.includes('mathura') || c.includes('vrindavan')) {
+      return 'All Braj transit corridors, Mathura Junction train connections, Nagar Seva electric buses, and battery rickshaw feeders are operating smoothly. Use the Incident Simulator above to test simulated temple darshan or parikrama rush scenarios.';
+    }
+    if (c.includes('bengaluru') || c.includes('bangalore')) {
+      return 'Namma Metro (Purple & Green lines) and BMTC bus routes are operating as scheduled across Bengaluru. Use the Incident Simulator above to test simulated disruption scenarios.';
+    }
+    return t('allCorridorsDesc');
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -44,8 +60,63 @@ export const LiveTransitView: React.FC<Props> = ({
         </span>
       </div>
 
-      {/* Demo Controls Panel */}
-      <DemoControls onSimulationUpdated={onRefreshIncidents} />
+      {/* Real-Time Operational Context & Temple/Rush Intelligence Banner */}
+      {realtimeContext && (
+        <div className="bg-[#FFFEFA] rounded-2xl border border-[#D8D4C7] p-5 shadow-[0_2px_12px_rgba(41,45,41,0.03)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#EEECE3]">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#253D30]/10 text-[#253D30] font-bold">
+                <Clock size={13} />
+                <span>{realtimeContext.current_time_str}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EEECE3] text-[#52544D] font-medium border border-[#D8D4C7]">
+                <Calendar size={13} />
+                <span>{realtimeContext.day_name} • {realtimeContext.day_type}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-[#52544D]">
+                <span>Crowd Inflow:</span>
+                <CrowdLevelIndicator level={realtimeContext.crowd_level} compact />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-[#5B8A6E]/15 text-[#253D30] font-bold">
+                LIVE TIMETABLE
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3.5 space-y-2">
+            <h3 className="font-heading font-bold text-base text-[#1F231F] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E5A919]" />
+              {realtimeContext.status_headline}
+            </h3>
+            <p className="text-xs text-[#52544D] font-medium leading-relaxed">
+              {realtimeContext.status_description}
+            </p>
+          </div>
+
+          {/* Recommended Mode & Special Advisory Pill */}
+          <div className="mt-4 pt-3 border-t border-[#EEECE3] flex flex-wrap items-center justify-between gap-3 text-xs">
+            {realtimeContext.recommended_mode && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#5B8A6E]/10 border border-[#5B8A6E]/20 text-[#253D30] font-bold">
+                <Compass size={14} className="text-[#5B8A6E]" />
+                <span>Recommended: {realtimeContext.recommended_mode}</span>
+              </div>
+            )}
+
+            {realtimeContext.special_advisory && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E7B75B]/15 border border-[#E7B75B]/30 text-[#7A4B0F] font-semibold text-[11px]">
+                <Info size={13} className="text-[#925C15] shrink-0" />
+                <span>{realtimeContext.special_advisory}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Demo Controls Panel (City-specific scenarios) */}
+      <DemoControls city={city} onSimulationUpdated={onRefreshIncidents} />
 
       {/* Active Service Alerts Feed */}
       <div className="space-y-4">
@@ -67,8 +138,8 @@ export const LiveTransitView: React.FC<Props> = ({
             <h4 className="font-heading font-bold text-base text-[#1F231F]">
               {t('allCorridorsOnSchedule')}
             </h4>
-            <p className="text-xs text-[#52544D] font-medium max-w-md mx-auto mt-1">
-              {t('allCorridorsDesc')}
+            <p className="text-xs text-[#52544D] font-medium max-w-lg mx-auto mt-1">
+              {getCityEmptyStateDesc(city)}
             </p>
           </div>
         ) : (

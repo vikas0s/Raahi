@@ -107,12 +107,15 @@ def get_itinerary(itinerary_id: str):
     raise HTTPException(status_code=404, detail=f"Itinerary '{itinerary_id}' not found or expired")
 
 @app.get("/delays")
-def get_transit_delays():
-    incidents = simulator_instance.get_incidents()
+def get_transit_delays(city: str = Query("Delhi NCR")):
+    incidents = simulator_instance.get_incidents(city)
     delays_map = simulator_instance.get_delays_map()
+    context = simulator_instance.get_city_realtime_context(city)
     return {
+        "city": city,
         "active_disruptions": incidents,
         "total_disruptions": len(incidents),
+        "realtime_context": context,
         "delays_summary": delays_map,
         "timestamp": datetime.now().isoformat()
     }

@@ -19,6 +19,7 @@ import {
   GeoLocation,
   SavedRoute,
   TransitIncident,
+  CityRealtimeContext,
   TravelPreferences,
   AppLanguage
 } from './types/transit';
@@ -81,13 +82,17 @@ export const App: React.FC = () => {
 
   // Incidents & Saved Routes Data
   const [incidents, setIncidents] = useState<TransitIncident[]>([]);
+  const [realtimeContext, setRealtimeContext] = useState<CityRealtimeContext | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
 
   // Initial Data Fetch
   const refreshIncidents = async () => {
     try {
-      const data = await getTransitDelays();
+      const data = await getTransitDelays(selectedCity);
       setIncidents(data.active_disruptions || []);
+      if (data.realtime_context) {
+        setRealtimeContext(data.realtime_context);
+      }
     } catch (err) {
       console.warn('Failed to load delays:', err);
     }
@@ -269,6 +274,7 @@ export const App: React.FC = () => {
             <LiveTransitView
               incidents={incidents}
               city={selectedCity}
+              realtimeContext={realtimeContext}
               onRefreshIncidents={refreshIncidents}
               onPlanAlternative={handlePlanAlternative}
             />

@@ -108,6 +108,19 @@ export interface TransitIncident {
   is_simulated: boolean;
 }
 
+export interface CityRealtimeContext {
+  city: string;
+  day_name: string;
+  day_type: string;
+  current_time_str: string;
+  time_window: string;
+  status_headline: string;
+  status_description: string;
+  crowd_level: CrowdLevel;
+  recommended_mode: string;
+  special_advisory?: string;
+}
+
 export interface SavedRoute {
   id: string;
   name: string;

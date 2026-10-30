@@ -1,6 +1,7 @@
 import {
   PlanResponse,
   TransitIncident,
+  CityRealtimeContext,
   SavedRoute,
   TravelPreferences,
   RouteItinerary,
@@ -101,13 +102,15 @@ export async function planJourney(
   return res.json();
 }
 
-export async function getTransitDelays(): Promise<{
+export async function getTransitDelays(city: string = 'Delhi NCR'): Promise<{
+  city?: string;
   active_disruptions: TransitIncident[];
   total_disruptions: number;
+  realtime_context?: CityRealtimeContext;
   delays_summary: Record<string, number>;
 }> {
   try {
-    const res = await fetch(`${API_BASE}/delays`);
+    const res = await fetch(`${API_BASE}/delays?city=${encodeURIComponent(city)}`);
     if (!res.ok) throw new Error('Failed to fetch delays');
     return res.json();
   } catch (err) {
@@ -121,7 +124,8 @@ export async function getTransitDelays(): Promise<{
 }
 
 export async function simulateDelay(
-  scenario: 'metro_signal_delay' | 'bus_breakdown' | 'peak_hour_surge' | 'monsoon_rain' | 'reset',
+  scenario: string,
+  city: string = 'Delhi NCR',
   targetLine?: string,
   delayMinutes?: number
 ) {
@@ -130,6 +134,7 @@ export async function simulateDelay(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       scenario,
+      city,
       target_line: targetLine,
       delay_minutes: delayMinutes
     })
