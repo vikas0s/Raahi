@@ -269,3 +269,15 @@ export interface RailSearchResponse {
   trains: TrainSummary[];
   data_source: string;
 }
+
+
+export interface ReverseGeocodeResult {
+  status: string;
+  lat: number;
+  lon: number;
+  city: string;
+  matched_transit_city?: string | null;
+  locality?: string | null;
+  formatted_address?: string | null;
+  state?: string | null;
+}

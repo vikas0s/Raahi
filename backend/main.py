@@ -15,7 +15,7 @@ load_dotenv(dotenv_path=root_env)
 
 from .models import (
     PlanRequest, PlanResponse, TransitIncident, SimulateDelayRequest,
-    SavedRoute, SavedRouteCreate, ChatRequest, ChatResponse, StopDeparture
+    SavedRoute, SavedRouteCreate, ChatRequest, ChatResponse, StopDeparture, ReverseGeocodeResponse
 )
 from .router import router_instance
 from .simulation import simulator_instance
@@ -91,6 +91,101 @@ def search_places(
         "count": len(results),
         "results": results
     }
+
+_REVERSE_GEOCODE_CACHE = {}
+
+KNOWN_TRANSIT_HUBS = {
+    "Delhi NCR": (28.6139, 77.2090),
+    "Mathura & Vrindavan": (27.4924, 77.6737),
+    "Mumbai": (19.0760, 72.8777),
+    "Bengaluru": (12.9716, 77.5946)
+}
+
+def _match_transit_cluster(lat: float, lon: float, detected_city: str = "") -> Optional[str]:
+    c_lower = (detected_city or "").lower()
+    if any(k in c_lower for k in ["mathura", "vrindavan", "braj"]):
+        return "Mathura & Vrindavan"
+    if any(k in c_lower for k in ["delhi", "gurugram", "gurgaon", "noida", "faridabad", "ghaziabad"]):
+        return "Delhi NCR"
+    if any(k in c_lower for k in ["mumbai", "thane", "navi mumbai"]):
+        return "Mumbai"
+    if any(k in c_lower for k in ["bengaluru", "bangalore"]):
+        return "Bengaluru"
+
+    import math
+    closest = None
+    min_dist = float("inf")
+    for name, (h_lat, h_lon) in KNOWN_TRANSIT_HUBS.items():
+        r = 6371.0
+        phi1, phi2 = math.radians(lat), math.radians(h_lat)
+        dphi = math.radians(h_lat - lat)
+        dlam = math.radians(h_lon - lon)
+        a = math.sin(dphi / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2)**2
+        d = 2 * r * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        if d < min_dist:
+            min_dist = d
+            closest = name
+    if min_dist <= 75.0:
+        return closest
+    return None
+
+@app.get("/places/reverse-geocode", response_model=ReverseGeocodeResponse)
+async def reverse_geocode(
+    lat: float = Query(..., description="Latitude"),
+    lon: float = Query(..., description="Longitude")
+):
+    """
+    Reverse geocodes (lat, lon) to a city and locality, matching to supported transit clusters.
+    Uses cached in-memory entries and OpenStreetMap Nominatim with resilient fallback.
+    """
+    cache_key = (round(lat, 3), round(lon, 3))
+    if cache_key in _REVERSE_GEOCODE_CACHE:
+        return _REVERSE_GEOCODE_CACHE[cache_key]
+
+    import urllib.request
+    import json
+
+    detected_city = None
+    locality = None
+    state = None
+    formatted = None
+
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&zoom=14&addressdetails=1"
+        req = urllib.request.Request(url, headers={"User-Agent": "RaahiTransit/1.0"})
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            data = json.loads(resp.read().decode())
+            addr = data.get("address", {})
+            locality = addr.get("suburb") or addr.get("neighbourhood") or addr.get("residential") or addr.get("quarter") or addr.get("village") or addr.get("road")
+            detected_city = addr.get("city") or addr.get("town") or addr.get("municipality") or addr.get("state_district") or addr.get("county") or addr.get("suburb")
+            state = addr.get("state")
+            formatted = data.get("display_name")
+    except Exception as e:
+        pass
+
+    matched_cluster = _match_transit_cluster(lat, lon, detected_city or "")
+    if not detected_city:
+        if matched_cluster == "Delhi NCR":
+            detected_city = "Delhi"
+        elif matched_cluster == "Mathura & Vrindavan":
+            detected_city = "Mathura"
+        elif matched_cluster:
+            detected_city = matched_cluster
+        else:
+            detected_city = "Current Location"
+
+    res = ReverseGeocodeResponse(
+        status="ok",
+        lat=lat,
+        lon=lon,
+        city=detected_city,
+        matched_transit_city=matched_cluster,
+        locality=locality or detected_city,
+        formatted_address=formatted,
+        state=state
+    )
+    _REVERSE_GEOCODE_CACHE[cache_key] = res
+    return res
 
 @app.post("/plan", response_model=PlanResponse)
 async def plan_journey(request: PlanRequest):
