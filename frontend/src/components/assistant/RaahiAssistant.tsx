@@ -484,7 +484,7 @@ export const RaahiAssistant: React.FC<Props> = ({
               </h3>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#304B3C]/10 text-[#253D30]">
                 <Sparkles size={10} />
-                <span>Sarvam AI</span>
+                <span>Gemini & Sarvam AI</span>
               </span>
             </div>
             <p className="text-[11px] text-[#52544D] font-medium flex items-center gap-1.5 mt-0.5">

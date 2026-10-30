@@ -17,6 +17,7 @@ from .models import (
 from .geocoding_service import geocoding_service_instance
 from .routing_providers.router_manager import routing_manager_instance
 from .sarvam_service import sarvam_service_instance, SarvamConfigurationError, SarvamAPIError
+from .ai_service import ai_service_instance
 from .simulation import simulator_instance
 
 logger = logging.getLogger("raahi.chat_engine")
@@ -75,13 +76,21 @@ class RaahiAIAssistant:
         raw_text = req.message.strip()
         lower_text = raw_text.lower()
 
-        # Language Detection
-        is_hindi = bool(re.search(r'[\u0900-\u097F]', raw_text))
-        is_hinglish = any(w in lower_text for w in [
-            "mujhe", "batao", "kaise", "jana", "sasta", "sabse", "bhaiya", "rasta",
-            "kya", "wala", "dikhao", "kahan", "kitna", "lagega", "hai", "jaun", "pahunchun"
-        ])
-        detected_lang = "hi" if is_hindi else ("hinglish" if is_hinglish else req.language)
+        # Language Selection:
+        # If user explicitly selected Hindi (req.language == 'hi'), respond consistently in pure Hindi.
+        # If user explicitly selected English (req.language == 'en'), respond consistently in English.
+        # Otherwise, intelligently detect based on Devanagari script or Hinglish vocabulary.
+        if req.language == "hi":
+            detected_lang = "hi"
+        elif req.language == "en":
+            detected_lang = "en"
+        else:
+            is_hindi = bool(re.search(r'[\u0900-\u097F]', raw_text))
+            is_hinglish = any(w in lower_text for w in [
+                "mujhe", "batao", "kaise", "jana", "sasta", "sabse", "bhaiya", "rasta",
+                "kya", "wala", "dikhao", "kahan", "kitna", "lagega", "hai", "jaun", "pahunchun"
+            ])
+            detected_lang = "hi" if is_hindi else ("hinglish" if is_hinglish else "en")
 
         # 1. INTENT: Check Live Delays & Disruption
         if any(w in lower_text for w in ["delay", "late", "status", "ruk", "gadbad", "chal rahi hai", "der", "deri", "jam"]):
@@ -129,17 +138,19 @@ class RaahiAIAssistant:
 
             # Check for ambiguity
             if orig_place and orig_place.is_ambiguous:
-                return self._create_clarification_response(
-                    session,
-                    f"'{orig_place.name}' matches multiple locations. Could you specify the city or state for your starting point?",
-                    detected_lang
+                q_text = (
+                    f"'{orig_place.name}' कई स्थानों से मेल खाता है। क्या आप अपने आरंभिक स्थान का शहर या राज्य बता सकते हैं?"
+                    if detected_lang == "hi" else
+                    f"'{orig_place.name}' matches multiple locations. Could you specify the city or state for your starting point?"
                 )
+                return self._create_clarification_response(session, q_text, detected_lang)
             if dest_place and dest_place.is_ambiguous:
-                return self._create_clarification_response(
-                    session,
-                    f"'{dest_place.name}' matches multiple locations. Could you specify the city or destination area?",
-                    detected_lang
+                q_text = (
+                    f"'{dest_place.name}' कई स्थानों से मेल खाता है। क्या आप अपने गंतव्य का शहर या क्षेत्र बता सकते हैं?"
+                    if detected_lang == "hi" else
+                    f"'{dest_place.name}' matches multiple locations. Could you specify the city or destination area?"
                 )
+                return self._create_clarification_response(session, q_text, detected_lang)
 
             if orig_place and dest_place:
                 canonical_req = CanonicalJourneyRequest(
@@ -207,11 +218,18 @@ class RaahiAIAssistant:
         session.add_message("user", user_query)
         session.add_message("assistant", reply_text)
 
-        suggested = [
-            {"label": "Inspect Route in Planner", "action": "navigate_plan"},
-            {"label": "Cheapest Option", "action": "prompt_cheapest"},
-            {"label": "Fastest Option", "action": "prompt_fastest"}
-        ]
+        if lang == "hi":
+            suggested = [
+                {"label": "प्लानर में पूरा रूट देखें", "action": "navigate_plan"},
+                {"label": "सबसे सस्ता विकल्प", "action": "prompt_cheapest"},
+                {"label": "सबसे तेज़ विकल्प", "action": "prompt_fastest"}
+            ]
+        else:
+            suggested = [
+                {"label": "Inspect Route in Planner", "action": "navigate_plan"},
+                {"label": "Cheapest Option", "action": "prompt_cheapest"},
+                {"label": "Fastest Option", "action": "prompt_fastest"}
+            ]
 
         return ChatResponse(
             reply=reply_text,
@@ -270,17 +288,22 @@ class RaahiAIAssistant:
                 reply = f"The route (**{top.title}**) from **{req.origin.name}** to **{req.destination.name}** has a total of **{stops_count} stops**, taking approximately ~{top.total_duration_minutes} mins."
         else:
             top = routes[0]
-            reply = f"For your journey from **{req.origin.name}** to **{req.destination.name}**, the recommended option is **{top.title}** (~{top.total_duration_minutes} mins, ₹{top.total_fare_inr:.0f})."
+            if lang == "hi":
+                reply = f"**{req.origin.name}** से **{req.destination.name}** की यात्रा के लिए अनुशंसित विकल्प **{top.title}** है (~{top.total_duration_minutes} मिनट, ₹{top.total_fare_inr:.0f})।"
+            else:
+                reply = f"For your journey from **{req.origin.name}** to **{req.destination.name}**, the recommended option is **{top.title}** (~{top.total_duration_minutes} mins, ₹{top.total_fare_inr:.0f})."
 
         session.add_message("user", raw_text)
         session.add_message("assistant", reply)
+
+        suggested_btn = [{"label": "प्लानर में पूरा रूट देखें", "action": "navigate_plan"}] if lang == "hi" else [{"label": "View in Journey Planner", "action": "navigate_plan"}]
 
         return ChatResponse(
             reply=reply,
             session_id=session.session_id,
             action_type="show_route",
             route_data=top,
-            suggested_actions=[{"label": "View in Journey Planner", "action": "navigate_plan"}],
+            suggested_actions=suggested_btn,
             detected_intent="route_followup",
             is_grounded_route=True,
             canonical_request=req,
@@ -441,9 +464,9 @@ class RaahiAIAssistant:
             coverage_warning = "Intercity RailConnect: Trains verified via Indian Railways network."
 
         lang_instruction = {
-            "hi": "Respond in polite, natural Hindi (हिंदी) in Devanagari script. Be culturally grounded and respectful.",
+            "hi": "अनिवार्य भाषा निर्देश: आपका पूरा उत्तर केवल और केवल शुद्ध, धाराप्रवाह एवं विनम्र हिंदी (Devanagari) में होना चाहिए। सभी हेडिंग्स (अनुशंसित विकल्प, समय, किराया, प्रमुख साधन, मुख्य विवरण) और बिंदु हिंदी में होने चाहिए। अंग्रेजी वाक्यों का प्रयोग बिल्कुल न करें।",
             "hinglish": "Respond in natural, fluent Roman-script Hinglish (e.g. 'Aapke liye sabse behtar option...').",
-            "en": "Respond in crisp, professional, welcoming English."
+            "en": "CRITICAL INSTRUCTION: Respond entirely in crisp, professional, welcoming English. Provide clear bullet points with transit mode, fare, and duration."
         }.get(lang, "Respond in clear English.")
 
         system_prompt = (
@@ -468,12 +491,18 @@ class RaahiAIAssistant:
         messages.append({"role": "user", "content": user_query})
 
         try:
-            res = await sarvam_service_instance.chat_completion(messages=messages, temperature=0.25)
+            res, provider = await ai_service_instance.chat_completion(
+                messages=messages,
+                system_instruction=system_prompt,
+                language=lang,
+                temperature=0.25,
+                user_query=user_query
+            )
             if res and res.strip():
                 return res.strip()
             return self._build_template_route_response(req, routes[0], coverage_type, lang)
         except Exception as err:
-            logger.warning("Sarvam AI unavailable, using verified local template: %s", err)
+            logger.warning("AI completion unavailable, using verified local template: %s", err)
             return self._build_template_route_response(req, routes[0], coverage_type, lang)
 
     def _build_template_route_response(
@@ -551,13 +580,18 @@ class RaahiAIAssistant:
     def _handle_delay_inquiry(self, session: AssistantSession, city: str, lang: str) -> ChatResponse:
         incidents = simulator_instance.get_incidents(city)
         if not incidents:
-            reply = f"All transit routes in {city} are operating normally with no active delays."
             if lang == "hi":
-                reply = f"वर्तमान में {city} में सभी परिवहन मार्ग सामान्य समय पर चल रहे हैं। कोई देरी नहीं है।"
+                reply = f"वर्तमान में **{city}** में सभी परिवहन मार्ग (मेट्रो, बसें और लोकल ट्रेनें) सामान्य समय पर चल रहे हैं। कोई सक्रिय देरी या व्यवधान नहीं है।"
+            else:
+                reply = f"All transit routes in **{city}** are operating normally with no active delays."
             return ChatResponse(reply=reply, session_id=session.session_id, action_type="show_delays", detected_intent="delays_status")
 
-        joined = "\n".join([f"• **{inc.line_name}**: +{inc.delay_minutes} min ({inc.headline})" for inc in incidents])
-        reply = f"Current active transit disruptions in {city}:\n\n{joined}"
+        if lang == "hi":
+            joined = "\n".join([f"• **{inc.line_name}**: +{inc.delay_minutes} मिनट की देरी ({inc.headline})" for inc in incidents])
+            reply = f"**{city}** में वर्तमान सक्रिय परिवहन व्यवधान:\n\n{joined}"
+        else:
+            joined = "\n".join([f"• **{inc.line_name}**: +{inc.delay_minutes} min ({inc.headline})" for inc in incidents])
+            reply = f"Current active transit disruptions in **{city}**:\n\n{joined}"
         return ChatResponse(reply=reply, session_id=session.session_id, action_type="show_delays", detected_intent="delays_status")
 
     def _detect_exploration_query(self, lower_text: str) -> Tuple[bool, Optional[str], Optional[str]]:
@@ -743,47 +777,100 @@ class RaahiAIAssistant:
         elif any(c in lower for c in ["delhi", "gurugram", "noida"]):
             target_city = "Delhi NCR"
 
-        prompt = (
-            f"You are Raahi AI, an intelligent mobility assistant for India and global journeys. "
-            f"The user asks: '{raw_text}'. "
-            f"Answer helpfully in {lang} focusing on travel in {target_city}. Explain how they can plan journeys between two locations or check live transit."
-        )
-        try:
-            reply = await sarvam_service_instance.chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3
+        if lang == "hi":
+            sys_instruct = (
+                "आप राही AI (Raahi AI) हैं, जो भारत और वैश्विक यात्राओं के लिए एक अत्यंत बुद्धिमान, विनम्र और विश्वसनीय यात्रा सहायक है। "
+                "अनिवार्य निर्देश: आपका पूरा उत्तर केवल और केवल शुद्ध, स्वाभाविक एवं सुंदर हिंदी (Devanagari लिपि) में होना चाहिए। "
+                "उत्तर को अत्यंत विस्तृत, सुव्यवस्थित (हेडिंग्स, बुलेट पॉइंट्स, सटीक समय, किराया, दूरी, और महत्वपूर्ण सुझावों के साथ) और आकर्षक बनाएं। "
+                "किसी भी परिस्थिति में अंग्रेजी वाक्य या रोमन-लिपि हिंदी का उपयोग न करें।"
             )
-            if not reply or not reply.strip():
-                raise ValueError("Empty reply from Sarvam AI")
-        except Exception:
-            if lang == "hi":
-                reply = f"नमस्ते! मैं राही AI हूँ। आप मुझसे {target_city} या किसी भी दो स्थानों के बीच सबसे तेज़ या सबसे सस्ते मार्ग के बारे में पूछ सकते हैं।"
+            prompt = (
+                f"उपयोगकर्ता का प्रश्न: '{raw_text}'\n"
+                f"संबंधित शहर/क्षेत्र: {target_city}\n\n"
+                f"कृपया इस प्रश्न का विस्तृत, बिंदुवार और संपूर्ण उत्तर हिंदी में दें। "
+                f"यदि उपयोगकर्ता मंदिर (जैसे प्रेम मंदिर, बांके बिहारी, श्रीकृष्ण जन्मस्थान आदि), लाइट शो, आरती या दर्शन के बारे में पूछ रहा है, "
+                f"तो सटीक समय, प्रवेश नियम, और वहाँ पहुँचने के लिए सर्वोत्तम स्थानीय साधन (ई-बस, टेम्पो, ई-रिक्शा, किराया और समय) विस्तार से बताएं। "
+                f"यदि वह किसी रूट के बारे में पूछ रहा है, तो स्पष्ट मार्गदर्शन प्रदान करें।"
+            )
+        else:
+            sys_instruct = (
+                "You are Raahi AI, an intelligent, accurate, and welcoming travel companion for Indian and global journeys. "
+                "CRITICAL INSTRUCTION: You must respond ENTIRELY in crisp, professional, and clear English. "
+                "Provide a comprehensive, well-structured, and helpful response with bullet points, exact timings, transit modes, fares, and practical travel tips."
+            )
+            prompt = (
+                f"User Question: '{raw_text}'\n"
+                f"City/Region: {target_city}\n\n"
+                f"Provide a comprehensive, detailed, and well-structured answer with bullet points. "
+                f"If the user is asking about temple timings (such as Prem Mandir light show, Bankey Bihari, Janmabhoomi), "
+                f"provide exact schedules, entry guidelines, and step-by-step local transit options (e-bus, auto, cab with fares and durations). "
+                f"If asking about transit or route planning, give clear and actionable directions."
+            )
+
+        try:
+            reply, provider = await ai_service_instance.chat_completion(
+                messages=[{"role": "user", "content": prompt}],
+                system_instruction=sys_instruct,
+                language=lang,
+                temperature=0.3,
+                user_query=raw_text
+            )
+        except Exception as e:
+            logger.warning("AI completion error: %s", e)
+            if lang in ("hi", "hinglish"):
+                reply = f"नमस्ते! मैं राही AI हूँ। आप मुझसे {target_city} के मंदिर दर्शन, लाइट शो, या किसी भी दो स्थानों के बीच रूट के बारे में पूछ सकते हैं।"
             else:
-                reply = f"Hello! I am Raahi AI. You can ask me for the fastest or cheapest routes between any two places across {target_city} or connected networks."
+                reply = f"Hello! I am Raahi AI. You can ask me for temple timings, light shows, or the fastest routes across {target_city}."
 
         session.add_message("user", raw_text)
         session.add_message("assistant", reply)
 
         if "Mathura" in target_city:
-            suggested = [
-                {"label": "Mathura Jn to GLA University", "action": "prompt_gla"},
-                {"label": "Mathura Jn to Bankey Bihari", "action": "prompt_bankey_bihari"}
-            ]
+            if lang == "hi":
+                suggested = [
+                    {"label": "प्रेम मंदिर दर्शन व लाइट शो", "action": "prompt_prem_mandir"},
+                    {"label": "बांके बिहारी मंदिर रूट", "action": "prompt_bankey_bihari"},
+                    {"label": "मथुरा जंक्शन से GLA यूनिवर्सिटी", "action": "prompt_gla"}
+                ]
+            else:
+                suggested = [
+                    {"label": "Prem Mandir Timings", "action": "prompt_prem_mandir"},
+                    {"label": "Mathura Jn to Bankey Bihari", "action": "prompt_bankey_bihari"},
+                    {"label": "Mathura Jn to GLA University", "action": "prompt_gla"}
+                ]
         elif "Mumbai" in target_city:
-            suggested = [
-                {"label": "CSMT to Gateway of India", "action": "prompt_gateway"},
-                {"label": "Mumbai Airport to BKC", "action": "prompt_bkc"}
-            ]
+            if lang == "hi":
+                suggested = [
+                    {"label": "CSMT से गेटवे ऑफ इंडिया", "action": "prompt_gateway"},
+                    {"label": "मुंबई एयरपोर्ट से BKC", "action": "prompt_bkc"}
+                ]
+            else:
+                suggested = [
+                    {"label": "CSMT to Gateway of India", "action": "prompt_gateway"},
+                    {"label": "Mumbai Airport to BKC", "action": "prompt_bkc"}
+                ]
         elif "Bengaluru" in target_city:
-            suggested = [
-                {"label": "Majestic to Electronic City", "action": "prompt_ecity"},
-                {"label": "BLR Airport to Whitefield", "action": "prompt_whitefield"}
-            ]
+            if lang == "hi":
+                suggested = [
+                    {"label": "मजेस्टिक से इलेक्ट्रॉनिक सिटी", "action": "prompt_ecity"},
+                    {"label": "BLR एयरपोर्ट से व्हाइटफील्ड", "action": "prompt_whitefield"}
+                ]
+            else:
+                suggested = [
+                    {"label": "Majestic to Electronic City", "action": "prompt_ecity"},
+                    {"label": "BLR Airport to Whitefield", "action": "prompt_whitefield"}
+                ]
         else:
-            suggested = [
-                {"label": "Fastest Route to Cyber City", "action": "prompt_fastest"},
-                {"label": "Mathura Jn to GLA University", "action": "prompt_gla"}
-            ]
+            if lang == "hi":
+                suggested = [
+                    {"label": "साइबर सिटी का सबसे तेज़ रूट", "action": "prompt_fastest"},
+                    {"label": "मथुरा जंक्शन से GLA यूनिवर्सिटी", "action": "prompt_gla"}
+                ]
+            else:
+                suggested = [
+                    {"label": "Fastest Route to Cyber City", "action": "prompt_fastest"},
+                    {"label": "Mathura Jn to GLA University", "action": "prompt_gla"}
+                ]
 
         return ChatResponse(
             reply=reply,

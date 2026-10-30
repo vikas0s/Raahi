@@ -734,8 +734,80 @@ PLACES_DATABASE: Dict[str, List[Dict[str, Any]]] = {
             "lat": 28.5641,
             "lon": 77.3342,
             "category": "metro_station",
-            "aliases": ["botanical", "noida interchange", "sector 38 noida"],
+            "aliases": ["botanical", "botanical garden", "noida interchange", "sector 38 noida"],
             "lines": ["Blue Line", "Magenta Line"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Noida Sector 52 (Blue Line)",
+            "lat": 28.5786,
+            "lon": 77.3734,
+            "category": "metro_station",
+            "aliases": ["noida sector 52", "sector 52", "sec 52 noida", "sector 52 blue line", "noida sec 52", "sector 52 metro station"],
+            "lines": ["Blue Line"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Noida Sector 51 (Aqua Line)",
+            "lat": 28.5772,
+            "lon": 77.3698,
+            "category": "metro_station",
+            "aliases": ["noida sector 51", "sector 51", "sec 51 noida", "sector 51 aqua line", "noida sec 51", "sector 51 interchange", "sector 51 metro station"],
+            "lines": ["Aqua Line (NMRC)"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Pari Chowk (Greater Noida)",
+            "lat": 28.4631,
+            "lon": 77.5081,
+            "category": "metro_station",
+            "aliases": ["pari chowk", "pari chowk greater noida", "pari chowk metro station", "pari chowk roundabout", "pari chowk bus stand", "greater noida pari chowk"],
+            "lines": ["Aqua Line (NMRC)", "DTC Express Bus 419"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Noida Sector 137",
+            "lat": 28.5140,
+            "lon": 77.4042,
+            "category": "metro_station",
+            "aliases": ["noida sector 137", "sector 137", "sec 137 noida", "paras tierea"],
+            "lines": ["Aqua Line (NMRC)"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Noida Sector 142 (Advant Navis)",
+            "lat": 28.5028,
+            "lon": 77.4180,
+            "category": "metro_station",
+            "aliases": ["noida sector 142", "sector 142", "advant navis", "advant it park", "sec 142 noida"],
+            "lines": ["Aqua Line (NMRC)"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Knowledge Park II (Greater Noida)",
+            "lat": 28.4630,
+            "lon": 77.4900,
+            "category": "metro_station",
+            "aliases": ["knowledge park 2", "knowledge park ii", "greater noida knowledge park", "sharda university", "gl bajaj"],
+            "lines": ["Aqua Line (NMRC)"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Alpha 1 (Greater Noida)",
+            "lat": 28.4715,
+            "lon": 77.5140,
+            "category": "metro_station",
+            "aliases": ["alpha 1", "greater noida alpha 1", "alpha 1 metro station"],
+            "lines": ["Aqua Line (NMRC)"],
+            "has_direct_metro": True
+        },
+        {
+            "name": "Depot (Greater Noida)",
+            "lat": 28.4350,
+            "lon": 77.5250,
+            "category": "metro_station",
+            "aliases": ["depot metro station", "greater noida depot", "gnida depot"],
+            "lines": ["Aqua Line (NMRC)"],
             "has_direct_metro": True
         },
         {
@@ -3407,6 +3479,22 @@ TRANSIT_LINES: Dict[str, Dict[str, Any]] = {
         "operator": "DMRC / Rapid Metro",
         "service_key": "dmrc_metro"
     },
+    "Aqua Line (NMRC)": {
+        "color": "#00BCD4",
+        "mode": "metro",
+        "fare_type": "nmrc_aqua",
+        "avg_speed_kmh": 36,
+        "operator": "Noida Metro Rail Corporation (NMRC)",
+        "service_key": "nmrc_metro"
+    },
+    "Red Line": {
+        "color": "#D32F2F",
+        "mode": "metro",
+        "fare_type": "dmrc",
+        "avg_speed_kmh": 34,
+        "operator": "Delhi Metro Rail Corporation",
+        "service_key": "dmrc_metro"
+    },
     "DTC Electric Bus 534": {
         "color": "#2E7D32",
         "mode": "bus",
@@ -3729,6 +3817,31 @@ def calculate_delhi_taxi_fare(dist_km: float, is_ac: bool = True, is_night: bool
     rounded_fare = round(fare, 1)
     tag_name = "AC Taxi" if is_ac else "Non-AC Taxi"
     return float(rounded_fare), f"Delhi Govt Taxi Meter ({tag_name}): ₹{base_fare:.0f} (first 1km) + ₹{per_km:.0f}/km{night_str}"
+
+def calculate_nmrc_fare(dist_km: float):
+    """
+    Official Noida Metro Rail Corporation (NMRC) Aqua Line Fare Slabs:
+    1 station (<= 2 km): ₹10
+    2 stations (2-5 km): ₹15
+    3-6 stations (5-12 km): ₹20
+    7-9 stations (12-18 km): ₹30
+    10-16 stations (18-24 km): ₹40
+    >16 stations (>24 km): ₹50
+    """
+    if dist_km <= 2.0:
+        fare = 10.0
+    elif dist_km <= 5.0:
+        fare = 15.0
+    elif dist_km <= 12.0:
+        fare = 20.0
+    elif dist_km <= 18.0:
+        fare = 30.0
+    elif dist_km <= 24.0:
+        fare = 40.0
+    else:
+        fare = 50.0
+    return fare, f"NMRC Smart Card/Token: ₹{int(fare)}"
+
 
 def calculate_erickshaw_fare(dist_km: float):
     """Calculates shared E-Rickshaw fare for metro first/last mile hopper."""

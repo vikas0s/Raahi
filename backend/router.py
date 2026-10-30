@@ -60,7 +60,7 @@ from .transit_data import (
 
 
 
-    calculate_delhi_taxi_fare,
+    calculate_delhi_taxi_fare, calculate_nmrc_fare,
 
 
 
@@ -2212,6 +2212,360 @@ class TransitRouter:
 
 
 
+    def _is_aqua_metro_node(self, node: Dict[str, Any]) -> bool:
+        lines = [str(l).lower() for l in node.get("lines", [])]
+        name = node.get("name", "").lower()
+        return (
+            any("aqua" in l for l in lines) or
+            any(k in name for k in ["pari chowk", "greater noida", "sector 51", "sector 137", "sector 142", "knowledge park", "alpha 1", "depot"])
+        )
+
+    def _build_metro_haul_legs(
+        self,
+        orig_hub: Dict[str, Any],
+        dest_hub: Dict[str, Any],
+        curr_time: datetime,
+        delays: Dict[str, int]
+    ) -> Tuple[List[TransitLeg], float, List[str], str, datetime]:
+        legs: List[TransitLeg] = []
+        added_fare = 0.0
+        fare_labels: List[str] = []
+
+        orig_is_aqua = self._is_aqua_metro_node(orig_hub)
+        dest_is_aqua = self._is_aqua_metro_node(dest_hub)
+
+        # ---------------- CASE 1: DMRC (Delhi / Noida) -> NMRC Aqua Line (Greater Noida) ----------------
+        if not orig_is_aqua and dest_is_aqua:
+            dmrc_fare = 50.0
+            if "botanical" in orig_hub["name"].lower():
+                dmrc_line = "Blue Line"
+                dmrc_color = TRANSIT_LINES["Blue Line"]["color"]
+                dmrc_mins = 7
+                dmrc_stops = ["Botanical Garden", "Golf Course", "Wave City Center", "Noida Sector 52"]
+                dmrc_fare = 20.0
+                dmrc_orig_name = orig_hub["name"]
+            elif "sector 52" in orig_hub["name"].lower():
+                dmrc_orig_name = None
+                dmrc_mins = 0
+                dmrc_fare = 0.0
+            else:
+                dmrc_orig_name = orig_hub["name"]
+                if "red" in str(orig_hub.get("lines", [])).lower() or "rohini" in orig_hub["name"].lower():
+                    dmrc_line = "Red Line ➔ Blue Line Interchange"
+                elif "yellow" in str(orig_hub.get("lines", [])).lower():
+                    dmrc_line = "Yellow Line ➔ Blue Line Interchange"
+                else:
+                    dmrc_line = "Blue Line"
+                dmrc_color = TRANSIT_LINES["Blue Line"]["color"]
+                dmrc_dist = haversine_km(orig_hub["lat"], orig_hub["lon"], 28.5786, 77.3734)
+                dmrc_mins = max(22, int(dmrc_dist * 1.5))
+                dmrc_stops = [orig_hub["name"], "Kashmere Gate / Rajiv Chowk", "Mandi House", "Mayur Vihar-I", "Botanical Garden", "Noida Sector 52"]
+
+            if dmrc_orig_name:
+                added_fare += dmrc_fare
+                fare_labels.append(f"DMRC Metro (₹{int(dmrc_fare)})")
+                arr_time = curr_time + timedelta(minutes=dmrc_mins)
+                dmrc_start = [orig_hub["lon"], orig_hub["lat"]]
+                dmrc_end = [77.3734, 28.5786]
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="metro",
+                    line_name=dmrc_line,
+                    line_color=dmrc_color,
+                    origin_name=dmrc_orig_name,
+                    destination_name="Noida Sector 52 (Blue Line)",
+                    origin_coords=dmrc_start,
+                    destination_coords=dmrc_end,
+                    path_coords=interpolate_points(dmrc_start, dmrc_end, num_points=6),
+                    duration_minutes=dmrc_mins,
+                    distance_meters=int(haversine_km(orig_hub["lat"], orig_hub["lon"], 28.5786, 77.3734) * 1000),
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr_time.strftime("%H:%M"),
+                    stops_count=len(dmrc_stops),
+                    intermediate_stops=dmrc_stops,
+                    instructions=f"Board {dmrc_line} towards Noida Sector 52. Board coach 3 or 4 for swift interchange towards Blue Line.",
+                    crowd_level="Moderate",
+                    fare_inr=dmrc_fare,
+                    fare_details=f"DMRC Token/Smart Card Fare: ₹{int(dmrc_fare)}"
+                ))
+                curr_time = arr_time
+
+            # Step 2: Dedicated Skywalk / Free NMRC E-Shuttle Interchange
+            walk_interchange_mins = 4
+            arr_time = curr_time + timedelta(minutes=walk_interchange_mins)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                line_name="Dedicated Skywalk / Free E-Shuttle",
+                line_color="#00BCD4",
+                origin_name="Noida Sector 52 (Blue Line) Concourse",
+                destination_name="Noida Sector 51 (Aqua Line) Concourse",
+                origin_coords=[77.3734, 28.5786],
+                destination_coords=[77.3698, 28.5772],
+                path_coords=[[77.3734, 28.5786], [77.3698, 28.5772]],
+                duration_minutes=walk_interchange_mins,
+                distance_meters=300,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=["Pedestrian Concourse Interchange"],
+                instructions="Interchange: Walk across the dedicated 300m pedestrian walkway / free NMRC electric feeder concourse connecting Sector 52 (Blue Line) & Sector 51 (Aqua Line).",
+                crowd_level="Low",
+                fare_inr=0.0,
+                fare_details="Free Dedicated Skywalk / NMRC Feeder Walkway"
+            ))
+            curr_time = arr_time
+
+            # Step 3: NMRC Aqua Line to Destination
+            aqua_dist = haversine_km(28.5772, 77.3698, dest_hub["lat"], dest_hub["lon"])
+            aqua_mins = max(10, int(aqua_dist * 1.3))
+            nmrc_fare, nmrc_desc = calculate_nmrc_fare(aqua_dist)
+            added_fare += nmrc_fare
+            fare_labels.append(f"Aqua Line (₹{int(nmrc_fare)})")
+            arr_time = curr_time + timedelta(minutes=aqua_mins)
+            aqua_start = [77.3698, 28.5772]
+            aqua_end = [dest_hub["lon"], dest_hub["lat"]]
+            aqua_stops = ["Noida Sector 51", "Noida Sector 50", "Noida Sector 76", "NSEZ", "Noida Sector 137", "Noida Sector 142", "Knowledge Park II", dest_hub["name"]]
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name="Aqua Line (NMRC)",
+                line_color=TRANSIT_LINES.get("Aqua Line (NMRC)", {}).get("color", "#00BCD4"),
+                origin_name="Noida Sector 51 (Aqua Line)",
+                destination_name=dest_hub["name"],
+                origin_coords=aqua_start,
+                destination_coords=aqua_end,
+                path_coords=interpolate_points(aqua_start, aqua_end, num_points=6),
+                duration_minutes=aqua_mins,
+                distance_meters=int(aqua_dist * 1000),
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=len(aqua_stops),
+                intermediate_stops=aqua_stops,
+                instructions=f"Board Aqua Line (NMRC) towards Depot. Smooth rapid transit along Noida-Greater Noida Expressway. De-board at {dest_hub['name']}.",
+                crowd_level="Low",
+                fare_inr=nmrc_fare,
+                fare_details=nmrc_desc
+            ))
+            curr_time = arr_time
+            return legs, added_fare, fare_labels, "Aqua Line (NMRC)", curr_time
+
+        # ---------------- CASE 2: NMRC Aqua Line (Greater Noida) -> DMRC (Delhi / Noida) ----------------
+        elif orig_is_aqua and not dest_is_aqua:
+            # Step 1: Aqua Line from orig_hub to Noida Sector 51
+            aqua_dist = haversine_km(orig_hub["lat"], orig_hub["lon"], 28.5772, 77.3698)
+            aqua_mins = max(10, int(aqua_dist * 1.3))
+            nmrc_fare, nmrc_desc = calculate_nmrc_fare(aqua_dist)
+            added_fare += nmrc_fare
+            fare_labels.append(f"Aqua Line (₹{int(nmrc_fare)})")
+            arr_time = curr_time + timedelta(minutes=aqua_mins)
+            aqua_start = [orig_hub["lon"], orig_hub["lat"]]
+            aqua_end = [77.3698, 28.5772]
+            aqua_stops = [orig_hub["name"], "Knowledge Park II", "Noida Sector 142", "Noida Sector 137", "NSEZ", "Noida Sector 76", "Noida Sector 50", "Noida Sector 51"]
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name="Aqua Line (NMRC)",
+                line_color=TRANSIT_LINES.get("Aqua Line (NMRC)", {}).get("color", "#00BCD4"),
+                origin_name=orig_hub["name"],
+                destination_name="Noida Sector 51 (Aqua Line)",
+                origin_coords=aqua_start,
+                destination_coords=aqua_end,
+                path_coords=interpolate_points(aqua_start, aqua_end, num_points=6),
+                duration_minutes=aqua_mins,
+                distance_meters=int(aqua_dist * 1000),
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=len(aqua_stops),
+                intermediate_stops=aqua_stops,
+                instructions="Board Aqua Line (NMRC) towards Sector 51. Alight at Noida Sector 51 for DMRC interchange.",
+                crowd_level="Low",
+                fare_inr=nmrc_fare,
+                fare_details=nmrc_desc
+            ))
+            curr_time = arr_time
+
+            # Step 2: Dedicated Skywalk Interchange
+            walk_interchange_mins = 4
+            arr_time = curr_time + timedelta(minutes=walk_interchange_mins)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                line_name="Dedicated Skywalk / Free E-Shuttle",
+                line_color="#00BCD4",
+                origin_name="Noida Sector 51 (Aqua Line) Concourse",
+                destination_name="Noida Sector 52 (Blue Line) Concourse",
+                origin_coords=[77.3698, 28.5772],
+                destination_coords=[77.3734, 28.5786],
+                path_coords=[[77.3698, 28.5772], [77.3734, 28.5786]],
+                duration_minutes=walk_interchange_mins,
+                distance_meters=300,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=["Pedestrian Concourse Interchange"],
+                instructions="Interchange: Walk across the dedicated 300m pedestrian walkway / free NMRC electric feeder concourse from Sector 51 to Sector 52 (Blue Line).",
+                crowd_level="Low",
+                fare_inr=0.0,
+                fare_details="Free Dedicated Skywalk / NMRC Feeder Walkway"
+            ))
+            curr_time = arr_time
+
+            # Step 3: DMRC to dest_hub
+            if "botanical" in dest_hub["name"].lower():
+                dmrc_line = "Blue Line"
+                dmrc_mins = 7
+                dmrc_stops = ["Noida Sector 52", "Wave City Center", "Golf Course", "Botanical Garden"]
+                dmrc_fare = 20.0
+            else:
+                dmrc_dist = haversine_km(28.5786, 77.3734, dest_hub["lat"], dest_hub["lon"])
+                dmrc_mins = max(22, int(dmrc_dist * 1.5))
+                dmrc_stops = ["Noida Sector 52", "Botanical Garden", "Mayur Vihar-I", "Mandi House", "Rajiv Chowk / Kashmere Gate", dest_hub["name"]]
+                dmrc_fare = 50.0
+                if "red" in str(dest_hub.get("lines", [])).lower() or "rohini" in dest_hub["name"].lower():
+                    dmrc_line = "Blue Line ➔ Red Line Interchange"
+                elif "yellow" in str(dest_hub.get("lines", [])).lower():
+                    dmrc_line = "Blue Line ➔ Yellow Line Interchange"
+                else:
+                    dmrc_line = "Blue Line"
+
+            added_fare += dmrc_fare
+            fare_labels.append(f"DMRC Metro (₹{int(dmrc_fare)})")
+            arr_time = curr_time + timedelta(minutes=dmrc_mins)
+            dmrc_start = [77.3734, 28.5786]
+            dmrc_end = [dest_hub["lon"], dest_hub["lat"]]
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name=dmrc_line,
+                line_color=TRANSIT_LINES["Blue Line"]["color"],
+                origin_name="Noida Sector 52 (Blue Line)",
+                destination_name=dest_hub["name"],
+                origin_coords=dmrc_start,
+                destination_coords=dmrc_end,
+                path_coords=interpolate_points(dmrc_start, dmrc_end, num_points=6),
+                duration_minutes=dmrc_mins,
+                distance_meters=int(haversine_km(28.5786, 77.3734, dest_hub["lat"], dest_hub["lon"]) * 1000),
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=len(dmrc_stops),
+                intermediate_stops=dmrc_stops,
+                instructions=f"Board DMRC Metro from Noida Sector 52 towards {dest_hub['name']}.",
+                crowd_level="Moderate",
+                fare_inr=dmrc_fare,
+                fare_details=f"DMRC Smart Card/Token Fare: ₹{int(dmrc_fare)}"
+            ))
+            curr_time = arr_time
+            return legs, added_fare, fare_labels, "Aqua Line ➔ Blue Line", curr_time
+
+        # ---------------- CASE 3: Both Origin & Destination on Aqua Line ----------------
+        elif orig_is_aqua and dest_is_aqua:
+            aqua_dist = haversine_km(orig_hub["lat"], orig_hub["lon"], dest_hub["lat"], dest_hub["lon"])
+            aqua_mins = max(8, int(aqua_dist * 1.3))
+            nmrc_fare, nmrc_desc = calculate_nmrc_fare(aqua_dist)
+            added_fare += nmrc_fare
+            fare_labels.append(f"Aqua Line (₹{int(nmrc_fare)})")
+            arr_time = curr_time + timedelta(minutes=aqua_mins)
+            aqua_start = [orig_hub["lon"], orig_hub["lat"]]
+            aqua_end = [dest_hub["lon"], dest_hub["lat"]]
+            line = "Aqua Line (NMRC)"
+            line_color = TRANSIT_LINES.get("Aqua Line (NMRC)", {}).get("color", "#00BCD4")
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name=line,
+                line_color=line_color,
+                origin_name=orig_hub["name"],
+                destination_name=dest_hub["name"],
+                origin_coords=aqua_start,
+                destination_coords=aqua_end,
+                path_coords=interpolate_points(aqua_start, aqua_end, num_points=6),
+                duration_minutes=aqua_mins,
+                distance_meters=int(aqua_dist * 1000),
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=4,
+                intermediate_stops=[orig_hub["name"], "Expressway Station", dest_hub["name"]],
+                instructions=f"Board Aqua Line (NMRC) towards {dest_hub['name']}.",
+                crowd_level="Low",
+                fare_inr=nmrc_fare,
+                fare_details=nmrc_desc
+            ))
+            curr_time = arr_time
+            return legs, added_fare, fare_labels, line, curr_time
+
+        # ---------------- CASE 4: Standard DMRC (Delhi NCR) Network ----------------
+        else:
+            metro_dist_km = haversine_km(orig_hub["lat"], orig_hub["lon"], dest_hub["lat"], dest_hub["lon"])
+            if metro_dist_km < 1.0:
+                metro_dist_km = 3.0
+
+            has_airport = "airport" in orig_hub["name"].lower() or "airport" in dest_hub["name"].lower() or "igi" in orig_hub["name"].lower() or "igi" in dest_hub["name"].lower()
+
+            if has_airport:
+                line = "Airport Express"
+                line_color = TRANSIT_LINES[line]["color"]
+                transit_mins = max(14, int(metro_dist_km * 1.5))
+                stops = ["New Delhi (NDLS)", "Shivaji Stadium", "Dhaula Kuan", "Delhi Aerocity", "IGI Airport T3"]
+                metro_fare = 60.0
+            elif "noida" in dest_hub["name"].lower() or "anand" in dest_hub["name"].lower() or "dwarka" in dest_hub["name"].lower() or "vaishali" in dest_hub["name"].lower():
+                line = "Blue Line"
+                line_color = TRANSIT_LINES[line]["color"]
+                transit_mins = max(12, int(metro_dist_km * 1.6))
+                stops = [orig_hub["name"], "Interchange Junction", dest_hub["name"]]
+                metro_fare = 50.0 if metro_dist_km > 20 else 40.0
+            elif "red" in str(orig_hub.get("lines", [])).lower() and "red" in str(dest_hub.get("lines", [])).lower():
+                line = "Red Line"
+                line_color = TRANSIT_LINES[line]["color"]
+                transit_mins = max(12, int(metro_dist_km * 1.6))
+                stops = [orig_hub["name"], "Platform Junction", dest_hub["name"]]
+                metro_fare = 40.0
+            elif metro_dist_km > 18:
+                line = "Yellow Line"
+                line_color = TRANSIT_LINES[line]["color"]
+                transit_mins = int(metro_dist_km * 1.6)
+                stops = ["Rajiv Chowk", "Central Secretariat", "AIIMS", "Hauz Khas", "Malviya Nagar", "Saket"]
+                metro_fare = 50.0
+            else:
+                line = "Yellow Line"
+                line_color = TRANSIT_LINES[line]["color"]
+                transit_mins = max(12, int(metro_dist_km * 1.8))
+                stops = [orig_hub["name"], "Interchange Junction", dest_hub["name"]]
+                metro_fare = 40.0
+
+            added_fare += metro_fare
+            fare_labels.append(f"Metro (₹{int(metro_fare)})")
+            delay = delays.get(line, 0)
+            arr_time = curr_time + timedelta(minutes=transit_mins + delay)
+
+            metro_start = [orig_hub["lon"], orig_hub["lat"]]
+            metro_end = [dest_hub["lon"], dest_hub["lat"]]
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name=line,
+                line_color=line_color,
+                origin_name=orig_hub["name"],
+                destination_name=dest_hub["name"],
+                origin_coords=metro_start,
+                destination_coords=metro_end,
+                path_coords=interpolate_points(metro_start, metro_end, num_points=6),
+                duration_minutes=transit_mins,
+                distance_meters=int(metro_dist_km * 1000),
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=len(stops),
+                intermediate_stops=stops,
+                instructions=f"Board {line} towards destination. Board from coach 3 or 4 for swift interchange.",
+                crowd_level="High" if delay > 5 else "Moderate",
+                delay_minutes=delay,
+                is_delayed=delay > 0,
+                fare_inr=metro_fare,
+                fare_details=f"DMRC Token/Smart Card Fare: ₹{int(metro_fare)}"
+            ))
+            curr_time = arr_time
+            return legs, added_fare, fare_labels, line, curr_time
+
     def _build_fastest_multimodal_route(
 
 
@@ -2501,244 +2855,13 @@ class TransitRouter:
 
 
             curr_time = arr_time
-
-
-
-
-
-
-
         # ----------------- MAIN RAPID METRO HAUL -----------------
-
-
-
-        metro_dist_km = haversine_km(orig_hub["lat"], orig_hub["lon"], dest_hub["lat"], dest_hub["lon"])
-
-
-
-        if metro_dist_km < 1.0:
-
-
-
-            metro_dist_km = 3.0
-
-
-
-
-
-
-
-        has_airport = "airport" in orig["name"].lower() or "airport" in dest["name"].lower() or "igi" in orig["name"].lower() or "igi" in dest["name"].lower()
-
-
-
-        if has_airport:
-
-
-
-            line = "Airport Express"
-
-
-
-            line_color = TRANSIT_LINES[line]["color"]
-
-
-
-            transit_mins = max(14, int(metro_dist_km * 1.5))
-
-
-
-            stops = ["New Delhi (NDLS)", "Shivaji Stadium", "Dhaula Kuan", "Delhi Aerocity", "IGI Airport T3"]
-
-
-
-            metro_fare = 60.0
-
-
-
-        elif metro_dist_km > 18:
-
-
-
-            line = "Yellow Line"
-
-
-
-            line_color = TRANSIT_LINES[line]["color"]
-
-
-
-            transit_mins = int(metro_dist_km * 1.6)
-
-
-
-            stops = ["Rajiv Chowk", "Central Secretariat", "AIIMS", "Hauz Khas", "Malviya Nagar", "Saket"]
-
-
-
-            metro_fare = 50.0
-
-
-
-        else:
-
-
-
-            line = "Blue Line" if "noida" in dest["name"].lower() or "anand" in dest["name"].lower() else "Yellow Line"
-
-
-
-            line_color = TRANSIT_LINES[line]["color"]
-
-
-
-            transit_mins = max(12, int(metro_dist_km * 1.8))
-
-
-
-            stops = [orig_hub["name"], "Interchange Junction", dest_hub["name"]]
-
-
-
-            metro_fare = 40.0
-
-
-
-
-
-
-
-        total_fare += metro_fare
-
-
-
-        fare_parts.append(f"Metro (₹{int(metro_fare)})")
-
-
-
-
-
-
-
-        delay = delays.get(line, 0)
-
-
-
-        arr_time = curr_time + timedelta(minutes=transit_mins + delay)
-
-
-
-
-
-
-
-        metro_start = [orig_hub["lon"], orig_hub["lat"]]
-
-
-
-        metro_end = [dest_hub["lon"], dest_hub["lat"]]
-
-
-
-        legs.append(TransitLeg(
-
-
-
-            id=str(uuid.uuid4())[:8],
-
-
-
-            mode="metro",
-
-
-
-            line_name=line,
-
-
-
-            line_color=line_color,
-
-
-
-            origin_name=orig_hub["name"],
-
-
-
-            destination_name=dest_hub["name"],
-
-
-
-            origin_coords=metro_start,
-
-
-
-            destination_coords=metro_end,
-
-
-
-            path_coords=interpolate_points(metro_start, metro_end, num_points=6),
-
-
-
-            duration_minutes=transit_mins,
-
-
-
-            distance_meters=int(metro_dist_km * 1000),
-
-
-
-            departure_time=curr_time.strftime("%H:%M"),
-
-
-
-            arrival_time=arr_time.strftime("%H:%M"),
-
-
-
-            stops_count=len(stops),
-
-
-
-            intermediate_stops=stops,
-
-
-
-            instructions=f"Board {line} towards destination. Board from coach 3 or 4 for swift interchange.",
-
-
-
-            crowd_level="High" if delay > 5 else "Moderate",
-
-
-
-            delay_minutes=delay,
-
-
-
-            is_delayed=delay > 0,
-
-
-
-            fare_inr=metro_fare,
-
-
-
-            fare_details=f"DMRC Token/Smart Card Fare: ₹{int(metro_fare)}"
-
-
-
-        ))
-
-
-
-        curr_time = arr_time
-
-
-
-
-
-
+        metro_legs, metro_fare_added, metro_fare_labels, line, curr_time = self._build_metro_haul_legs(
+            orig_hub, dest_hub, curr_time, delays
+        )
+        legs.extend(metro_legs)
+        total_fare += metro_fare_added
+        fare_parts.extend(metro_fare_labels)
 
         # ----------------- LAST MILE LEG -----------------
 
@@ -2984,6 +3107,7 @@ class TransitRouter:
 
 
 
+        delay = sum(getattr(leg, 'delay_minutes', 0) for leg in legs)
         total_mins = sum(leg.duration_minutes for leg in legs) + delay
 
 
@@ -3008,18 +3132,13 @@ class TransitRouter:
 
 
 
+        elif (not self._is_aqua_metro_node(orig_hub) and self._is_aqua_metro_node(dest_hub)) or (self._is_aqua_metro_node(orig_hub) and not self._is_aqua_metro_node(dest_hub)):
+            tag_title = "Fastest: Metro Interchange (Blue Line ➔ Aqua Line)" if not self._is_aqua_metro_node(orig_hub) else "Fastest: Metro Interchange (Aqua Line ➔ Blue Line)"
+            tag = "Fastest"
+            tag_reason = f"DMRC Metro + NMRC Aqua Line seamless transit via Noida Sector 52/51 pedestrian skywalk. Direct to {dest_hub['name']} in ~{total_mins} mins at ₹{int(total_fare)} without expressway traffic."
         elif first_mile_needed or last_mile_needed:
-
-
-
             tag_title = f"Multi-Transport: Doorstep Auto ➔ Metro ({line})"
-
-
-
             tag = "Multi-Transport (Auto + Metro)"
-
-
-
             tag_reason = f"Door-to-door multi-transport: Hires Auto ({first_mile_km:.1f} km, ₹{int(fm_fare if first_mile_needed else 0)}) from home/colony directly to {orig_hub['name']} Metro Station, skips highway jams via rapid rail, and drops at destination."
 
 
@@ -3301,212 +3420,13 @@ class TransitRouter:
 
 
         curr_time = arr_time
-
-
-
-
-
-
-
         # 2. Main Trunk Metro Haul
-
-
-
-        metro_dist_km = haversine_km(orig_hub["lat"], orig_hub["lon"], dest_hub["lat"], dest_hub["lon"])
-
-
-
-        if metro_dist_km < 1.0:
-
-
-
-            metro_dist_km = 3.0
-
-
-
-
-
-
-
-        if metro_dist_km > 18:
-
-
-
-            line = "Yellow Line"
-
-
-
-            line_color = TRANSIT_LINES[line]["color"]
-
-
-
-            transit_mins = int(metro_dist_km * 1.6)
-
-
-
-            stops = ["Interchange Concourse", "Platform Express", dest_hub["name"]]
-
-
-
-            metro_fare = 50.0
-
-
-
-        else:
-
-
-
-            line = "Blue Line" if ("noida" in dest["name"].lower() or "anand" in dest["name"].lower()) else "Yellow Line"
-
-
-
-            line_color = TRANSIT_LINES[line]["color"]
-
-
-
-            transit_mins = max(12, int(metro_dist_km * 1.8))
-
-
-
-            stops = [orig_hub["name"], "Platform Junction", dest_hub["name"]]
-
-
-
-            metro_fare = 40.0
-
-
-
-
-
-
-
-        total_fare += metro_fare
-
-
-
-        fare_parts.append(f"Metro (₹{int(metro_fare)})")
-
-
-
-        delay = delays.get(line, 0)
-
-
-
-        arr_time = curr_time + timedelta(minutes=transit_mins + delay)
-
-
-
-
-
-
-
-        metro_start = [orig_hub["lon"], orig_hub["lat"]]
-
-
-
-        metro_end = [dest_hub["lon"], dest_hub["lat"]]
-
-
-
-        legs.append(TransitLeg(
-
-
-
-            id=str(uuid.uuid4())[:8],
-
-
-
-            mode="metro",
-
-
-
-            line_name=line,
-
-
-
-            line_color=line_color,
-
-
-
-            origin_name=orig_hub["name"],
-
-
-
-            destination_name=dest_hub["name"],
-
-
-
-            origin_coords=metro_start,
-
-
-
-            destination_coords=metro_end,
-
-
-
-            path_coords=interpolate_points(metro_start, metro_end, num_points=6),
-
-
-
-            duration_minutes=transit_mins,
-
-
-
-            distance_meters=int(metro_dist_km * 1000),
-
-
-
-            departure_time=curr_time.strftime("%H:%M"),
-
-
-
-            arrival_time=arr_time.strftime("%H:%M"),
-
-
-
-            stops_count=len(stops),
-
-
-
-            intermediate_stops=stops,
-
-
-
-            instructions=f"Board {line} from platform towards {dest_hub['name']}.",
-
-
-
-            crowd_level="Moderate",
-
-
-
-            delay_minutes=delay,
-
-
-
-            is_delayed=delay > 0,
-
-
-
-            fare_inr=metro_fare,
-
-
-
-            fare_details=f"DMRC Smart Card/Token: ₹{int(metro_fare)}"
-
-
-
-        ))
-
-
-
-        curr_time = arr_time
-
-
-
-
-
-
+        metro_legs, metro_fare_added, metro_fare_labels, line, curr_time = self._build_metro_haul_legs(
+            orig_hub, dest_hub, curr_time, delays
+        )
+        legs.extend(metro_legs)
+        total_fare += metro_fare_added
+        fare_parts.extend(metro_fare_labels)
 
         # 3. Last-Mile Leg
 
@@ -3704,6 +3624,7 @@ class TransitRouter:
 
 
 
+        delay = sum(getattr(leg, 'delay_minutes', 0) for leg in legs)
         total_mins = sum(leg.duration_minutes for leg in legs) + delay
 
 
@@ -4428,6 +4349,7 @@ class TransitRouter:
 
 
 
+        delay = sum(getattr(leg, 'delay_minutes', 0) for leg in legs)
         total_mins = sum(leg.duration_minutes for leg in legs) + delay
 
 
@@ -5688,6 +5610,7 @@ class TransitRouter:
 
 
 
+        delay = sum(getattr(leg, 'delay_minutes', 0) for leg in legs)
         total_mins = sum(leg.duration_minutes for leg in legs) + delay
 
 
