@@ -53,10 +53,14 @@ export async function searchPlaces(query: string, city: string = 'Delhi NCR'): P
     return [
       { name: 'Rajiv Chowk (Connaught Place)', lat: 28.6328, lon: 77.2197, category: 'metro_station', city },
       { name: 'Cyber City (Gurugram)', lat: 28.4950, lon: 77.0895, category: 'landmark', city },
-      { name: 'New Delhi Railway Station (NDLS)', lat: 28.6431, lon: 77.2223, category: 'railway_station', city },
-      { name: 'Hauz Khas', lat: 28.5434, lon: 77.2064, category: 'metro_station', city },
-      { name: 'Noida Sector 62', lat: 28.6279, lon: 77.3622, category: 'metro_station', city },
-      { name: 'IGI Airport Terminal 3', lat: 28.5562, lon: 77.0864, category: 'landmark', city }
+      { name: 'Lajpat Nagar 2 (Central Market)', lat: 28.5695, lon: 77.2420, category: 'market', city },
+      { name: 'Janakpuri District Centre (D-Block)', lat: 28.6295, lon: 77.0780, category: 'market', city },
+      { name: 'Rohini Sector 7 & 8 (M2K Cinema & Sai Mandir)', lat: 28.7080, lon: 77.1260, category: 'residential_block', city },
+      { name: 'Dwarka Sector 14 (Vegas Mall & NLU)', lat: 28.6010, lon: 77.0260, category: 'market', city },
+      { name: 'Laxmi Nagar (Vikas Marg)', lat: 28.6310, lon: 77.2780, category: 'market', city },
+      { name: 'Shahpur Jat (Fashion Village)', lat: 28.5480, lon: 77.2185, category: 'village', city },
+      { name: 'Sangam Vihar (Blocks A to L & Ratia Marg)', lat: 28.5020, lon: 77.2420, category: 'residential_block', city },
+      { name: 'New Delhi Railway Station (NDLS)', lat: 28.6431, lon: 77.2223, category: 'railway_station', city }
     ];
   }
 }
