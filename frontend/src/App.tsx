@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TopBar } from './components/layout/TopBar';
 import { SidebarNavigation, NavTab } from './components/layout/SidebarNavigation';
 import { DiscoverView } from './views/DiscoverView';
@@ -105,12 +105,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     refreshIncidents();
     refreshSavedRoutes();
-  }, [selectedCity]);
 
-  // Initial first view search
-  useEffect(() => {
+    // Trigger initial search for realistic first view
     handleExecuteSearch();
-  }, []);
+  }, [selectedCity]);
 
   // WebSocket for Live Telemetry Updates
   useEffect(() => {
@@ -124,7 +122,7 @@ export const App: React.FC = () => {
           if (payload.type === 'SIMULATION_UPDATE') {
             refreshIncidents();
             // If user has routes computed, refresh route ranking seamlessly!
-            handleExecuteSearch(undefined, undefined, undefined, undefined, true);
+            handleExecuteSearch(undefined, true);
           }
         } catch (e) {
           // ignore
@@ -175,6 +173,103 @@ export const App: React.FC = () => {
       if (!silent) setIsSearching(false);
     }
   };
+
+  // Stable references for background telemetry updates without triggering effect re-subscriptions
+  const handleExecuteSearchRef = useRef(handleExecuteSearch);
+  handleExecuteSearchRef.current = handleExecuteSearch;
+
+  const refreshIncidentsRef = useRef(refreshIncidents);
+  refreshIncidentsRef.current = refreshIncidents;
+
+  useEffect(() => {
+    refreshIncidents();
+    refreshSavedRoutes();
+
+    // Trigger initial search for realistic first view
+    handleExecuteSearch();
+  }, [selectedCity]);
+
+  // WebSocket for Live Telemetry Updates (persistent single connection)
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let isMounted = true;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (!isMounted) return;
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        let wsUrl: string;
+        if (apiUrl && (apiUrl.startsWith('http://') || apiUrl.startsWith('https://'))) {
+          wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/telemetry';
+        } else {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl = `${protocol}//${window.location.host}/ws/telemetry`;
+        }
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === 'SIMULATION_UPDATE') {
+              refreshIncidentsRef.current();
+              // If user has routes computed, refresh route ranking seamlessly!
+              handleExecuteSearchRef.current(undefined, true);
+            }
+          } catch {
+            // ignore
+          }
+        };
+
+        ws.onclose = () => {
+          if (isMounted) {
+            reconnectTimeout = setTimeout(connect, 4000);
+          }
+        };
+
+        ws.onerror = () => {
+          // Handled gracefully without logging uncaught errors
+        };
+      } catch (err) {
+        console.warn('WebSocket connection not available:', err);
+      }
+    };
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (ws) {
+        // Detach handlers first so callbacks don't fire during unmount
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+
+        if (ws.readyState === WebSocket.CONNECTING) {
+          // If still connecting, wait until open before calling close to prevent browser
+          // "WebSocket is closed before the connection is established" error
+          ws.onopen = () => {
+            try {
+              ws?.close();
+            } catch {
+              // ignore
+            }
+          };
+        } else if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.close();
+          } catch {
+            // ignore
+          }
+        }
+      }
+    };
+  }, []);
 
   // Replan a Saved Commute
   const handleReplanSaved = (saved: SavedRoute) => {
