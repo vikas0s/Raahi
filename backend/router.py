@@ -280,7 +280,7 @@ class TransitRouter:
 
         # Route to city-specific transit engines
         if is_mathura:
-            return self._plan_mathura_journey(
+            resp = self._plan_mathura_journey(
                 origin_dict=origin_dict,
                 dest_dict=dest_dict,
                 origin_loc=origin_loc,
@@ -290,8 +290,9 @@ class TransitRouter:
                 request=request,
                 simulated_delays=simulated_delays
             )
+            return self._adjust_route_timings(resp, request, now)
         elif city == "Mumbai":
-            return self._plan_mumbai_journey(
+            resp = self._plan_mumbai_journey(
                 origin_dict=origin_dict,
                 dest_dict=dest_dict,
                 origin_loc=origin_loc,
@@ -301,8 +302,9 @@ class TransitRouter:
                 request=request,
                 simulated_delays=simulated_delays
             )
+            return self._adjust_route_timings(resp, request, now)
         elif city == "Bengaluru":
-            return self._plan_bengaluru_journey(
+            resp = self._plan_bengaluru_journey(
                 origin_dict=origin_dict,
                 dest_dict=dest_dict,
                 origin_loc=origin_loc,
@@ -312,6 +314,7 @@ class TransitRouter:
                 request=request,
                 simulated_delays=simulated_delays
             )
+            return self._adjust_route_timings(resp, request, now)
 
         is_night = base_time.hour >= 23 or base_time.hour < 5
 
@@ -410,13 +413,53 @@ class TransitRouter:
 
         active_disruptions = sum(1 for d in simulated_delays.values() if d > 0)
 
-        return PlanResponse(
+        resp = PlanResponse(
             origin=origin_loc,
             destination=dest_loc,
             generated_at=now.isoformat(),
             routes=routes,
             active_disruptions_count=active_disruptions
         )
+        return self._adjust_route_timings(resp, request, now)
+
+    def _adjust_route_timings(self, plan_resp: PlanResponse, request: PlanRequest, now: datetime) -> PlanResponse:
+        if not plan_resp or not plan_resp.routes:
+            return plan_resp
+            
+        is_arrive_by = (getattr(request, "time_mode", None) == "arrive_by") or (getattr(request, "arrival_time", None) is not None)
+        target_str = request.arrival_time if is_arrive_by else (request.departure_time or now.strftime("%H:%M"))
+        if not target_str:
+            target_str = now.strftime("%H:%M")
+            
+        try:
+            if ":" in target_str and len(target_str) <= 5:
+                hh, mm = map(int, target_str.split(":"))
+                target_dt = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+            else:
+                target_dt = datetime.fromisoformat(target_str)
+        except Exception:
+            target_dt = now
+
+        for route in plan_resp.routes:
+            dur = route.total_duration_minutes
+            if is_arrive_by:
+                route_dep = target_dt - timedelta(minutes=dur)
+                route_arr = target_dt
+            else:
+                route_dep = target_dt
+                route_arr = target_dt + timedelta(minutes=dur)
+                
+            route.departure_time = route_dep.strftime("%H:%M")
+            route.arrival_time = route_arr.strftime("%H:%M")
+            
+            curr_leg_dep = route_dep
+            for leg in route.legs:
+                leg.departure_time = curr_leg_dep.strftime("%H:%M")
+                curr_leg_arr = curr_leg_dep + timedelta(minutes=leg.duration_minutes)
+                leg.arrival_time = curr_leg_arr.strftime("%H:%M")
+                curr_leg_dep = curr_leg_arr
+                
+        return plan_resp
 
     def _build_fastest_multimodal_route(
         self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime, delays: Dict[str, int], city: str

@@ -2,6 +2,7 @@ export type TransitMode = 'walk' | 'metro' | 'bus' | 'rail' | 'auto' | 'taxi' | 
 export type CrowdLevel = 'Low' | 'Moderate' | 'High' | 'Very High';
 export type SeverityLevel = 'minor' | 'moderate' | 'severe';
 export type AppLanguage = 'en' | 'hi';
+export type TimeMode = 'now' | 'depart_at' | 'arrive_by';
 
 export interface GeoLocation {
   name: string;

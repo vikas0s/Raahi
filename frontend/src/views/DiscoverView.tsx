@@ -4,7 +4,7 @@ import { JourneySearch } from '../components/journey/JourneySearch';
 import { TravelPreferenceChips } from '../components/journey/TravelPreferenceChips';
 import { MiniCityScene } from '../components/scene/MiniCityScene';
 import { DelayStatusBadge } from '../components/common/DelayStatusBadge';
-import type { SavedRoute, TravelPreferences, TransitIncident } from '../types/transit';
+import type { SavedRoute, TravelPreferences, TransitIncident, TimeMode } from '../types/transit';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
   onOriginChange: (val: string) => void;
   onDestinationChange: (val: string) => void;
   onPreferencesChange: (prefs: TravelPreferences) => void;
-  onSearch: (depTime?: string) => void;
+  onSearch: (departureTime?: string, arrivalTime?: string, timeMode?: TimeMode) => void;
   onReplanSaved: (route: SavedRoute) => void;
   onNavigateToPlan: () => void;
   onNavigateToLive: () => void;

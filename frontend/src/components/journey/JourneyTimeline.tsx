@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Clock } from 'lucide-react';
 import type { RouteItinerary } from '../../types/transit';
+import { formatTime12 } from '../../utils/time';
 import { TransitModeIcon } from '../common/TransitModeIcon';
 import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../common/CrowdLevelIndicator';
@@ -33,7 +34,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
         <div className="flex items-center gap-2.5 text-xs">
           <span className="px-3 py-1.5 rounded-xl bg-[#EEECE3] font-bold text-[#1F231F] flex items-center gap-1.5 border border-[#D8D4C7]">
             <Clock size={13} className="text-[#304B3C] stroke-[2.5]" />
-            <span>{route.total_duration_minutes} mins</span>
+            <span>{formatTime12(route.departure_time)} → {formatTime12(route.arrival_time)} ({route.total_duration_minutes}m)</span>
           </span>
           <span className="px-3 py-1.5 rounded-xl bg-[#4E7C5F]/20 font-bold text-[#21432E] border border-[#4E7C5F]/35">
             ₹{route.total_fare_inr.toFixed(0)} total fare
@@ -74,7 +75,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                     )}
                   </div>
                   <span className="text-xs font-mono font-bold text-[#52544D]">
-                    {leg.departure_time} - {leg.arrival_time} ({leg.duration_minutes}m)
+                    {formatTime12(leg.departure_time)} – {formatTime12(leg.arrival_time)} ({leg.duration_minutes}m)
                   </span>
                 </div>
 

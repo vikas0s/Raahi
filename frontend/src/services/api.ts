@@ -4,6 +4,7 @@ import {
   CityRealtimeContext,
   SavedRoute,
   TravelPreferences,
+  TimeMode,
   RouteItinerary,
   GeoLocation,
   RailStation,
@@ -65,6 +66,8 @@ export async function planJourney(
   destination: string,
   city: string = 'Delhi NCR',
   departureTime?: string,
+  arrivalTime?: string,
+  timeMode: TimeMode = 'now',
   preferences?: Partial<TravelPreferences>
 ): Promise<PlanResponse> {
   const payload = {
@@ -72,6 +75,8 @@ export async function planJourney(
     destination,
     city,
     departure_time: departureTime,
+    arrival_time: arrivalTime,
+    time_mode: timeMode,
     preferences: {
       fastest: preferences?.fastest ?? true,
       cheapest: preferences?.cheapest ?? false,

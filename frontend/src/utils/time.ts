@@ -55,3 +55,4 @@ export function addMinutesToTime(timeStr: string, minutesToAdd: number): string 
     return getCurrentTime24();
   }
 }
+

@@ -21,6 +21,7 @@ import {
   TransitIncident,
   CityRealtimeContext,
   TravelPreferences,
+  TimeMode,
   AppLanguage
 } from './types/transit';
 
@@ -127,7 +128,7 @@ export const App: React.FC = () => {
           if (payload.type === 'SIMULATION_UPDATE') {
             refreshIncidents();
             // If user has routes computed, refresh route ranking seamlessly!
-            handleExecuteSearch(undefined, true);
+            handleExecuteSearch(undefined, undefined, undefined, undefined, undefined, undefined, true);
           }
         } catch (e) {
           // ignore
@@ -148,6 +149,8 @@ export const App: React.FC = () => {
     customDestination?: string,
     customCity?: string,
     departureTime?: string,
+    arrivalTime?: string,
+    timeMode?: TimeMode,
     silent: boolean = false
   ) => {
     const o = customOrigin || origin;
@@ -164,6 +167,8 @@ export const App: React.FC = () => {
         d,
         c,
         departureTime,
+        arrivalTime,
+        timeMode,
         preferences
       );
       setRoutes(res.routes);
@@ -220,7 +225,7 @@ export const App: React.FC = () => {
             if (payload.type === 'SIMULATION_UPDATE') {
               refreshIncidentsRef.current();
               // If user has routes computed, refresh route ranking seamlessly!
-              handleExecuteSearchRef.current(undefined, true);
+              handleExecuteSearchRef.current(undefined, undefined, undefined, undefined, undefined, undefined, true);
             }
           } catch {
             // ignore
@@ -343,7 +348,7 @@ export const App: React.FC = () => {
               onOriginChange={setOrigin}
               onDestinationChange={setDestination}
               onPreferencesChange={(p) => setPreferences(p)}
-              onSearch={(depTime) => handleExecuteSearch(undefined, undefined, undefined, depTime)}
+              onSearch={(depTime, arrTime, mode) => handleExecuteSearch(undefined, undefined, undefined, depTime, arrTime, mode)}
               onReplanSaved={handleReplanSaved}
               onNavigateToPlan={() => setActiveTab('plan')}
               onNavigateToLive={() => setActiveTab('live')}

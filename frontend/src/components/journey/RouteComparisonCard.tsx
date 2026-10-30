@@ -1,6 +1,7 @@
 import React from 'react';
-import { IndianRupee, ArrowLeftRight, Footprints, Sparkles, ChevronRight, Check, MoonStar, Ban } from 'lucide-react';
+import { IndianRupee, ArrowLeftRight, Footprints, Sparkles, ChevronRight, Check, MoonStar, Ban, Clock } from 'lucide-react';
 import type { RouteItinerary } from '../../types/transit';
+import { formatTime12 } from '../../utils/time';
 import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../common/CrowdLevelIndicator';
 import { TransitModeIcon } from '../common/TransitModeIcon';
@@ -103,8 +104,11 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
             {isUnavailable ? <Ban size={12} className="shrink-0" /> : <Sparkles size={12} className="shrink-0" />}
             <span>{route.tag}</span>
           </span>
-          <span className="text-xs font-semibold text-[#52544D] font-mono tracking-tight">
-            {route.departure_time} → {route.arrival_time}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#EEECE3]/70 font-mono text-xs font-bold text-[#253D30] border border-[#D8D4C7]/80">
+            <Clock size={12} className="text-[#5B8A6E] stroke-[2.2]" />
+            <span>{formatTime12(route.departure_time)}</span>
+            <span className="text-[#888B82]">→</span>
+            <span>{formatTime12(route.arrival_time)}</span>
           </span>
         </div>
 
