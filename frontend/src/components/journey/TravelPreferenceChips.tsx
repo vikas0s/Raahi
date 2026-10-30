@@ -33,36 +33,36 @@ export const TravelPreferenceChips: React.FC<Props> = ({ preferences, onChange, 
   const isBengaluru = city.toLowerCase().includes('bengaluru') || city.toLowerCase().includes('bangalore');
 
   const ebusLabel = isMumbai
-    ? 'BEST Electric Bus'
+    ? t('chipBestEBus')
     : isMathura
-    ? 'Electric Nagar Seva'
+    ? t('chipNagarSeva')
     : isBengaluru
-    ? 'BMTC Electric Bus'
+    ? t('chipBmtcEBus')
     : t('prefEBus');
 
   const autoLabel = isMumbai
-    ? 'Auto & Kaali-Peeli Taxi'
+    ? t('chipAutoKaaliPeeli')
     : isMathura
-    ? 'Shared Tempo & Auto'
+    ? t('chipSharedTempo')
     : isBengaluru
-    ? 'Metered Auto & Cab'
+    ? t('chipMeteredAutoCab')
     : t('prefAutoTaxi');
 
   const multiLabel = isMumbai
-    ? 'Multi-Transport (Local / Metro)'
+    ? t('chipMultiLocalMetro')
     : isMathura
-    ? 'Multi-Transport (Tempo + Train)'
+    ? t('chipMultiTempoTrain')
     : t('prefMultiTransport');
 
   const pinkLabel = isMumbai
-    ? 'Women Concession'
+    ? t('chipWomenConcession')
     : isMathura
-    ? 'Women Concession'
+    ? t('chipWomenConcession')
     : t('prefPinkPass');
 
   const chips: { key: keyof TravelPreferences; label: string; icon: React.ReactNode; isPink?: boolean }[] = [
     { key: 'prefer_multimodal', label: multiLabel, icon: <Layers size={13} /> },
-    { key: 'prefer_rail', label: isMumbai ? '🚆 Suburban Local Train' : t('prefRail'), icon: <Train size={13} /> },
+    { key: 'prefer_rail', label: isMumbai ? t('chipSuburbanTrain') : t('prefRail'), icon: <Train size={13} /> },
     { key: 'fastest', label: t('prefFastest'), icon: <Zap size={13} /> },
     { key: 'cheapest', label: t('prefCheapest'), icon: <IndianRupee size={13} /> },
     { key: 'prefer_ebus', label: ebusLabel, icon: <Bus size={13} /> },

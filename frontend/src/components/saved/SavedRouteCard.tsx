@@ -3,6 +3,7 @@ import { MapPin, Navigation, Clock, IndianRupee, ArrowLeftRight, Trash2, Check, 
 import type { SavedRoute } from '../../types/transit';
 import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { localizeRouteTag } from '../../i18n/translations';
 
 interface Props {
   route: SavedRoute;
@@ -11,8 +12,13 @@ interface Props {
 }
 
 export const SavedRouteCard: React.FC<Props> = ({ route, onReplan, onDelete }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const preferredLabel = localizeRouteTag(
+    route.preferred_mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    language
+  );
 
   return (
     <div className="bg-[#FFFEFA] rounded-2xl border border-[#E3E0D6] p-5 shadow-[0_1px_4px_rgba(41,45,41,0.02)] hover:shadow-[0_4px_18px_rgba(48,75,60,0.07)] transition-all flex flex-col justify-between">
@@ -24,7 +30,7 @@ export const SavedRouteCard: React.FC<Props> = ({ route, onReplan, onDelete }) =
               {route.name}
             </h4>
             <span className="text-[11px] text-[#52544D] uppercase tracking-wider font-bold">
-              {route.city} • Preferred: {route.preferred_mode}
+              {route.city} • {t('preferredLabel')} {preferredLabel}
             </span>
           </div>
 

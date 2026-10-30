@@ -11,7 +11,8 @@ if (typeof window !== 'undefined') {
 import { RouteItinerary, GeoLocation, LiveVehicle } from '../../types/transit';
 import { fetchLiveVehicles } from '../../services/api';
 import { CheckCircle2, Crosshair, Navigation } from 'lucide-react';
-import { useLocation } from '../../context/LocationContext';
+import { useLocation } from '../../context/LocationContext';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 interface Props {
   selectedRoute: RouteItinerary | null;
@@ -32,6 +33,7 @@ export const TransitMap: React.FC<Props> = ({
   className = '',
   city
 }) => {
+  const { t, language } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState<boolean>(false);
@@ -358,7 +360,7 @@ export const TransitMap: React.FC<Props> = ({
           .setLngLat(originPt)
           .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(`
             <div class="text-xs">
-              <span class="text-[10px] uppercase font-bold text-[#2E5A3D]">Origin</span>
+              <span class="text-[10px] uppercase font-bold text-[#2E5A3D]">${t('mapOriginLabel')}</span>
               <h4 class="font-bold text-[#1F231F]">${originLabel}</h4>
             </div>
           `))
@@ -391,7 +393,7 @@ export const TransitMap: React.FC<Props> = ({
           .setLngLat(destPt)
           .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(`
             <div class="text-xs">
-              <span class="text-[10px] uppercase font-bold text-[#C8795A]">Destination</span>
+              <span class="text-[10px] uppercase font-bold text-[#C8795A]">${t('mapDestLabel')}</span>
               <h4 class="font-bold text-[#1F231F]">${destLabel}</h4>
             </div>
           `))
@@ -657,7 +659,7 @@ export const TransitMap: React.FC<Props> = ({
         <button
           type="button"
           onClick={recenterMap}
-          title={userLat !== null ? "Center map on your current location" : "Detect your current location"}
+          title={userLat !== null ? t('mapCenterTooltip') : t('mapDetectTooltip')}
           className="flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-[#FFFEFA]/95 hover:bg-[#FFFEFA] text-[#2563EB] shadow-md border border-[#D8D4C7] transition-all cursor-pointer hover:scale-105 active:scale-95 backdrop-blur-xs"
         >
           <Crosshair size={18} className="stroke-[2.4]" />
@@ -676,10 +678,10 @@ export const TransitMap: React.FC<Props> = ({
           }`}
         >
           <span className={`w-2 h-2 rounded-full ${showLiveGPS ? 'bg-[#5B8A6E] animate-pulse' : 'bg-[#77776F]'}`} />
-          <span>Live Delhi Transit (OTD)</span>
+          <span>{t('mapLiveDelhiTransit')}</span>
           {showLiveGPS && (
             <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full font-mono ml-0.5">
-              {liveVehicles.length} buses
+              {t('mapBusesCount').replace('{count}', String(liveVehicles.length))}
             </span>
           )}
         </button>
@@ -687,7 +689,7 @@ export const TransitMap: React.FC<Props> = ({
         {showLiveGPS && lastTelemetryUpdate && (
           <span className="text-[10px] text-[#304B3C] bg-[#F7F5EF]/90 backdrop-blur-xs px-2.5 py-0.5 rounded-lg border border-[#E3E0D6] shadow-xs inline-flex items-center gap-1 font-mono">
             <CheckCircle2 size={10} className="text-[#5B8A6E]" />
-            OTD Key Active • {lastTelemetryUpdate}
+            {t('mapOtdActive')} • {lastTelemetryUpdate}
           </span>
         )}
       </div>
@@ -695,16 +697,16 @@ export const TransitMap: React.FC<Props> = ({
       {/* Top Right: Legend Badge */}
       <div className="absolute top-3 right-3 z-10 flex items-center gap-2 bg-[#F7F5EF]/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-[#E3E0D6] text-xs text-[#292D29] shadow-sm">
         <span className="flex items-center gap-1 text-[#2563EB] font-bold">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] inline-block border border-white shadow-xs" /> You
+          <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] inline-block border border-white shadow-xs" /> {t('mapYou')}
         </span>
         <span className="flex items-center gap-1 ml-1.5">
-          <span className="w-3 h-1 bg-[#304B3C] rounded-full inline-block" /> Transit
+          <span className="w-3 h-1 bg-[#304B3C] rounded-full inline-block" /> {t('mapTransit')}
         </span>
         <span className="flex items-center gap-1 ml-1.5">
-          <span className="w-3 h-0.5 border-t border-dashed border-[#77776F] inline-block" /> Walk
+          <span className="w-3 h-0.5 border-t border-dashed border-[#77776F] inline-block" /> {t('mapWalk')}
         </span>
         <span className="flex items-center gap-1 ml-1.5 text-[#304B3C] font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#304B3C] inline-block animate-ping" /> Bus GPS
+          <span className="w-2 h-2 rounded-full bg-[#304B3C] inline-block animate-ping" /> {t('mapBusGps')}
         </span>
       </div>
     </div>

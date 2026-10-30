@@ -130,7 +130,7 @@ export const TopBar: React.FC<Props> = ({
             >
               {availableCities.map((c) => (
                 <option key={c} value={c}>
-                  {c === detectedCity ? `📍 ${c} (Current)` : c}
+                  {c === detectedCity ? `📍 ${c} (${language === 'hi' ? 'वर्तमान' : 'Current'})` : c}
                 </option>
               ))}
             </select>
@@ -141,10 +141,10 @@ export const TopBar: React.FC<Props> = ({
               onClick={handleLocateClick}
               title={
                 isLocating
-                  ? 'Detecting your location...'
+                  ? (language === 'hi' ? 'आपका स्थान खोज रहे हैं...' : 'Detecting your location...')
                   : permissionStatus === 'granted'
-                  ? `Live GPS Active (${detectedLocality || detectedCity || 'Detected'}). Click to recenter.`
-                  : 'Detect my live location'
+                  ? (language === 'hi' ? `लाइव जीपीएस सक्रिय (${detectedLocality || detectedCity || 'सक्रिय'})` : `Live GPS Active (${detectedLocality || detectedCity || 'Detected'}). Click to recenter.`)
+                  : (language === 'hi' ? 'वर्तमान स्थान का पता लगाएं' : 'Detect my live location')
               }
               className={`pr-2 pl-1 py-1 text-[#52544D] hover:text-[#2563EB] cursor-pointer transition-colors ${
                 isLocating ? 'animate-pulse text-[#2563EB]' : ''
@@ -159,11 +159,13 @@ export const TopBar: React.FC<Props> = ({
             <div className="absolute top-full right-0 mt-2 w-72 bg-[#FFFEFA] rounded-xl border border-[#D8D4C7] p-3 shadow-xl z-50 text-xs text-[#1F231F] space-y-1.5 animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center gap-1.5 font-bold text-[#C8795A]">
                 <AlertCircle size={14} />
-                <span>Enable Browser Location</span>
+                <span>{language === 'hi' ? 'ब्राउज़र लोकेशन अनुमति दें' : 'Enable Browser Location'}</span>
               </div>
               <p className="text-[11px] text-[#52544D] leading-normal">
                 {locationError ||
-                  'Location permission is blocked. Click the lock/settings icon in your browser address bar and enable "Location" to auto-detect your city.'}
+                  (language === 'hi'
+                    ? 'लोकेशन अनुमति बंद है। शहर का पता लगाने हेतु ब्राउज़र सेटिंग्स में लोकेशन की अनुमति दें।'
+                    : 'Location permission is blocked. Click the lock/settings icon in your browser address bar and enable "Location" to auto-detect your city.')}
               </p>
               <div className="flex items-center justify-between pt-1 border-t border-[#E3E0D6]">
                 <button
@@ -174,14 +176,14 @@ export const TopBar: React.FC<Props> = ({
                   }}
                   className="text-[11px] font-bold text-[#2563EB] hover:underline cursor-pointer"
                 >
-                  Retry Detection
+                  {language === 'hi' ? 'पुनः प्रयास करें' : 'Retry Detection'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowLocationTip(false)}
                   className="text-[11px] text-[#77776F] hover:text-[#1F231F] cursor-pointer"
                 >
-                  Dismiss
+                  {language === 'hi' ? 'खारिज करें' : 'Dismiss'}
                 </button>
               </div>
             </div>

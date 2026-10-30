@@ -145,6 +145,21 @@ export interface ChatMessage {
   action_type?: string;
   route_data?: RouteItinerary;
   suggested_actions?: { label: string; action: string }[];
+  is_grounded_route?: boolean;
+  audio_base64?: string;
+  isError?: boolean;
+  canRetry?: boolean;
+}
+
+export interface AssistantChatResponse {
+  reply: string;
+  session_id?: string;
+  action_type?: 'show_route' | 'show_delays' | 'save_route' | 'general_info';
+  route_data?: RouteItinerary;
+  suggested_actions?: { label: string; action: string }[];
+  detected_intent?: string;
+  is_grounded_route?: boolean;
+  audio_base64?: string;
 }
 
 export interface LiveVehicle {

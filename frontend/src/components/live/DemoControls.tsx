@@ -21,19 +21,21 @@ interface ScenarioConfig {
 }
 
 export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulationUpdated, className = '' }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [activeScenario, setActiveScenario] = useState<string>('normal');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
 
   const getScenariosForCity = (cityName: string): ScenarioConfig[] => {
     const c = (cityName || '').toLowerCase();
+    const isHi = language === 'hi';
+
     if (c.includes('mumbai')) {
       return [
         {
           id: 'mumbai_interchange_rush',
-          title: 'Dadar Interchange Rush',
-          subtitle: '+12m Western/Central platform crowd',
+          title: isHi ? 'दादर इंटरचेंज भीड़' : 'Dadar Interchange Rush',
+          subtitle: isHi ? '+12 मिनट पश्चिमी/मध्य प्लेटफॉर्म भीड़' : '+12m Western/Central platform crowd',
           icon: Train,
           colorBg: 'bg-[#BD4F44]/15',
           colorBorder: 'border-[#BD4F44]',
@@ -42,8 +44,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mumbai_mega_block',
-          title: 'Sunday Mega Block',
-          subtitle: '+20m fast-to-slow line diversion',
+          title: isHi ? 'रविवार मेगा ब्लॉक' : 'Sunday Mega Block',
+          subtitle: isHi ? '+20 मिनट फास्ट से स्लो लाइन डायवर्सन' : '+20m fast-to-slow line diversion',
           icon: Sliders,
           colorBg: 'bg-[#E5A919]/15',
           colorBorder: 'border-[#E5A919]',
@@ -52,8 +54,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mumbai_traffic_jam',
-          title: 'WEH & BKC Road Traffic',
-          subtitle: '+22m Kalanagar & Sea Link jam',
+          title: isHi ? 'WEH और BKC भारी ट्रैफिक' : 'WEH & BKC Road Traffic',
+          subtitle: isHi ? '+22 मिनट कलानगर व सी लिंक जाम' : '+22m Kalanagar & Sea Link jam',
           icon: Car,
           colorBg: 'bg-[#C8795A]/15',
           colorBorder: 'border-[#C8795A]',
@@ -62,8 +64,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mumbai_monsoon_waterlogging',
-          title: 'Kurla / Sion High Tide',
-          subtitle: '+16m track waterlogging regulation',
+          title: isHi ? 'कुर्ला / सायन जलभराव' : 'Kurla / Sion High Tide',
+          subtitle: isHi ? '+16 मिनट ट्रैक पर जलभराव नियमन' : '+16m track waterlogging regulation',
           icon: CloudRain,
           colorBg: 'bg-[#4E7C5F]/20',
           colorBorder: 'border-[#4E7C5F]',
@@ -76,8 +78,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
       return [
         {
           id: 'mathura_darshan_surge',
-          title: 'Bankey Bihari Darshan Surge',
-          subtitle: '+25m evening aarti crowd & parikrama',
+          title: isHi ? 'बांके बिहारी दर्शन भीड़' : 'Bankey Bihari Darshan Surge',
+          subtitle: isHi ? '+25 मिनट संध्या आरती व परिक्रमा भीड़' : '+25m evening aarti crowd & parikrama',
           icon: Users,
           colorBg: 'bg-[#BD4F44]/15',
           colorBorder: 'border-[#BD4F44]',
@@ -86,8 +88,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mathura_parikrama_rush',
-          title: 'Govardhan Parikrama Surge',
-          subtitle: '+30m Ekadashi/Purnima 50k+ rush',
+          title: isHi ? 'गोवर्धन परिक्रमा भीड़' : 'Govardhan Parikrama Surge',
+          subtitle: isHi ? '+30 मिनट एकादशी/पूर्णिमा 50हजार+ भीड़' : '+30m Ekadashi/Purnima 50k+ rush',
           icon: Sparkles,
           colorBg: 'bg-[#E5A919]/15',
           colorBorder: 'border-[#E5A919]',
@@ -96,8 +98,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mathura_kapat_reopen',
-          title: 'Temple Kapat Reopening',
-          subtitle: '+15m 4:30 PM Darshan rush after rest',
+          title: isHi ? 'मंदिर कपाट पुनः दर्शन' : 'Temple Kapat Reopening',
+          subtitle: isHi ? '+15 मिनट 4:30 बजे दर्शनार्थी आगमन' : '+15m 4:30 PM Darshan rush after rest',
           icon: AlertTriangle,
           colorBg: 'bg-[#C8795A]/15',
           colorBorder: 'border-[#C8795A]',
@@ -106,8 +108,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'mathura_traffic_diversion',
-          title: 'Chatikara Outer Diversion',
-          subtitle: '+18m highway cut shuttle queue',
+          title: isHi ? 'छटीकरा बाहरी डायवर्सन' : 'Chatikara Outer Diversion',
+          subtitle: isHi ? '+18 मिनट हाईवे शटल कतार' : '+18m highway cut shuttle queue',
           icon: Bus,
           colorBg: 'bg-[#4E7C5F]/20',
           colorBorder: 'border-[#4E7C5F]',
@@ -120,8 +122,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
       return [
         {
           id: 'blr_silk_board_jam',
-          title: 'Silk Board Junction Jam',
-          subtitle: '+25m Outer Ring Road crawl',
+          title: isHi ? 'सिल्क बोर्ड जंक्शन जाम' : 'Silk Board Junction Jam',
+          subtitle: isHi ? '+25 मिनट आउटर रिंग रोड रुकावट' : '+25m Outer Ring Road crawl',
           icon: Car,
           colorBg: 'bg-[#BD4F44]/15',
           colorBorder: 'border-[#BD4F44]',
@@ -130,8 +132,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'blr_metro_peak',
-          title: 'Namma Metro Purple Line',
-          subtitle: '+8m Majestic interchange rush',
+          title: isHi ? 'नम्मा मेट्रो पर्पल लाइन' : 'Namma Metro Purple Line',
+          subtitle: isHi ? '+8 मिनट मैजेस्टिक इंटरचेंज भीड़' : '+8m Majestic interchange rush',
           icon: Train,
           colorBg: 'bg-[#E5A919]/15',
           colorBorder: 'border-[#E5A919]',
@@ -140,8 +142,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'blr_airport_surge',
-          title: 'Airport Road Hebbal Jam',
-          subtitle: '+20m KIA airport highway delay',
+          title: isHi ? 'एयरपोर्ट रोड हेब्बल जाम' : 'Airport Road Hebbal Jam',
+          subtitle: isHi ? '+20 मिनट केआईए एयरपोर्ट हाईवे देरी' : '+20m KIA airport highway delay',
           icon: Bus,
           colorBg: 'bg-[#C8795A]/15',
           colorBorder: 'border-[#C8795A]',
@@ -150,8 +152,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
         },
         {
           id: 'monsoon_rain',
-          title: 'Monsoon Rain Downpour',
-          subtitle: '+15m waterlogged corridors',
+          title: isHi ? 'मानसून बारिश / जलभराव' : 'Monsoon Rain Downpour',
+          subtitle: isHi ? '+15 मिनट जलभराव प्रभावित मार्ग' : '+15m waterlogged corridors',
           icon: CloudRain,
           colorBg: 'bg-[#4E7C5F]/20',
           colorBorder: 'border-[#4E7C5F]',
@@ -164,8 +166,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
     return [
       {
         id: 'metro_signal_delay',
-        title: 'Yellow Line Delay',
-        subtitle: '+14m signal calibration',
+        title: isHi ? 'येलो लाइन देरी' : 'Yellow Line Delay',
+        subtitle: isHi ? '+14 मिनट सिग्नल सुधार' : '+14m signal calibration',
         icon: Train,
         colorBg: 'bg-[#E5A919]/15',
         colorBorder: 'border-[#E5A919]',
@@ -174,8 +176,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
       },
       {
         id: 'bus_breakdown',
-        title: 'DTC Bus Diversion',
-        subtitle: '+20m Ring Road block',
+        title: isHi ? 'डीटीसी बस डायवर्सन' : 'DTC Bus Diversion',
+        subtitle: isHi ? '+20 मिनट रिंग रोड जाम' : '+20m Ring Road block',
         icon: Bus,
         colorBg: 'bg-[#C8795A]/15',
         colorBorder: 'border-[#C8795A]',
@@ -184,8 +186,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
       },
       {
         id: 'peak_hour_surge',
-        title: 'Concourse Peak Surge',
-        subtitle: 'Rajiv Chowk & Kashmere Gate',
+        title: isHi ? 'कॉनकोर्स पीक भीड़' : 'Concourse Peak Surge',
+        subtitle: isHi ? 'राजीव चौक और कश्मीरी गेट' : 'Rajiv Chowk & Kashmere Gate',
         icon: Users,
         colorBg: 'bg-[#BD4F44]/15',
         colorBorder: 'border-[#BD4F44]',
@@ -194,8 +196,8 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
       },
       {
         id: 'monsoon_rain',
-        title: 'Monsoon Rain',
-        subtitle: '+15m Minto Bridge road delay',
+        title: isHi ? 'मानसून बारिश' : 'Monsoon Rain',
+        subtitle: isHi ? '+15 मिनट मिंटो ब्रिज सड़क देरी' : '+15m Minto Bridge road delay',
         icon: CloudRain,
         colorBg: 'bg-[#4E7C5F]/20',
         colorBorder: 'border-[#4E7C5F]',
@@ -209,14 +211,14 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
 
   const trigger = async (scenarioId: string, label: string) => {
     setIsLoading(true);
-    setStatusMessage(`Applying scenario: ${label}...`);
+    setStatusMessage(language === 'hi' ? `परिदृश्य लागू किया जा रहा है: ${label}...` : `Applying scenario: ${label}...`);
     try {
       const res = await simulateDelay(scenarioId, city);
       setActiveScenario(scenarioId);
-      setStatusMessage(res.message || 'Scenario updated');
+      setStatusMessage(res.message || (language === 'hi' ? 'परिदृश्य अद्यतित' : 'Scenario updated'));
       onSimulationUpdated();
-    } catch (err) {
-      setStatusMessage('Error updating simulation');
+    } catch {
+      setStatusMessage(language === 'hi' ? 'सिम्युलेशन अद्यतन में त्रुटि' : 'Error updating simulation');
     } finally {
       setIsLoading(false);
     }
@@ -224,14 +226,14 @@ export const DemoControls: React.FC<Props> = ({ city = 'Delhi NCR', onSimulation
 
   const reset = async () => {
     setIsLoading(true);
-    setStatusMessage('Resetting to normal schedule...');
+    setStatusMessage(language === 'hi' ? 'सामान्य समय सारिणी पर रीसेट हो रहा है...' : 'Resetting to normal schedule...');
     try {
       const res = await simulateDelay('reset', city);
       setActiveScenario('normal');
-      setStatusMessage(res.message || 'Transit network reset to standard schedule');
+      setStatusMessage(res.message || (language === 'hi' ? 'परिवहन नेटवर्क मानक समय सारिणी पर रीसेट' : 'Transit network reset to standard schedule'));
       onSimulationUpdated();
-    } catch (err) {
-      setStatusMessage('Error resetting simulation');
+    } catch {
+      setStatusMessage(language === 'hi' ? 'रीसेट करने में त्रुटि' : 'Error resetting simulation');
     } finally {
       setIsLoading(false);
     }

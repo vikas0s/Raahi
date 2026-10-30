@@ -5,6 +5,8 @@ import { formatTime12 } from '../../utils/time';
 import { TransitModeIcon } from '../common/TransitModeIcon';
 import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../common/CrowdLevelIndicator';
+import { useTranslation } from '../../i18n/LanguageContext';
+import { localizeMode } from '../../i18n/translations';
 
 interface Props {
   route: RouteItinerary;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
+  const { t, language } = useTranslation();
   const [expandedLegs, setExpandedLegs] = useState<Record<string, boolean>>({});
 
   const toggleLegStops = (legId: string) => {
@@ -24,7 +27,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D8D4C7]">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-[#304B3C]">
-            Step-by-step Transit Itinerary
+            {t('stepByStepItinerary')}
           </span>
           <h3 className="font-heading font-bold text-lg text-[#1F231F] mt-0.5 tracking-tight">
             {route.title}
@@ -37,7 +40,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
             <span>{formatTime12(route.departure_time)} → {formatTime12(route.arrival_time)} ({route.total_duration_minutes}m)</span>
           </span>
           <span className="px-3 py-1.5 rounded-xl bg-[#4E7C5F]/20 font-bold text-[#21432E] border border-[#4E7C5F]/35">
-            ₹{route.total_fare_inr.toFixed(0)} total fare
+            ₹{route.total_fare_inr.toFixed(0)} {t('totalFare').toLowerCase()}
           </span>
         </div>
       </div>
@@ -68,7 +71,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-sm text-[#1F231F]">
-                      {leg.line_name || (leg.mode === 'walk' ? 'Walking Section' : leg.mode.toUpperCase())}
+                      {leg.line_name || (leg.mode === 'walk' ? t('walkingSection') : localizeMode(leg.mode, language))}
                     </span>
                     {leg.is_delayed && (
                       <DelayStatusBadge delayMinutes={leg.delay_minutes} />
@@ -83,7 +86,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                 {leg.mode === 'rail' && (
                   <div className="flex flex-wrap items-center gap-2 mb-2.5 p-2 rounded-xl bg-[#8B1E1E]/8 border border-[#8B1E1E]/25 text-xs">
                     <span className="inline-flex items-center gap-1 font-extrabold text-[#8B1E1E]">
-                      <span>🚆 Indian Railways</span>
+                      <span>{language === 'hi' ? '🚆 भारतीय रेल' : '🚆 Indian Railways'}</span>
                     </span>
                     {leg.platform && (
                       <span className="px-2 py-0.5 rounded-md bg-[#8B1E1E]/15 font-bold text-[#8B1E1E] border border-[#8B1E1E]/30">
@@ -92,11 +95,11 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                     )}
                     {leg.coach_classes && leg.coach_classes.length > 0 && (
                       <span className="px-2 py-0.5 rounded-md bg-[#EEECE3] font-bold text-[#454841] border border-[#D8D4C7]">
-                        Classes: {leg.coach_classes.join(' · ')}
+                        {t('classesLabel')} {leg.coach_classes.join(' · ')}
                       </span>
                     )}
                     <span className="ml-auto text-[11px] font-semibold text-[#8B1E1E]">
-                      {leg.data_source === 'railradar_live' ? '● Live NTES Telemetry' : '✓ Verified IR Timetable'}
+                      {leg.data_source === 'railradar_live' ? t('liveNTES') : t('verifiedTimetable')}
                     </span>
                   </div>
                 )}
@@ -105,11 +108,11 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                 <div className="text-xs space-y-1.5 mb-2.5">
                   <p className="flex items-center gap-2 font-bold text-[#1F231F]">
                     <span className="w-2 h-2 rounded-full bg-[#4E7C5F]" />
-                    <span>From: {leg.origin_name}</span>
+                    <span>{t('fromLabel')} {leg.origin_name}</span>
                   </p>
                   <p className="flex items-center gap-2 font-bold text-[#1F231F]">
                     <span className="w-2 h-2 rounded-full bg-[#B85732]" />
-                    <span>To: {leg.destination_name}</span>
+                    <span>{t('toLabel')} {leg.destination_name}</span>
                   </p>
                 </div>
 
@@ -140,7 +143,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                       onClick={() => toggleLegStops(leg.id)}
                       className="inline-flex items-center gap-1.5 text-xs text-[#253D30] font-bold hover:underline cursor-pointer"
                     >
-                      <span>{leg.stops_count} intermediate stops</span>
+                      <span>{leg.stops_count} {t('intermediateStops')}</span>
                       {isExpanded ? <ChevronUp size={14} className="stroke-[2.5]" /> : <ChevronDown size={14} className="stroke-[2.5]" />}
                     </button>
 
@@ -159,7 +162,7 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
 
                 {/* Footer Metadata */}
                 <div className="mt-3 pt-2.5 border-t border-[#D8D4C7]/60 flex items-center justify-between text-xs font-bold text-[#52544D]">
-                  <span>Distance: {(leg.distance_meters / 1000).toFixed(1)} km</span>
+                  <span>{t('distanceLabel')} {(leg.distance_meters / 1000).toFixed(1)} km</span>
                   <CrowdLevelIndicator level={leg.crowd_level} compact />
                 </div>
               </div>

@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Query, HTTPException, WebSocket, WebSocketDisconnect, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load unified root .env configuration
@@ -15,12 +15,14 @@ load_dotenv(dotenv_path=root_env)
 
 from .models import (
     PlanRequest, PlanResponse, TransitIncident, SimulateDelayRequest,
-    SavedRoute, SavedRouteCreate, ChatRequest, ChatResponse, StopDeparture, ReverseGeocodeResponse
+    SavedRoute, SavedRouteCreate, ChatRequest, ChatResponse, StopDeparture, ReverseGeocodeResponse,
+    ResetSessionRequest, TTSRequest, TTSResponse
 )
 from .router import router_instance
 from .simulation import simulator_instance
 from .storage import get_all_saved_routes, create_saved_route, delete_saved_route
 from .chat_engine import chat_assistant_instance
+from .sarvam_service import sarvam_service_instance
 from .transit_data import PLACES_DATABASE
 from .otd_service import otd_service_instance, LiveVehicle
 from .rail.service import rail_service_instance
@@ -227,8 +229,31 @@ async def simulate_delay(req: SimulateDelayRequest):
     return result
 
 @app.post("/chat", response_model=ChatResponse)
-def chat_with_assistant(req: ChatRequest):
-    return chat_assistant_instance.process_message(req)
+@app.post("/api/assistant/chat", response_model=ChatResponse)
+async def chat_with_assistant(req: ChatRequest):
+    return await chat_assistant_instance.process_message(req)
+
+@app.post("/api/assistant/reset")
+def reset_assistant_session(req: ResetSessionRequest):
+    chat_assistant_instance.session_manager.reset(req.session_id)
+    return {"status": "ok", "session_id": req.session_id, "message": "Session reset"}
+
+@app.post("/api/assistant/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        transcript = await sarvam_service_instance.transcribe_speech(content, filename=file.filename or "audio.wav")
+        return {"status": "ok", "transcript": transcript}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/assistant/synthesize", response_model=TTSResponse)
+async def synthesize_speech_endpoint(req: TTSRequest):
+    try:
+        audio_base64 = await sarvam_service_instance.synthesize_speech(req.text, req.language_code, req.speaker)
+        return TTSResponse(status="ok", audio_base64=audio_base64)
+    except Exception as e:
+        return TTSResponse(status="error", error=str(e))
 
 @app.get("/saved-routes", response_model=List[SavedRoute])
 def list_saved_routes(city: Optional[str] = Query(None)):

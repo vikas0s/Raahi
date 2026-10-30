@@ -3,7 +3,8 @@ import { ArrowUpDown, MapPin, Navigation, Clock, Search, Sparkles, RotateCcw, Cr
 import { useLocation } from '../../context/LocationContext';
 import { searchPlaces } from '../../services/api';
 import type { GeoLocation, TimeMode } from '../../types/transit';
-import { useTranslation } from '../../i18n/LanguageContext';
+import { useTranslation } from '../../i18n/LanguageContext';
+import { localizeCategory } from '../../i18n/translations';
 import { formatTime12, getCurrentTime24, addMinutesToTime } from '../../utils/time';
 
 interface Props {
@@ -27,7 +28,7 @@ export const JourneySearch: React.FC<Props> = ({
   onSubmit,
   isLoading = false
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const {
     latitude: userLat,
     longitude: userLon,
@@ -48,8 +49,8 @@ export const JourneySearch: React.FC<Props> = ({
     const locName = loc.locality
       ? `${loc.locality}${loc.city ? `, ${loc.city}` : ''}`
       : loc.city
-      ? `My Current Location (${loc.city})`
-      : 'My Current Location';
+      ? (language === 'hi' ? `मेरा वर्तमान स्थान (${loc.city})` : `My Current Location (${loc.city})`)
+      : (language === 'hi' ? 'मेरा वर्तमान स्थान' : 'My Current Location');
 
     const coords: [number, number] = [loc.lon, loc.lat];
 
@@ -157,7 +158,7 @@ export const JourneySearch: React.FC<Props> = ({
                 className="text-[11px] font-bold text-[#2563EB] hover:text-[#1D4ED8] inline-flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Crosshair size={12} className={`stroke-[2.5] ${isLocating ? 'animate-spin' : ''}`} />
-                <span>{isLocating ? 'Locating...' : 'Use current location'}</span>
+                <span>{isLocating ? t('locatingShort') : t('useCurrentLocationShort')}</span>
               </button>
             </div>
             <div className="relative flex items-center">
@@ -187,7 +188,7 @@ export const JourneySearch: React.FC<Props> = ({
                   >
                     <span className="truncate">{item.name}</span>
                     <span className="text-[10px] text-[#454841] capitalize bg-[#EEECE3] px-2 py-0.5 rounded-full ml-2 shrink-0 font-bold border border-[#D8D4C7]">
-                      {item.category.replace('_', ' ')}
+                      {localizeCategory(item.category, language)}
                     </span>
                   </button>
                 ))}
@@ -200,7 +201,7 @@ export const JourneySearch: React.FC<Props> = ({
             <button
               type="button"
               onClick={handleSwap}
-              title="Swap origin and destination"
+              title={t('swapTooltip')}
               className={`p-2.5 rounded-xl bg-[#EEECE3] text-[#21432E] hover:bg-[#D8D4C7] transition-all duration-300 border border-[#D8D4C7] cursor-pointer shadow-xs active:scale-95 ${
                 isSwapping ? 'rotate-180 scale-110' : ''
               }`}
@@ -241,7 +242,7 @@ export const JourneySearch: React.FC<Props> = ({
                   >
                     <span className="truncate">{item.name}</span>
                     <span className="text-[10px] text-[#454841] capitalize bg-[#EEECE3] px-2 py-0.5 rounded-full ml-2 shrink-0 font-bold border border-[#D8D4C7]">
-                      {item.category.replace('_', ' ')}
+                      {localizeCategory(item.category, language)}
                     </span>
                   </button>
                 ))}
@@ -298,7 +299,7 @@ export const JourneySearch: React.FC<Props> = ({
               {depOption === 'now' && (
                 <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-bold text-[#5B8A6E] bg-[#5B8A6E]/10 px-2.5 py-1 rounded-lg border border-[#5B8A6E]/20">
                   <span>●</span>
-                  <span>Live (~{formatTime12(getCurrentTime24())})</span>
+                  <span>{t('liveNowLabel')} (~{formatTime12(getCurrentTime24())})</span>
                 </span>
               )}
             </div>
@@ -330,7 +331,7 @@ export const JourneySearch: React.FC<Props> = ({
                 {/* Time Input with 12-Hour formatted display */}
                 <div className="flex items-center gap-2.5">
                   <span className="text-xs font-extrabold text-[#253D30] uppercase tracking-wider">
-                    {depOption === 'depart_at' ? 'Departure Time:' : 'Target Arrival:'}
+                    {depOption === 'depart_at' ? t('departureTimeLabel') : t('targetArrivalLabel')}
                   </span>
 
                   <div className="flex items-center gap-2">
@@ -350,7 +351,7 @@ export const JourneySearch: React.FC<Props> = ({
 
                 {/* Quick Increment Controls */}
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-[11px] font-bold text-[#52544D] mr-1">Quick Add:</span>
+                  <span className="text-[11px] font-bold text-[#52544D] mr-1">{t('quickAddLabel')}</span>
                   <button
                     type="button"
                     onClick={() => handleQuickAdd(15)}

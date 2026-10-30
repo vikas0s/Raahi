@@ -12,7 +12,8 @@ import {
   LiveRunningStatus,
   StationBoardResponse,
   RailSearchResponse,
-  ReverseGeocodeResult
+  ReverseGeocodeResult,
+  AssistantChatResponse
 } from '../types/transit';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -162,15 +163,10 @@ export async function chatWithAssistant(
   language: 'en' | 'hi' = 'en',
   contextOrigin?: string,
   contextDestination?: string,
-  city: string = 'Delhi NCR'
-): Promise<{
-  reply: string;
-  action_type?: string;
-  route_data?: RouteItinerary;
-  suggested_actions?: { label: string; action: string }[];
-  detected_intent?: string;
-}> {
-  const res = await fetch(`${API_BASE}/chat`, {
+  city: string = 'Delhi NCR',
+  sessionId?: string
+): Promise<AssistantChatResponse> {
+  const res = await fetch(`${API_BASE}/api/assistant/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -178,12 +174,58 @@ export async function chatWithAssistant(
       language,
       context_origin: contextOrigin,
       context_destination: contextDestination,
-      city
+      city,
+      session_id: sessionId
     })
   });
 
-  if (!res.ok) throw new Error('Chat failed');
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || 'Chat request failed');
+  }
   return res.json();
+}
+
+export async function resetAssistantSession(sessionId: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/api/assistant/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+  } catch (err) {
+    console.warn('Failed to reset assistant session:', err);
+  }
+}
+
+export async function transcribeAudio(audioBlob: Blob): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'voice_query.webm');
+  const res = await fetch(`${API_BASE}/api/assistant/transcribe`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Audio transcription failed');
+  }
+  const data = await res.json();
+  return data.transcript || '';
+}
+
+export async function synthesizeSpeech(text: string, languageCode: string = 'hi-IN'): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, language_code: languageCode, speaker: 'meera' })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.audio_base64 || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSavedRoutes(city?: string): Promise<SavedRoute[]> {

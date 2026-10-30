@@ -17,19 +17,15 @@ interface Props {
 export const SettingsView: React.FC<Props> = ({
   selectedCity,
   onCityChange,
-  language: propLang,
-  onLanguageChange,
   accessibleOnly,
   onAccessibleChange,
   reducedMotion,
   onReducedMotionChange
 }) => {
   const { t, language, setLanguage } = useTranslation();
-  const activeLang = propLang || language;
 
   const handleLang = (lang: AppLanguage) => {
     setLanguage(lang);
-    onLanguageChange(lang);
   };
 
   return (
@@ -56,7 +52,7 @@ export const SettingsView: React.FC<Props> = ({
               <span>{t('regionalCity')}</span>
             </h4>
             <p className="text-xs text-[#52544D] font-medium mt-0.5">
-              Select the active metropolitan public transport network.
+              {t('citySelectDesc')}
             </p>
           </div>
           <select
@@ -79,14 +75,14 @@ export const SettingsView: React.FC<Props> = ({
               <span>{t('appLanguage')}</span>
             </h4>
             <p className="text-xs text-[#52544D] font-medium mt-0.5">
-              Support for English and Hindi (हिन्दी).
+              {t('langSelectDesc')}
             </p>
           </div>
           <div className="inline-flex rounded-xl bg-[#EEECE3] p-1 border border-[#D8D4C7] text-xs font-bold">
             <button
               onClick={() => handleLang('en')}
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeLang === 'en' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
+                language === 'en' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
               }`}
             >
               English
@@ -94,7 +90,7 @@ export const SettingsView: React.FC<Props> = ({
             <button
               onClick={() => handleLang('hi')}
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeLang === 'hi' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
+                language === 'hi' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
               }`}
             >
               हिन्दी
@@ -147,12 +143,12 @@ export const SettingsView: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <Key size={18} className="text-[#304B3C]" />
             <h3 className="font-heading font-bold text-base text-[#1F231F]">
-              Transit API Credentials & Fare Calculation Engines
+              {t('transitApiTitle')}
             </h3>
           </div>
           <span className="inline-flex items-center gap-1 text-xs font-bold text-[#2A4D38] bg-[#64836D]/15 px-2.5 py-1 rounded-full border border-[#64836D]/30">
             <CheckCircle2 size={13} />
-            <span>3 Active Services</span>
+            <span>{t('activeServices')}</span>
           </span>
         </div>
 
@@ -161,10 +157,12 @@ export const SettingsView: React.FC<Props> = ({
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#1F231F]">1. Open Transit Data Delhi (OTD)</span>
-              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">Configured (.env)</span>
+              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">{language === 'hi' ? 'कॉन्फ़िगर (.env)' : 'Configured (.env)'}</span>
             </div>
             <p className="text-[#52544D] leading-relaxed">
-              Live GPS telemetry for 7,000+ DTC & DIMTS cluster electric/CNG buses, route IDs, agency feeds, and arrival estimates.
+              {language === 'hi'
+                ? '7,000+ डीटीसी व क्लस्टर इलेक्ट्रिक/सीएनजी बसों के लिए लाइव जीपीएस टेलीमेट्री, रूट आईडी और आगमन अनुमान।'
+                : 'Live GPS telemetry for 7,000+ DTC & DIMTS cluster electric/CNG buses, route IDs, agency feeds, and arrival estimates.'}
             </p>
             <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#304B3C] border border-[#D8D4C7]">
               OTD_DELHI_API_KEY=hAGgv0...H3a
@@ -175,13 +173,13 @@ export const SettingsView: React.FC<Props> = ({
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#1F231F]">2. Gazetted Multi-City Govt Fare Engines</span>
-              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">Built-in & Active</span>
+              <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">{language === 'hi' ? 'सक्रिय एवं अंतर्निहित' : 'Built-in & Active'}</span>
             </div>
             <p className="text-[#52544D] leading-relaxed text-xs">
-              • <strong>Mumbai (Maharashtra Transport Dept):</strong> Metered Auto (₹27 first 1.5km + ₹18.22/km), Kaali-Peeli Taxi (₹33 first 1.5km + ₹21.90/km), BEST E-Bus (₹6-₹25), Local Train (₹5-₹20)<br />
-              • <strong>Delhi NCR (GNCTD Gazetted):</strong> Auto meter (₹30 first 1.5km + ₹11/km), DTC E-Bus (₹10-₹25), Pink Pass (₹0 Free for Women)<br />
-              • <strong>Mathura & Vrindavan:</strong> Shared Tempo / Vikram (₹15-₹60), E-Rickshaw Toto (₹10-₹20), Nagar Seva EV<br />
-              • <strong>Bengaluru:</strong> Karnataka Auto meter (₹30 first 2km + ₹15/km), BMTC Vajra AC Bus
+              • <strong>Mumbai:</strong> Metered Auto (₹27/1.5km + ₹18.22/km), Kaali-Peeli (₹33/1.5km + ₹21.90/km), BEST E-Bus (₹6-₹25), Local Train (₹5-₹20)<br />
+              • <strong>Delhi NCR:</strong> Auto meter (₹30/1.5km + ₹11/km), DTC E-Bus (₹10-₹25), Pink Pass (₹0 Free for Women)<br />
+              • <strong>Mathura & Vrindavan:</strong> Shared Tempo / Vikram (₹15-₹60), E-Rickshaw Toto (₹10-₹20)<br />
+              • <strong>Bengaluru:</strong> Auto meter (₹30/2km + ₹15/km), BMTC Vajra AC Bus
             </p>
             <div className="text-[11px] font-bold text-[#64836D]">
               Maharashtra RTO + GNCTD + Karnataka Transport + Indian Railways Regulated Tariffs
@@ -192,10 +190,12 @@ export const SettingsView: React.FC<Props> = ({
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#1F231F]">3. Google Maps Road Traffic API</span>
-              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">Optional Key</span>
+              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">{language === 'hi' ? 'वैकल्पिक कुंजी' : 'Optional Key'}</span>
             </div>
             <p className="text-[#52544D] leading-relaxed">
-              Provides live congestion road duration for Auto/Cab navigation. <em>(Built-in OpenStreetMap OSRM engine active as default)</em>.
+              {language === 'hi'
+                ? 'सड़क ट्रैफिक और ऑटो/कैब अवधि। (डिफ़ॉल्ट रूप से अंतर्निहित OpenStreetMap OSRM इंजन सक्रिय है)।'
+                : 'Provides live congestion road duration for Auto/Cab navigation. (Built-in OpenStreetMap OSRM engine active as default).'}
             </p>
             <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#52544D] border border-[#D8D4C7]">
               GOOGLE_MAPS_API_KEY (optional)
@@ -206,10 +206,12 @@ export const SettingsView: React.FC<Props> = ({
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#1F231F]">4. ONDC / Ride-Hailing Cab API</span>
-              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">Optional Key</span>
+              <span className="text-[10px] font-bold text-[#B85732] bg-[#FBE9E7] px-2 py-0.5 rounded border border-[#FFCCBC]">{language === 'hi' ? 'वैकल्पिक कुंजी' : 'Optional Key'}</span>
             </div>
             <p className="text-[#52544D] leading-relaxed">
-              Enables real-time dynamic booking estimates with BluSmart EV and open-mobility auto networks via Beckn protocol.
+              {language === 'hi'
+                ? 'Beckn प्रोटोकॉल के माध्यम से BluSmart EV और ऑटो बुकिंग की रियल-टाइम दरें।'
+                : 'Enables real-time dynamic booking estimates with BluSmart EV and open-mobility auto networks via Beckn protocol.'}
             </p>
             <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#52544D] border border-[#D8D4C7]">
               UBER_SERVER_TOKEN / ONDC_BAP_KEY (optional)
@@ -222,11 +224,10 @@ export const SettingsView: React.FC<Props> = ({
       <div className="p-5 rounded-2xl bg-[#EEECE3]/60 border border-[#D8D4C7] space-y-2">
         <div className="flex items-center gap-2 text-xs font-bold text-[#253D30] uppercase tracking-wider">
           <Shield size={14} className="stroke-[2.2]" />
-          <span>{t('missionTag')} Engineering Notes</span>
+          <span>{t('engNotesTitle')}</span>
         </div>
         <p className="text-xs text-[#52544D] font-medium leading-relaxed">
-          Raahi is designed to minimize multi-modal commuter friction across Indian megacities.
-          All simulated alerts are transparently designated as <code className="text-[#BD4F44]">[SIMULATED]</code> to preserve data integrity.
+          {t('engNotesDesc')}
         </p>
       </div>
     </div>

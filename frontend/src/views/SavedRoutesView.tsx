@@ -137,7 +137,7 @@ export const SavedRoutesView: React.FC<Props> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g., Rajiv Chowk (Connaught Place)"
+                  placeholder={t('originPlaceholder')}
                   value={origin}
                   onChange={(e) => setOrigin(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#EEECE3]/60 focus:bg-[#FFFEFA] border border-[#D8D4C7] focus:border-[#253D30] focus:ring-1 focus:ring-[#253D30]/20 outline-none transition-all text-[#1F231F]"
@@ -151,7 +151,7 @@ export const SavedRoutesView: React.FC<Props> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g., Cyber City (Gurugram)"
+                  placeholder={t('destinationPlaceholder')}
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#EEECE3]/60 focus:bg-[#FFFEFA] border border-[#D8D4C7] focus:border-[#253D30] focus:ring-1 focus:ring-[#253D30]/20 outline-none transition-all text-[#1F231F]"
@@ -186,7 +186,7 @@ export const SavedRoutesView: React.FC<Props> = ({
                   disabled={isSubmitting || !name || !origin || !destination}
                   className="px-4 py-2 rounded-xl bg-[#253D30] text-white text-xs font-bold shadow-xs hover:bg-[#1A2E24] transition-all cursor-pointer"
                 >
-                  {isSubmitting ? 'Saving...' : t('saveCommuteButton')}
+                  {isSubmitting ? t('savingShort') : t('saveCommuteButton')}
                 </button>
               </div>
             </form>

@@ -6,6 +6,7 @@ import { DelayStatusBadge } from '../common/DelayStatusBadge';
 import { CrowdLevelIndicator } from '../common/CrowdLevelIndicator';
 import { TransitModeIcon } from '../common/TransitModeIcon';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { localizeRouteTag, localizeMode } from '../../i18n/translations';
 
 interface Props {
   route: RouteItinerary;
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSelect }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const isUnavailable = route.service_available === false;
 
   const getTagBadgeClass = () => {
@@ -76,6 +77,8 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
     }
   };
 
+  const localizedTag = localizeRouteTag(route.tag, language);
+
   return (
     <div
       onClick={isUnavailable ? undefined : onSelect}
@@ -92,7 +95,7 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
         <div className="flex items-center gap-2 px-3.5 py-2 mb-3.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
           <MoonStar size={15} className="shrink-0 stroke-[2.5]" />
           <span className="text-xs font-bold leading-snug">
-            {route.unavailable_reason || 'Service currently unavailable'}
+            {route.unavailable_reason || t('serviceUnavailable')}
           </span>
         </div>
       )}
@@ -102,7 +105,7 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
         <div className="flex items-center gap-2.5">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border tracking-tight shadow-2xs ${getTagBadgeClass()}`}>
             {isUnavailable ? <Ban size={12} className="shrink-0" /> : <Sparkles size={12} className="shrink-0" />}
-            <span>{route.tag}</span>
+            <span>{localizedTag}</span>
           </span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#EEECE3]/70 font-mono text-xs font-bold text-[#253D30] border border-[#D8D4C7]/80">
             <Clock size={12} className="text-[#5B8A6E] stroke-[2.2]" />
@@ -137,7 +140,7 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
           <span className="text-[11px] font-bold uppercase tracking-wide text-[#52544D] block">{t('totalFare')}</span>
           {route.pink_pass_fare_inr !== undefined && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C2185B] bg-[#FCE4EC] px-2 py-0.5 rounded-full border border-[#F8BBD0] mt-1">
-              🌸 Pink Pass: ₹0
+              🌸 {language === 'hi' ? 'गुलाबी टिकट: ₹0 (मुफ्त)' : 'Pink Pass: ₹0'}
             </span>
           )}
         </div>
@@ -152,7 +155,7 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
               <span className="text-xs font-bold max-w-[120px] truncate">
                 {leg.mode === 'rail' && leg.train_number
                   ? `${leg.train_number} ${leg.train_name || 'Train'}`
-                  : (leg.line_name || (leg.mode === 'walk' ? `${leg.duration_minutes}m ${t('walking')}` : leg.mode))}
+                  : (leg.line_name || (leg.mode === 'walk' ? `${leg.duration_minutes}m ${t('walking')}` : localizeMode(leg.mode, language)))}
               </span>
             </div>
             {idx < route.legs.length - 1 && (
@@ -165,11 +168,11 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
       {/* Metadata Row: Transfers, Walk Duration, Crowd Level */}
       <div className="flex items-center justify-between text-xs text-[#454841] pt-2.5 border-t border-[#D8D4C7]">
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 font-bold text-[#2A2E2A]" title="Transfers count">
+          <span className="flex items-center gap-1.5 font-bold text-[#2A2E2A]" title={t('transfersCountTooltip')}>
             <ArrowLeftRight size={14} className="text-[#52544D]" />
             <span>{route.transfers_count === 0 ? t('direct') : `${route.transfers_count} ${t('transfer')}`}</span>
           </span>
-          <span className="flex items-center gap-1.5 font-bold text-[#2A2E2A]" title="Walking time">
+          <span className="flex items-center gap-1.5 font-bold text-[#2A2E2A]" title={t('walkingTimeTooltip')}>
             <Footprints size={14} className="text-[#52544D]" />
             <span>{route.walking_duration_minutes}m {t('walking')}</span>
           </span>

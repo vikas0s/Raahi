@@ -15,6 +15,18 @@ interface Props {
   onPlanAlternative: (lineName: string) => void;
 }
 
+const HINDI_DAYS: Record<string, string> = {
+  Monday: 'सोमवार',
+  Tuesday: 'मंगलवार',
+  Wednesday: 'बुधवार',
+  Thursday: 'गुरुवार',
+  Friday: 'शुक्रवार',
+  Saturday: 'शनिवार',
+  Sunday: 'रविवार',
+  Weekday: 'कार्यदिवस',
+  Weekend: 'सप्ताहांत'
+};
+
 export const LiveTransitView: React.FC<Props> = ({
   incidents,
   city,
@@ -22,10 +34,23 @@ export const LiveTransitView: React.FC<Props> = ({
   onRefreshIncidents,
   onPlanAlternative
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const getCityEmptyStateDesc = (cityName: string) => {
     const c = (cityName || '').toLowerCase();
+    if (language === 'hi') {
+      if (c.includes('mumbai')) {
+        return 'मुंबई उपनगरीय रेलवे (पश्चिमी, मध्य एवं हार्बर लाइन), मेट्रो लाइन 3 एक्वा लाइन और बेस्ट बसें सामान्य रूप से संचालित हैं। परिदृश्यों के परीक्षण के लिए ऊपर सिम्युलेटर का उपयोग करें।';
+      }
+      if (c.includes('mathura') || c.includes('vrindavan')) {
+        return 'सभी ब्रज ट्रांजिट मार्ग, मथुरा जंक्शन ट्रेन कनेक्टिविटी, नगर सेवा इलेक्ट्रिक बसें और ई-रिक्शा सामान्य रूप से संचालित हैं। दर्शन या परिक्रमा भीड़ के परीक्षण के लिए सिम्युलेटर का उपयोग करें।';
+      }
+      if (c.includes('bengaluru') || c.includes('bangalore')) {
+        return 'नम्मा मेट्रो (पर्पल व ग्रीन लाइन) और बीएमटीसी बसें निर्धारित समय पर संचालित हो रही हैं। परीक्षण के लिए ऊपर सिम्युलेटर का उपयोग करें।';
+      }
+      return t('allCorridorsDesc');
+    }
+
     if (c.includes('mumbai')) {
       return 'All Mumbai Suburban corridors (Western, Central & Harbour Lines), Metro Line 3 Aqua Line, and BEST electric buses are running normally. Use the Incident Simulator above to test simulated rush hour or mega block scenarios.';
     }
@@ -37,6 +62,14 @@ export const LiveTransitView: React.FC<Props> = ({
     }
     return t('allCorridorsDesc');
   };
+
+  const dayName = realtimeContext?.day_name
+    ? (language === 'hi' ? HINDI_DAYS[realtimeContext.day_name] || realtimeContext.day_name : realtimeContext.day_name)
+    : '';
+
+  const dayType = realtimeContext?.day_type
+    ? (language === 'hi' ? HINDI_DAYS[realtimeContext.day_type] || realtimeContext.day_type : realtimeContext.day_type)
+    : '';
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -71,17 +104,17 @@ export const LiveTransitView: React.FC<Props> = ({
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EEECE3] text-[#52544D] font-medium border border-[#D8D4C7]">
                 <Calendar size={13} />
-                <span>{realtimeContext.day_name} • {realtimeContext.day_type}</span>
+                <span>{dayName} • {dayType}</span>
               </span>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-xs font-medium text-[#52544D]">
-                <span>Crowd Inflow:</span>
+                <span>{t('crowdInflow')}</span>
                 <CrowdLevelIndicator level={realtimeContext.crowd_level} compact />
               </div>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-[#5B8A6E]/15 text-[#253D30] font-bold">
-                LIVE TIMETABLE
+                {t('liveTimetableBadge')}
               </span>
             </div>
           </div>
@@ -101,7 +134,7 @@ export const LiveTransitView: React.FC<Props> = ({
             {realtimeContext.recommended_mode && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#5B8A6E]/10 border border-[#5B8A6E]/20 text-[#253D30] font-bold">
                 <Compass size={14} className="text-[#5B8A6E]" />
-                <span>Recommended: {realtimeContext.recommended_mode}</span>
+                <span>{t('recommendedModeLabel')} {realtimeContext.recommended_mode}</span>
               </div>
             )}
 
@@ -159,7 +192,7 @@ export const LiveTransitView: React.FC<Props> = ({
                         {inc.headline}
                       </h4>
                       <p className="text-xs text-[#52544D] font-medium">
-                        Line: <span className="text-[#253D30] font-bold">{inc.line_name}</span>
+                        {t('lineLabel')} <span className="text-[#253D30] font-bold">{inc.line_name}</span>
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import type { AppLanguage } from '../types/transit';
+import type { AppLanguage, CrowdLevel } from '../types/transit';
 
 export type TranslationKey =
   | 'appName'
@@ -127,7 +127,75 @@ export type TranslationKey =
   | 'navRail'
   | 'prefRail'
   | 'railConnectTitle'
-  | 'railConnectSubtitle';
+  | 'railConnectSubtitle'
+  // Added keys for complete localization
+  | 'startFromCurrentLoc'
+  | 'startFromCurrentLocTitle'
+  | 'calculatingItineraries'
+  | 'calculatingItinerariesSub'
+  | 'noDirectRoutes'
+  | 'noDirectRoutesSub'
+  | 'cleanTransitImpact'
+  | 'savesCarbon'
+  | 'ecoVerified'
+  | 'pinkPassFree'
+  | 'serviceUnavailable'
+  | 'transfersCountTooltip'
+  | 'walkingTimeTooltip'
+  | 'fromLabel'
+  | 'toLabel'
+  | 'distanceLabel'
+  | 'classesLabel'
+  | 'liveNTES'
+  | 'verifiedTimetable'
+  | 'walkingSection'
+  | 'intermediateStopsCount'
+  | 'mapYou'
+  | 'mapTransit'
+  | 'mapWalk'
+  | 'mapBusGps'
+  | 'mapLiveDelhiTransit'
+  | 'mapBusesCount'
+  | 'mapOtdActive'
+  | 'mapCenterTooltip'
+  | 'mapDetectTooltip'
+  | 'mapOriginLabel'
+  | 'mapDestLabel'
+  | 'catMetroStation'
+  | 'catBusStop'
+  | 'catRailStation'
+  | 'catLandmark'
+  | 'catCurrentLocation'
+  | 'useCurrentLocationShort'
+  | 'locatingShort'
+  | 'departureTimeLabel'
+  | 'targetArrivalLabel'
+  | 'quickAddLabel'
+  | 'liveNowLabel'
+  | 'swapTooltip'
+  | 'chipBestEBus'
+  | 'chipNagarSeva'
+  | 'chipBmtcEBus'
+  | 'chipAutoKaaliPeeli'
+  | 'chipSharedTempo'
+  | 'chipMeteredAutoCab'
+  | 'chipMultiLocalMetro'
+  | 'chipMultiTempoTrain'
+  | 'chipSuburbanTrain'
+  | 'chipWomenConcession'
+  | 'preferredLabel'
+  | 'savingShort'
+  | 'crowdInflow'
+  | 'liveTimetableBadge'
+  | 'recommendedModeLabel'
+  | 'lineLabel'
+  | 'itinerariesCalculated'
+  | 'citySelectDesc'
+  | 'langSelectDesc'
+  | 'transitApiTitle'
+  | 'activeServices'
+  | 'engNotesTitle'
+  | 'engNotesDesc';
 
 export const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -167,6 +235,13 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     searching: 'Searching routes...',
     originPlaceholder: 'e.g., Rajiv Chowk, Kashmere Gate...',
     destinationPlaceholder: 'e.g., Cyber City, Noida Sec 62...',
+    useCurrentLocationShort: 'Use current location',
+    locatingShort: 'Locating...',
+    departureTimeLabel: 'Departure Time:',
+    targetArrivalLabel: 'Target Arrival:',
+    quickAddLabel: 'Quick Add:',
+    liveNowLabel: 'Live',
+    swapTooltip: 'Swap origin and destination',
 
     // Priorities
     routePriorities: 'Route Priorities',
@@ -183,6 +258,18 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     prefRail: '🚆 Indian Railways',
     railConnectTitle: 'Raahi RailConnect — Indian Railways & Local Trains',
     railConnectSubtitle: 'Direct trains, local EMUs, live delays & platform departure boards',
+
+    // City Preference Chips
+    chipBestEBus: 'BEST Electric Bus',
+    chipNagarSeva: 'Electric Nagar Seva',
+    chipBmtcEBus: 'BMTC Electric Bus',
+    chipAutoKaaliPeeli: 'Auto & Kaali-Peeli Taxi',
+    chipSharedTempo: 'Shared Tempo & Auto',
+    chipMeteredAutoCab: 'Metered Auto & Cab',
+    chipMultiLocalMetro: 'Multi-Transport (Local / Metro)',
+    chipMultiTempoTrain: 'Multi-Transport (Tempo + Train)',
+    chipSuburbanTrain: '🚆 Suburban Local Train',
+    chipWomenConcession: 'Women Concession',
 
     // 3D Scene
     live3dTransitGrid: 'Live 3D Transit Grid',
@@ -223,6 +310,48 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     stepByStepItinerary: 'STEP-BY-STEP TRANSIT ITINERARY',
     intermediateStops: 'intermediate stops',
     stops: 'stops',
+    startFromCurrentLoc: 'Start from current location',
+    startFromCurrentLocTitle: 'Recalculate route starting directly from your live GPS position',
+    calculatingItineraries: 'Calculating Transit Itineraries...',
+    calculatingItinerariesSub: 'Evaluating Metro, Electric Buses, Shared Tempos & Feeder Autos',
+    noDirectRoutes: 'No direct routes found',
+    noDirectRoutesSub: 'Try searching another nearby landmark or hub.',
+    cleanTransitImpact: 'Clean Transit Impact',
+    savesCarbon: 'Saves ~{kg} kg CO₂ emissions',
+    ecoVerified: 'Eco Verified',
+    pinkPassFree: 'Pink Pass: ₹0 (Free)',
+    serviceUnavailable: 'Service currently unavailable',
+    transfersCountTooltip: 'Transfers count',
+    walkingTimeTooltip: 'Walking time',
+    fromLabel: 'From:',
+    toLabel: 'To:',
+    distanceLabel: 'Distance:',
+    classesLabel: 'Classes:',
+    liveNTES: '● Live NTES Telemetry',
+    verifiedTimetable: '✓ Verified IR Timetable',
+    walkingSection: 'Walking Section',
+    intermediateStopsCount: '{count} intermediate stops',
+    itinerariesCalculated: '{count} transit itineraries calculated • {city} Transit Grid',
+
+    // Map
+    mapYou: 'You',
+    mapTransit: 'Transit',
+    mapWalk: 'Walk',
+    mapBusGps: 'Bus GPS',
+    mapLiveDelhiTransit: 'Live Delhi Transit (OTD)',
+    mapBusesCount: '{count} buses',
+    mapOtdActive: 'OTD Key Active',
+    mapCenterTooltip: 'Center map on your current location',
+    mapDetectTooltip: 'Detect your current location',
+    mapOriginLabel: 'Origin',
+    mapDestLabel: 'Destination',
+
+    // Autocomplete Categories
+    catMetroStation: 'Metro Station',
+    catBusStop: 'Bus Terminal / Stop',
+    catRailStation: 'Railway Station',
+    catLandmark: 'Landmark / Hub',
+    catCurrentLocation: 'Current Location',
 
     // Live Transit View
     liveTransitTitle: 'Live Transit & Incident Awareness',
@@ -244,10 +373,14 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     activeAdvisories: 'Active Service Advisories',
     updatedEvery30s: 'Updated every 30 seconds',
     allCorridorsOnSchedule: 'All transit corridors operating on schedule',
-    allCorridorsDesc: 'No signal delays, crowd blocks, or diversions reported across Delhi Metro or DTC lines. Use the Incident Simulator above to test simulated disruption scenarios.',
+    allCorridorsDesc: 'No signal delays, crowd blocks, or diversions reported across lines. Use the Incident Simulator above to test simulated disruption scenarios.',
     affectedStops: 'Affected Stops:',
     lastReported: 'Last reported:',
     planAlternative: 'Plan Alternative Bypass',
+    crowdInflow: 'Crowd Inflow:',
+    liveTimetableBadge: 'LIVE TIMETABLE',
+    recommendedModeLabel: 'Recommended:',
+    lineLabel: 'Line:',
 
     // Saved Routes View
     savedCommutesTitle: 'Saved Commutes & Routes',
@@ -263,6 +396,8 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     saveCommuteButton: 'Save Commute',
     remove: 'Remove',
     confirmDelete: 'Confirm delete?',
+    preferredLabel: 'Preferred:',
+    savingShort: 'Saving...',
 
     // AI Assistant
     aiAssistantTitle: 'Raahi AI Assistant',
@@ -283,7 +418,13 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     accessibleRouting: 'Wheelchair & Accessibility Routing',
     accessibleRoutingDesc: 'Prioritize lifts, ramps, wide gates, and step-free transfers.',
     reducedMotionSetting: 'Reduced Motion',
-    reducedMotionDesc: 'Disable 3D scene rotations and micro-animations for low-bandwidth.'
+    reducedMotionDesc: 'Disable 3D scene rotations and micro-animations for low-bandwidth.',
+    citySelectDesc: 'Select the active metropolitan public transport network.',
+    langSelectDesc: 'Support for English and Hindi (हिन्दी).',
+    transitApiTitle: 'Transit API Credentials & Fare Calculation Engines',
+    activeServices: '3 Active Services',
+    engNotesTitle: 'MISSION BHARAT DEV-P05 Engineering Notes',
+    engNotesDesc: 'Raahi is designed to minimize multi-modal commuter friction across Indian megacities. All simulated alerts are transparently designated as [SIMULATED] to preserve data integrity.'
   },
   hi: {
     appName: 'राही',
@@ -293,75 +434,94 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     
     // Nav
     navTitle: 'नेविगेशन',
-    navDiscover: 'खोजें (Discover)',
-    navPlan: 'यात्रा योजना बनाएं',
-    navLive: 'लाइव ट्रांजिट',
+    navDiscover: 'खोजें',
+    navPlan: 'यात्रा की योजना बनाएँ',
+    navLive: 'लाइव सार्वजनिक परिवहन',
     navRail: 'रेल कनेक्ट',
-    navSaved: 'सुरक्षित मार्ग',
+    navSaved: 'सहेजे गए मार्ग',
     navAssistant: 'एआई यात्रा सहायक',
     navSettings: 'सेटिंग्स',
 
     // TopBar
-    liveAlerts: 'सक्रिय ट्रांजिट अलर्ट',
+    liveAlerts: 'सक्रिय ट्रांजिट सूचनाएं',
     raahiAiButton: 'राही AI',
 
     // Discover Hero
     heroTitle: 'आपकी अगली यात्रा, हुई अब आसान।',
     heroDesc: 'मेट्रो, इलेक्ट्रिक बस और उपनगरीय रेल का मल्टी-मॉडल नेटवर्क। बिना किसी झंझट के सबसे तेज़, सबसे सस्ते और कम भीड़ वाले मार्गों की तुलना करें।',
-    allLinesNormal: 'सभी लाइनें सामान्य',
+    allLinesNormal: 'सभी लाइनें सामान्य रूप से संचालित',
     serviceAlerts: 'सेवा अलर्ट',
-    transitGrid: 'ट्रांजिट ग्रिड',
+    transitGrid: 'ट्रांजिट नेटवर्क',
 
     // Search
-    startingOrigin: 'प्रस्थान स्थान (Origin)',
-    targetDestination: 'गंतव्य स्थान (Destination)',
+    startingOrigin: 'प्रारंभिक स्थान',
+    targetDestination: 'गंतव्य',
     leaveNow: 'अभी निकलें',
     departAt: 'प्रस्थान समय',
     arriveBy: 'पहुंचने का समय',
-    searchJourneys: 'यात्रा खोजें',
-    searching: 'मार्ग खोज रहे हैं...',
+    searchJourneys: 'यात्राएँ खोजें',
+    searching: 'मार्ग खोजे जा रहे हैं...',
     originPlaceholder: 'जैसे: राजीव चौक, कश्मीरी गेट...',
     destinationPlaceholder: 'जैसे: साइबर सिटी, नोएडा सेक्टर 62...',
+    useCurrentLocationShort: 'वर्तमान स्थान का उपयोग करें',
+    locatingShort: 'स्थान खोज रहे हैं...',
+    departureTimeLabel: 'प्रस्थान समय:',
+    targetArrivalLabel: 'पहुंचने का समय:',
+    quickAddLabel: 'त्वरित समय जोड़ें:',
+    liveNowLabel: 'लाइव',
+    swapTooltip: 'प्रारंभिक स्थान और गंतव्य आपस में बदलें',
 
     // Priorities
     routePriorities: 'मार्ग प्राथमिकताएँ',
     prefFastest: 'सबसे तेज़',
-    prefCheapest: 'सबसे सस्ता',
+    prefCheapest: 'सबसे किफायती',
     prefLessCrowded: 'कम भीड़',
     prefFewerTransfers: 'कम बदलाव',
-    prefLessWalking: 'कम पैदल',
-    prefAccessible: 'सुगम्य (Accessible)',
-    prefEBus: 'डीटीसी ई-बस',
-    prefAutoTaxi: 'ऑटो और टैक्सी',
-    prefPinkPass: 'गुलाबी टिकट (महिलाएं मुफ्त)',
+    prefLessWalking: 'कम पैदल चलना',
+    prefAccessible: 'सुगम्य (व्हीलचेयर अनुकूल)',
+    prefEBus: 'डीटीसी इलेक्ट्रिक बस',
+    prefAutoTaxi: 'ऑटो व टैक्सी',
+    prefPinkPass: 'गुलाबी टिकट (महिलाओं के लिए मुफ्त)',
     prefMultiTransport: 'मल्टी-ट्रांसपोर्ट (ऑटो + मेट्रो)',
     prefRail: '🚆 भारतीय रेल / लोकल ट्रेन',
     railConnectTitle: 'राही रेल कनेक्ट — भारतीय रेलवे व लोकल ट्रेन',
     railConnectSubtitle: 'सीधी ट्रेनें, ईएमयू लोकल, लाइव रनिंग स्टेटस और प्लेटफार्म बोर्ड',
 
+    // City Preference Chips
+    chipBestEBus: 'बेस्ट इलेक्ट्रिक बस',
+    chipNagarSeva: 'इलेक्ट्रिक नगर सेवा',
+    chipBmtcEBus: 'बीएमटीसी इलेक्ट्रिक बस',
+    chipAutoKaaliPeeli: 'ऑटो व काली-पीली टैक्सी',
+    chipSharedTempo: 'शेयरिंग टेम्पो व ऑटो',
+    chipMeteredAutoCab: 'मीटर ऑटो व कैब',
+    chipMultiLocalMetro: 'मल्टी-ट्रांसपोर्ट (लोकल / मेट्रो)',
+    chipMultiTempoTrain: 'मल्टी-ट्रांसपोर्ट (टेम्पो + ट्रेन)',
+    chipSuburbanTrain: '🚆 उपनगरीय लोकल ट्रेन',
+    chipWomenConcession: 'महिला रियायत (छूट)',
+
     // 3D Scene
     live3dTransitGrid: 'लाइव 3D ट्रांजिट मॉडल',
 
     // Frequent Commutes
-    frequentCommutes: 'नियमित यात्राएं (Frequent Commutes)',
-    oneTapReplan: 'एक-क्लिक में पुनः योजना',
-    noSavedJourneys: 'अभी कोई सुरक्षित यात्रा नहीं है',
-    noSavedJourneysDesc: 'अपने नियमित कार्यालय या कॉलेज के मार्गों को सुरक्षित करें ताकि लाइव देरी देख सकें और एक क्लिक में पुनः योजना बना सकें।',
-    replanNow: 'पुनः योजना बनाएं',
-    replanJourney: 'पुनः योजना बनाएं',
-    direct: 'सीधा मार्ग (बिना बदले)',
+    frequentCommutes: 'नियमित यात्राएँ',
+    oneTapReplan: 'एक क्लिक में पुनः योजना',
+    noSavedJourneys: 'अभी कोई सहेजी गई यात्रा नहीं है',
+    noSavedJourneysDesc: 'अपने नियमित कार्यालय या कॉलेज के मार्गों को सहेजें ताकि लाइव देरी देख सकें और एक क्लिक में पुनः योजना बना सकें।',
+    replanNow: 'पुनः योजना बनाएँ',
+    replanJourney: 'पुनः योजना बनाएँ',
+    direct: 'सीधा मार्ग',
     transfer: 'बदलाव',
     transfers: 'बदलाव',
 
     // Telemetry Banner
     officialTelemetry: 'आधिकारिक ट्रांजिट टेलीमेट्री डेटा',
-    officialTelemetryDesc: 'सभी किराए, लाइन के नाम और स्टेशन महाराष्ट्र परिवहन विभाग, GNCTD, BEST, DMRC, और भारतीय रेल के आधिकारिक टैरिफ चार्ट के अनुसार हैं।',
+    officialTelemetryDesc: 'सभी किराए, लाइन के नाम और स्टेशन महाराष्ट्र परिवहन विभाग, GNCTD, BEST, DMRC, BMTC और भारतीय रेल के आधिकारिक टैरिफ चार्ट के अनुसार हैं।',
     viewSystemStatus: 'सिस्टम स्थिति देखें',
 
     // Plan Journey View
-    modifySearch: '← खोज बदलें',
-    saveRoute: 'मार्ग सुरक्षित करें',
-    saved: 'सुरक्षित किया गया!',
+    modifySearch: '← खोज के विकल्प बदलें',
+    saveRoute: 'मार्ग सहेजें',
+    saved: 'सहेज लिया गया!',
     availableRoutes: 'उपलब्ध मार्ग',
     clickToInspect: 'विवरण देखने के लिए कार्ड पर क्लिक करें',
     totalFare: 'कुल किराया',
@@ -372,20 +532,62 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     selected: 'चयनित',
     selectRouteArrow: 'मार्ग चुनें →',
     lowCrowd: 'कम भीड़',
-    moderateCrowd: 'सामान्य भीड़',
+    moderateCrowd: 'मध्यम भीड़',
     highCrowd: 'अधिक भीड़',
     veryHighCrowd: 'अत्यधिक भीड़',
-    stepByStepItinerary: 'चरण-दर-चरण यात्रा मार्ग',
+    stepByStepItinerary: 'चरण-दर-चरण यात्रा विवरण',
     intermediateStops: 'मध्यवर्ती स्टॉप',
     stops: 'स्टॉप',
+    startFromCurrentLoc: 'वर्तमान स्थान से शुरू करें',
+    startFromCurrentLocTitle: 'अपनी लाइव जीपीएस स्थिति से मार्ग की पुनः गणना करें',
+    calculatingItineraries: 'यात्रा विकल्पों की गणना हो रही है...',
+    calculatingItinerariesSub: 'मेट्रो, इलेक्ट्रिक बस, शेयरिंग टेम्पो और फीडर ऑटो का विश्लेषण जारी...',
+    noDirectRoutes: 'कोई सीधा मार्ग नहीं मिला',
+    noDirectRoutesSub: 'कृपया किसी अन्य नजदीकी स्टेशन, स्टॉप या लैंडमार्क से खोजें।',
+    cleanTransitImpact: 'स्वच्छ हरित यात्रा प्रभाव',
+    savesCarbon: 'लगभग ~{kg} किग्रा CO₂ उत्सर्जन की बचत',
+    ecoVerified: 'इको प्रमाणित',
+    pinkPassFree: 'गुलाबी टिकट: ₹0 (मुफ्त)',
+    serviceUnavailable: 'सेवा वर्तमान में उपलब्ध नहीं है',
+    transfersCountTooltip: 'बदलावों की संख्या',
+    walkingTimeTooltip: 'पैदल चलने का समय',
+    fromLabel: 'प्रारंभिक:',
+    toLabel: 'गंतव्य:',
+    distanceLabel: 'दूरी:',
+    classesLabel: 'श्रेणियाँ:',
+    liveNTES: '● लाइव NTES टेलीमेट्री',
+    verifiedTimetable: '✓ सत्यापित रेलवे समय सारिणी',
+    walkingSection: 'पैदल खंड',
+    intermediateStopsCount: '{count} मध्यवर्ती स्टॉप',
+    itinerariesCalculated: '{count} यात्रा विकल्प उपलब्ध • {city} ट्रांजिट नेटवर्क',
+
+    // Map
+    mapYou: 'आप',
+    mapTransit: 'सार्वजनिक परिवहन',
+    mapWalk: 'पैदल',
+    mapBusGps: 'बस जीपीएस',
+    mapLiveDelhiTransit: 'लाइव दिल्ली ट्रांजिट (OTD)',
+    mapBusesCount: '{count} बसें',
+    mapOtdActive: 'OTD सक्रिय',
+    mapCenterTooltip: 'मानचित्र को अपने वर्तमान स्थान पर केंद्रित करें',
+    mapDetectTooltip: 'वर्तमान स्थान का पता लगाएं',
+    mapOriginLabel: 'प्रारंभिक स्थान (A)',
+    mapDestLabel: 'गंतव्य स्थान (B)',
+
+    // Autocomplete Categories
+    catMetroStation: 'मेट्रो स्टेशन',
+    catBusStop: 'बस स्टॉप / टर्मिनल',
+    catRailStation: 'रेलवे स्टेशन',
+    catLandmark: 'स्थान / लैंडमार्क',
+    catCurrentLocation: 'वर्तमान स्थान',
 
     // Live Transit View
-    liveTransitTitle: 'लाइव ट्रांजिट एवं घटना सूचना',
+    liveTransitTitle: 'लाइव सार्वजनिक परिवहन एवं घटना सूचना',
     liveTransitSubtitle: 'रियल-टाइम टेलीमेट्री, ट्रैक सूचनाएं और भीड़ की लाइव स्थिति:',
     syncActive: 'लाइव सिंक सक्रिय',
     incidentSimulator: 'घटना सिम्युलेटर',
     incidentSimulatorDesc: 'देरी और मौसम के अनुसार रियल-टाइम रूटिंग का परीक्षण करें',
-    simulatedBadge: 'डेमो / सिम्युलेशन डेटा',
+    simulatedBadge: 'सिम्युलेटेड / डेमो डेटा',
     scenarioYellowLine: 'येलो लाइन देरी',
     scenarioYellowLineSub: '+14 मिनट सिग्नल सुधार',
     scenarioBus: 'डीटीसी बस डायवर्सन',
@@ -399,49 +601,154 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     activeAdvisories: 'सक्रिय सेवा सूचनाएं',
     updatedEvery30s: 'प्रत्येक 30 सेकंड में अपडेट',
     allCorridorsOnSchedule: 'सभी मार्ग निर्धारित समय पर संचालित',
-    allCorridorsDesc: 'दिल्ली मेट्रो या डीटीसी पर कोई सिग्नल खराबी या डायवर्सन नहीं है। परीक्षण के लिए ऊपर सिम्युलेटर का उपयोग करें।',
+    allCorridorsDesc: 'सभी ट्रांजिट मार्गों पर सेवाएं सुचारू रूप से चल रही हैं। किसी भी देरी का परीक्षण करने के लिए ऊपर सिम्युलेटर का उपयोग करें।',
     affectedStops: 'प्रभावित स्टॉप:',
     lastReported: 'अंतिम रिपोर्ट:',
     planAlternative: 'वैकल्पिक मार्ग खोजें',
+    crowdInflow: 'भीड़ आगमन:',
+    liveTimetableBadge: 'लाइव समय सारिणी',
+    recommendedModeLabel: 'सुझाया गया साधन:',
+    lineLabel: 'लाइन:',
 
     // Saved Routes View
-    savedCommutesTitle: 'सुरक्षित यात्राएं एवं मार्ग',
-    savedCommutesSubtitle: 'दैनिक यात्राओं की एक-क्लिक पुनः योजना और लाइव देरी ट्रैक करने के लिए।',
-    addCustomCommute: 'नई यात्रा जोड़ें',
-    createFirstCommute: 'अपनी पहली यात्रा जोड़ें',
-    saveRegularCommute: 'नियमित यात्रा सुरक्षित करें',
-    saveRegularCommuteDesc: 'अपनी नियमित यात्रा को अपने डैशबोर्ड में जोड़ें।',
+    savedCommutesTitle: 'सहेजे गए मार्ग एवं दैनिक यात्राएँ',
+    savedCommutesSubtitle: 'दैनिक यात्राओं की एक-क्लिक में पुनः योजना और लाइव देरी ट्रैक करने के लिए।',
+    addCustomCommute: 'नया मार्ग जोड़ें',
+    createFirstCommute: 'अपनी पहली यात्रा सहेजें',
+    saveRegularCommute: 'नियमित यात्रा सहेजें',
+    saveRegularCommuteDesc: 'अपनी नियमित यात्रा को अपने डैशबोर्ड में सहेजें।',
     commuteLabel: 'यात्रा का नाम',
-    commuteLabelPlaceholder: 'जैसे: घर से दफ्तर, सप्ताहांत यात्रा',
+    commuteLabelPlaceholder: 'जैसे: घर से कार्यालय, सप्ताहांत यात्रा',
     preferredOptimization: 'प्राथमिकता',
     cancel: 'रद्द करें',
     saveCommuteButton: 'सुरक्षित करें',
-    remove: 'हटाएं',
+    remove: 'हटाएँ',
     confirmDelete: 'क्या आप हटाना चाहते हैं?',
+    preferredLabel: 'प्राथमिकता:',
+    savingShort: 'सहेजा जा रहा है...',
 
     // AI Assistant
     aiAssistantTitle: 'राही AI सहायक',
     aiAssistantLangs: 'English • हिन्दी',
-    aiWelcome: 'नमस्ते! मैं राही AI हूँ, आपका स्मार्ट यात्रा साथी। आज मैं आपकी यात्रा में क्या मदद कर सकता हूँ?',
+    aiWelcome: 'नमस्ते! मैं राही AI हूँ, आपका स्मार्ट यात्रा साथी। आज मैं आपकी यात्रा में क्या सहायता कर सकता हूँ?',
     aiFastestChip: '⚡ सबसे तेज़ मार्ग',
     aiCheapestChip: '💰 सबसे कम किराया',
     aiDelaysChip: '⚠️ देरी की जांच',
     aiLessWalkingChip: '🚶 कम पैदल चलना',
-    aiInputPlaceholder: 'राही से पूछें (जैसे: \'राजीव चौक से साइबर सिटी कैसे जाएं?\')...',
+    aiInputPlaceholder: 'राही से पूछें (जैसे: \'राजीव चौक से साइबर सिटी कैसे जाएँ?\')...',
     aiAnalyzing: 'राही AI मार्गों का विश्लेषण कर रहा है...',
 
     // Settings
-    settingsTitle: 'प्राथमिकताएँ एवं सेटिंग्स',
+    settingsTitle: 'प्राथमिकताएँ एवं सिस्टम सेटिंग्स',
     settingsSubtitle: 'अभिगम्यता, भाषा और क्षेत्रीय प्राथमिकताओं को कॉन्फ़िगर करें।',
-    regionalCity: 'शहर (Regional City)',
+    regionalCity: 'शहर / क्षेत्रीय नेटवर्क',
     appLanguage: 'एप्लिकेशन भाषा',
     accessibleRouting: 'व्हीलचेयर एवं सुगम्य मार्ग',
     accessibleRoutingDesc: 'लिफ्ट, रैंप और सीढ़ी-मुक्त स्थानांतरण को प्राथमिकता दें।',
     reducedMotionSetting: 'कम एनीमेशन मोड',
-    reducedMotionDesc: 'कम बैंडविड्थ पर 3D दृश्य और एनिमेशन को सीमित करें।'
+    reducedMotionDesc: 'कम बैंडविड्थ पर 3D दृश्य और एनिमेशन को सीमित करें।',
+    citySelectDesc: 'सक्रिय महानगर सार्वजनिक परिवहन नेटवर्क चुनें।',
+    langSelectDesc: 'अंग्रेजी और हिन्दी भाषा का समर्थन।',
+    transitApiTitle: 'ट्रांजिट एपीआई क्रेडेंशियल एवं किराया गणना इंजन',
+    activeServices: '3 सक्रिय सेवाएं',
+    engNotesTitle: 'मिशन भारत DEV-P05 इंजीनियरिंग विवरण',
+    engNotesDesc: 'राही को भारतीय महानगरों में दैनिक यात्रा को सरल और सुगम बनाने के लिए तैयार किया गया है। डेटा प्रामाणिकता के लिए सभी नकली अलर्ट को [सिम्युलेटेड] के रूप में चिन्हित किया गया है।'
   }
 };
 
 export const getTranslation = (lang: AppLanguage, key: TranslationKey): string => {
   return translations[lang]?.[key] || translations.en[key] || key;
 };
+
+// Route Tag Localizer
+const ROUTE_TAG_TRANSLATIONS: Record<string, string> = {
+  'Fastest': 'सबसे तेज़',
+  'Lowest Fare': 'सबसे किफायती',
+  'Least Crowded': 'कम भीड़',
+  'Direct Cab': 'डायरेक्ट कैब / टैक्सी',
+  'Govt Metered Auto': 'सरकारी मीटर ऑटो',
+  'Govt Metered Taxi': 'सरकारी मीटर टैक्सी',
+  'Direct Reserved Auto': 'आरक्षित ऑटो',
+  'Shared Tempo': 'शेयरिंग टेम्पो',
+  'Shared Tempo & Auto': 'शेयरिंग टेम्पो व ऑटो',
+  'Most Popular': 'सर्वाधिक लोकप्रिय',
+  'Green Electric Bus': 'हरित इलेक्ट्रिक बस',
+  'DTC Electric Bus': 'डीटीसी इलेक्ट्रिक बस',
+  'BEST Electric Bus': 'बेस्ट इलेक्ट्रिक बस',
+  'BMTC Electric Bus': 'बीएमटीसी इलेक्ट्रिक बस',
+  'Electric Nagar Seva': 'इलेक्ट्रिक नगर सेवा',
+  'Private Taxi (Limited)': 'प्राइवेट टैक्सी (सीमित)',
+  'Metro Closed': 'मेट्रो सेवा बंद',
+  'Metro (Alternative)': 'मेट्रो (वैकल्पिक मार्ग)',
+  'Multi-Transport (Auto + Metro)': 'मल्टी-ट्रांसपोर्ट (ऑटो + मेट्रो)',
+  'Multi-Transport (E-Rickshaw + Metro)': 'मल्टी-ट्रांसपोर्ट (ई-रिक्शा + मेट्रो)',
+  'Multi-Transport (Braj Feeder)': 'मल्टी-ट्रांसपोर्ट (ब्रज फीडर)',
+  'Multi-Transport (Local / Metro)': 'मल्टी-ट्रांसपोर्ट (लोकल / मेट्रो)',
+  'Multi-Transport (Tempo + Train)': 'मल्टी-ट्रांसपोर्ट (टेम्पो + ट्रेन)',
+  'Short Distance Recommended': 'कम दूरी हेतु उत्तम',
+  'Local E-Rickshaw Hop': 'लोकल ई-रिक्शा',
+  'Mumbai Suburban Local': 'मुंबई उपनगरीय लोकल',
+  'Maha Mumbai Metro': 'महा मुंबई मेट्रो',
+  'Namma Metro': 'नम्मा मेट्रो'
+};
+
+export function localizeRouteTag(tag: string, lang: AppLanguage): string {
+  if (lang !== 'hi') return tag;
+  if (ROUTE_TAG_TRANSLATIONS[tag]) return ROUTE_TAG_TRANSLATIONS[tag];
+  if (tag.startsWith('🚆')) {
+    return tag.replace('Suburban Local Train', 'उपनगरीय लोकल ट्रेन').replace('Indian Railways', 'भारतीय रेल');
+  }
+  return tag;
+}
+
+// Transport Mode Localizer
+const MODE_TRANSLATIONS: Record<string, string> = {
+  walk: 'पैदल',
+  metro: 'मेट्रो',
+  bus: 'बस',
+  ebus: 'इलेक्ट्रिक बस',
+  auto: 'ऑटो',
+  taxi: 'टैक्सी',
+  'e-rickshaw': 'ई-रिक्शा',
+  rail: 'ट्रेन / रेलवे',
+  ferry: 'फेरी'
+};
+
+export function localizeMode(mode: string, lang: AppLanguage): string {
+  if (lang !== 'hi') return mode;
+  return MODE_TRANSLATIONS[mode.toLowerCase()] || mode;
+}
+
+// Autocomplete Category Localizer
+const CATEGORY_TRANSLATIONS: Record<string, string> = {
+  metro_station: 'मेट्रो स्टेशन',
+  bus_terminal: 'बस टर्मिनल',
+  bus_stop: 'बस स्टॉप',
+  rail_station: 'रेलवे स्टेशन',
+  railway_station: 'रेलवे स्टेशन',
+  landmark: 'स्थान / लैंडमार्क',
+  hub: 'ट्रांजिट हब',
+  current_location: 'वर्तमान स्थान'
+};
+
+export function localizeCategory(category: string, lang: AppLanguage): string {
+  if (lang !== 'hi') return category.replace('_', ' ');
+  return CATEGORY_TRANSLATIONS[category.toLowerCase()] || category.replace('_', ' ');
+}
+
+// Crowd Level Localizer
+export function localizeCrowdLevel(level: CrowdLevel, lang: AppLanguage): string {
+  if (lang !== 'hi') return `${level} crowd`;
+  switch (level) {
+    case 'Low':
+      return 'कम भीड़';
+    case 'Moderate':
+      return 'मध्यम भीड़';
+    case 'High':
+      return 'अधिक भीड़';
+    case 'Very High':
+      return 'अत्यधिक भीड़';
+    default:
+      return `${level} भीड़`;
+  }
+}
