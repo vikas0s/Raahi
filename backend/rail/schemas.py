@@ -22,8 +22,8 @@ class RailStation(BaseModel):
 class TrainHalt(BaseModel):
     station_code: str
     station_name: str
-    arrival_time: str
-    departure_time: str
+    arrival_time: Optional[str] = "00:00"
+    departure_time: Optional[str] = "00:00"
     halt_minutes: int
     distance_km: float
     platform: Optional[str] = None
@@ -45,13 +45,13 @@ class TrainSchedule(BaseModel):
 class TrainSummary(BaseModel):
     train_number: str
     train_name: str
-    train_type: Literal["Superfast", "Express", "Passenger", "MEMU", "DEMU", "EMU / Local", "Rail Bus", "Shatabdi", "Vande Bharat"]
+    train_type: str = "Express"
     origin_code: str
     origin_name: str
     destination_code: str
     destination_name: str
-    departure_time: str  # HH:MM format
-    arrival_time: str    # HH:MM format
+    departure_time: Optional[str] = "00:00"  # HH:MM format
+    arrival_time: Optional[str] = "00:00"    # HH:MM format
     duration_minutes: int
     distance_km: float
     running_days: List[str] = Field(default_factory=lambda: ["Daily"])

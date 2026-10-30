@@ -155,8 +155,15 @@ export type TranslationKey =
   | 'mapWalk'
   | 'mapBusGps'
   | 'mapLiveDelhiTransit'
+  | 'mapLiveTransitMathura'
+  | 'mapLiveTransitMumbai'
+  | 'mapLiveTransitBengaluru'
   | 'mapBusesCount'
+  | 'mapVehiclesCount'
   | 'mapOtdActive'
+  | 'mapMathuraActive'
+  | 'mapMumbaiActive'
+  | 'mapBengaluruActive'
   | 'mapCenterTooltip'
   | 'mapDetectTooltip'
   | 'mapOriginLabel'
@@ -339,8 +346,15 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     mapWalk: 'Walk',
     mapBusGps: 'Bus GPS',
     mapLiveDelhiTransit: 'Live Delhi Transit (OTD)',
+    mapLiveTransitMathura: 'Live Braj Transit (E-Bus & Tempos)',
+    mapLiveTransitMumbai: 'Live Mumbai Transit (BEST)',
+    mapLiveTransitBengaluru: 'Live Bengaluru Transit (BMTC)',
     mapBusesCount: '{count} buses',
+    mapVehiclesCount: '{count} vehicles',
     mapOtdActive: 'OTD Key Active',
+    mapMathuraActive: 'Smart City Telemetry Active',
+    mapMumbaiActive: 'BEST / Chalo Telemetry Active',
+    mapBengaluruActive: 'BMTC Telemetry Active',
     mapCenterTooltip: 'Center map on your current location',
     mapDetectTooltip: 'Detect your current location',
     mapOriginLabel: 'Origin',
@@ -567,8 +581,15 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     mapWalk: 'पैदल',
     mapBusGps: 'बस जीपीएस',
     mapLiveDelhiTransit: 'लाइव दिल्ली ट्रांजिट (OTD)',
+    mapLiveTransitMathura: 'लाइव ब्रज ट्रांजिट (ई-बस व ऑटो)',
+    mapLiveTransitMumbai: 'लाइव मुंबई ट्रांजिट (BEST)',
+    mapLiveTransitBengaluru: 'लाइव बेंगलुरु ट्रांजिट (BMTC)',
     mapBusesCount: '{count} बसें',
+    mapVehiclesCount: '{count} वाहन',
     mapOtdActive: 'OTD सक्रिय',
+    mapMathuraActive: 'स्मार्ट सिटी टेलीमेट्री सक्रिय',
+    mapMumbaiActive: 'BEST / चलो टेलीमेट्री सक्रिय',
+    mapBengaluruActive: 'BMTC टेलीमेट्री सक्रिय',
     mapCenterTooltip: 'मानचित्र को अपने वर्तमान स्थान पर केंद्रित करें',
     mapDetectTooltip: 'वर्तमान स्थान का पता लगाएं',
     mapOriginLabel: 'प्रारंभिक स्थान (A)',

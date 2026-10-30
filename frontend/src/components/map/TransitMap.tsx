@@ -1299,6 +1299,42 @@ export const TransitMap: React.FC<Props> = ({
 
   }, [liveVehicles, showLiveGPS, isMapReady]);
 
+  // Dynamic live transit branding per city
+  const normalizedCity = (city || (origin && origin.city) || '').toLowerCase();
+
+  const liveTransitTitle = (() => {
+    if (normalizedCity.includes('mathura') || normalizedCity.includes('vrindavan') || normalizedCity.includes('braj')) {
+      return t('mapLiveTransitMathura');
+    }
+    if (normalizedCity.includes('mumbai')) {
+      return t('mapLiveTransitMumbai');
+    }
+    if (normalizedCity.includes('bengaluru') || normalizedCity.includes('bangalore')) {
+      return t('mapLiveTransitBengaluru');
+    }
+    return t('mapLiveDelhiTransit');
+  })();
+
+  const liveTransitStatus = (() => {
+    if (normalizedCity.includes('mathura') || normalizedCity.includes('vrindavan') || normalizedCity.includes('braj')) {
+      return t('mapMathuraActive');
+    }
+    if (normalizedCity.includes('mumbai')) {
+      return t('mapMumbaiActive');
+    }
+    if (normalizedCity.includes('bengaluru') || normalizedCity.includes('bangalore')) {
+      return t('mapBengaluruActive');
+    }
+    return t('mapOtdActive');
+  })();
+
+  const liveVehicleCountText = (() => {
+    if (normalizedCity.includes('mathura') || normalizedCity.includes('vrindavan') || normalizedCity.includes('braj')) {
+      return t('mapVehiclesCount').replace('{count}', String(liveVehicles.length));
+    }
+    return t('mapBusesCount').replace('{count}', String(liveVehicles.length));
+  })();
+
 
 
   return (
@@ -1357,13 +1393,13 @@ export const TransitMap: React.FC<Props> = ({
 
           <span className={`w-2 h-2 rounded-full ${showLiveGPS ? 'bg-[#5B8A6E] animate-pulse' : 'bg-[#77776F]'}`} />
 
-          <span>{t('mapLiveDelhiTransit')}</span>
+          <span>{liveTransitTitle}</span>
 
           {showLiveGPS && (
 
             <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full font-mono ml-0.5">
 
-              {t('mapBusesCount').replace('{count}', String(liveVehicles.length))}
+              {liveVehicleCountText}
 
             </span>
 
@@ -1379,7 +1415,7 @@ export const TransitMap: React.FC<Props> = ({
 
             <CheckCircle2 size={10} className="text-[#5B8A6E]" />
 
-            {t('mapOtdActive')} • {lastTelemetryUpdate}
+            {liveTransitStatus} • {lastTelemetryUpdate}
 
           </span>
 
