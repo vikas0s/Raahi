@@ -6,9 +6,9 @@ import * as THREE from 'three';
 const MetroTrain: React.FC = () => {
   const trainRef = useRef<THREE.Group>(null);
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (trainRef.current) {
-      const t = clock.getElapsedTime() * 0.4;
+      const t = performance.now() * 0.001 * 0.4;
       // Linear smooth back-and-forth transit loop
       trainRef.current.position.x = Math.sin(t) * 2.8;
     }
@@ -39,9 +39,9 @@ const MetroTrain: React.FC = () => {
 const ElectricBus: React.FC = () => {
   const busRef = useRef<THREE.Group>(null);
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (busRef.current) {
-      const t = clock.getElapsedTime() * 0.25;
+      const t = performance.now() * 0.001 * 0.25;
       busRef.current.position.z = Math.cos(t) * 2.2;
     }
   });
@@ -163,8 +163,8 @@ const CityEnvironment: React.FC = () => {
 
 // Camera drift controller
 const CameraController: React.FC<{ mousePos: { x: number; y: number } }> = ({ mousePos }) => {
-  useFrame(({ camera, clock }) => {
-    const elapsed = clock.getElapsedTime() * 0.15;
+  useFrame(({ camera }) => {
+    const elapsed = performance.now() * 0.001 * 0.15;
     const targetX = 4.2 + Math.sin(elapsed) * 0.4 + mousePos.x * 0.5;
     const targetY = 3.6 + Math.cos(elapsed * 0.8) * 0.2 - mousePos.y * 0.3;
     const targetZ = 4.2 + Math.cos(elapsed) * 0.4;
