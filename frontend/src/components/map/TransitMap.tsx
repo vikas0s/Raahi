@@ -44,10 +44,17 @@ export const TransitMap: React.FC<Props> = ({
     if (!mapContainer.current || mapRef.current) return;
 
     const isMathura = (city && city.toLowerCase().includes('mathura')) || (origin && origin.city.toLowerCase().includes('mathura'));
+    const isMumbai = (city && city.toLowerCase().includes('mumbai')) || (origin && origin.city.toLowerCase().includes('mumbai'));
+    const isBengaluru = (city && (city.toLowerCase().includes('bengaluru') || city.toLowerCase().includes('bangalore'))) || (origin && origin.city.toLowerCase().includes('bengaluru'));
+
     const initialCenter: [number, number] = origin
       ? [origin.lon, origin.lat]
       : isMathura
       ? [77.6737, 27.4855]
+      : isMumbai
+      ? [72.8400, 19.0400]
+      : isBengaluru
+      ? [77.5946, 12.9716]
       : [77.2197, 28.6328];
 
     const map = new maplibregl.Map({

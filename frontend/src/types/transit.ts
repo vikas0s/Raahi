@@ -29,6 +29,7 @@ export interface TravelPreferences {
   allow_taxi?: boolean;
   pink_pass?: boolean; // Delhi Govt free bus travel for women
   prefer_multimodal?: boolean;
+  prefer_rail?: boolean; // Indian Railways & Local Trains
 }
 
 export interface TransitLeg {
@@ -54,6 +55,12 @@ export interface TransitLeg {
   accessibility: boolean;
   fare_inr?: number;
   fare_details?: string;
+  train_number?: string;
+  train_name?: string;
+  train_type?: string;
+  platform?: string;
+  coach_classes?: string[];
+  data_source?: string;
 }
 
 export interface RouteItinerary {
@@ -137,5 +144,114 @@ export interface LiveVehicle {
   current_status: string;
   timestamp: string;
   is_live_telemetry: boolean;
+  data_source: string;
+}
+
+// ==============================================================================
+// Raahi RailConnect — Indian Railways Types
+// ==============================================================================
+
+export interface RailStation {
+  code: string;
+  name: string;
+  city: string;
+  state?: string;
+  lat: number;
+  lon: number;
+  platforms_count?: number;
+  category?: string;
+  aliases?: string[];
+  zone?: string;
+}
+
+export interface TrainHalt {
+  station_code: string;
+  station_name: string;
+  arrival_time: string;
+  departure_time: string;
+  halt_minutes: number;
+  distance_km: number;
+  platform?: string;
+  day_offset: number;
+}
+
+export interface TrainSchedule {
+  train_number: string;
+  train_name: string;
+  train_type: string;
+  origin_code: string;
+  origin_name: string;
+  destination_code: string;
+  destination_name: string;
+  halts: TrainHalt[];
+  running_days: string[];
+}
+
+export interface TrainSummary {
+  train_number: string;
+  train_name: string;
+  train_type: 'Superfast' | 'Express' | 'Passenger' | 'MEMU' | 'DEMU' | 'EMU / Local' | 'Rail Bus' | 'Shatabdi' | 'Vande Bharat' | string;
+  origin_code: string;
+  origin_name: string;
+  destination_code: string;
+  destination_name: string;
+  departure_time: string;
+  arrival_time: string;
+  duration_minutes: number;
+  distance_km: number;
+  running_days: string[];
+  classes: string[];
+  fares: Record<string, number>;
+  halts_count: number;
+  platform_origin?: string;
+  platform_dest?: string;
+  live_delay_mins: number;
+  live_status: string;
+  is_live: boolean;
+  data_source: string;
+}
+
+export interface LiveRunningStatus {
+  train_number: string;
+  train_name: string;
+  train_type?: string;
+  current_station: string;
+  current_status: string;
+  delay_minutes: number;
+  speed_kmh?: number;
+  last_reported_time?: string;
+  next_station?: string;
+  eta_destination: string;
+  is_live: boolean;
+  data_source: string;
+}
+
+export interface StationBoardItem {
+  train_number: string;
+  train_name: string;
+  train_type: string;
+  origin_code: string;
+  destination_code: string;
+  destination_name: string;
+  scheduled_time: string;
+  expected_time: string;
+  platform: string;
+  status: string;
+  delay_minutes: number;
+  is_live: boolean;
+}
+
+export interface StationBoardResponse {
+  station: RailStation;
+  departures: StationBoardItem[];
+  generated_at: string;
+}
+
+export interface RailSearchResponse {
+  from_station: RailStation;
+  to_station: RailStation;
+  date: string;
+  trains_count: number;
+  trains: TrainSummary[];
   data_source: string;
 }

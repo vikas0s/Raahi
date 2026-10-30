@@ -78,6 +78,28 @@ export const JourneyTimeline: React.FC<Props> = ({ route, className = '' }) => {
                   </span>
                 </div>
 
+                {/* Railway Special Badge Strip */}
+                {leg.mode === 'rail' && (
+                  <div className="flex flex-wrap items-center gap-2 mb-2.5 p-2 rounded-xl bg-[#8B1E1E]/8 border border-[#8B1E1E]/25 text-xs">
+                    <span className="inline-flex items-center gap-1 font-extrabold text-[#8B1E1E]">
+                      <span>🚆 Indian Railways</span>
+                    </span>
+                    {leg.platform && (
+                      <span className="px-2 py-0.5 rounded-md bg-[#8B1E1E]/15 font-bold text-[#8B1E1E] border border-[#8B1E1E]/30">
+                        {leg.platform}
+                      </span>
+                    )}
+                    {leg.coach_classes && leg.coach_classes.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-md bg-[#EEECE3] font-bold text-[#454841] border border-[#D8D4C7]">
+                        Classes: {leg.coach_classes.join(' · ')}
+                      </span>
+                    )}
+                    <span className="ml-auto text-[11px] font-semibold text-[#8B1E1E]">
+                      {leg.data_source === 'railradar_live' ? '● Live NTES Telemetry' : '✓ Verified IR Timetable'}
+                    </span>
+                  </div>
+                )}
+
                 {/* Origin / Destination for Leg */}
                 <div className="text-xs space-y-1.5 mb-2.5">
                   <p className="flex items-center gap-2 font-bold text-[#1F231F]">

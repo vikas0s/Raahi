@@ -78,6 +78,54 @@ def test_saved_routes():
     assert len(routes) >= 1
     print(f"[PASS] Saved routes retrieved ({len(routes)} items)")
 
+def test_railconnect():
+    # 1. Search stations
+    res = client.get("/api/rail/stations?query=Mathura")
+    assert res.status_code == 200
+    stations = res.json()
+    assert len(stations) >= 1
+    print(f"[PASS] RailConnect station search passed ({len(stations)} stations found)")
+
+    # 2. Trains between stations
+    res = client.get("/api/rail/trains?from_station=MTJ&to_station=BDB")
+    assert res.status_code == 200
+    trains_data = res.json()
+    assert trains_data["trains_count"] >= 1
+    print(f"[PASS] RailConnect trains between MTJ & BDB passed ({trains_data['trains_count']} trains)")
+
+    # 3. Schedule
+    res = client.get("/api/rail/schedule/12002")
+    assert res.status_code == 200
+    schedule = res.json()
+    assert len(schedule["halts"]) >= 2
+    print(f"[PASS] RailConnect schedule for Shatabdi passed ({len(schedule['halts'])} halts)")
+
+    # 4. Live Running Status
+    res = client.get("/api/rail/live-status/12002")
+    assert res.status_code == 200
+    live = res.json()
+    assert live["train_number"] == "12002"
+    print("[PASS] RailConnect live running status passed")
+
+    # 5. Station Departure Board
+    res = client.get("/api/rail/station-board/MTJ")
+    assert res.status_code == 200
+    board = res.json()
+    assert len(board["departures"]) >= 1
+    print(f"[PASS] RailConnect MTJ station board passed ({len(board['departures'])} departures)")
+
+    # 6. Integrated routing in Plan Journey
+    plan_res = client.post("/plan", json={
+        "origin": "Mathura Junction Railway Station (MTJ)",
+        "destination": "Vrindavan Railway Station / Gandhi Park",
+        "city": "Mathura & Vrindavan"
+    })
+    assert plan_res.status_code == 200
+    routes = plan_res.json()["routes"]
+    has_train = any("rail_connect" in r.get("route_type", "") or "🚆" in r.get("tag", "") for r in routes)
+    assert has_train, "Expected Indian Railways / Rail Bus route in journey comparison options"
+    print("[PASS] RailConnect integrated journey planning comparison passed")
+
 if __name__ == "__main__":
     test_health()
     test_search_places()
@@ -85,5 +133,6 @@ if __name__ == "__main__":
     test_chat_hinglish()
     test_delays_and_simulation()
     test_saved_routes()
+    test_railconnect()
     print("\nALL BACKEND UNIT TESTS PASSED SUCCESSFULLY!")
 

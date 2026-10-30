@@ -171,17 +171,20 @@ export const SettingsView: React.FC<Props> = ({
             </code>
           </div>
 
-          {/* Delhi Govt Fare Tariff Engine */}
+          {/* Gazetted Govt Fare Tariff Engine */}
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-[#1F231F]">2. Delhi Govt Gazetted Fare Engine</span>
+              <span className="font-bold text-[#1F231F]">2. Gazetted Multi-City Govt Fare Engines</span>
               <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9]">Built-in & Active</span>
             </div>
-            <p className="text-[#52544D] leading-relaxed">
-              Auto meter tariff (₹30 first 1.5km + ₹11/km), DTC E-Bus slabs (₹10/₹15/₹20/₹25), DTC Non-AC (₹5/₹10/₹15), and Pink Ticket (₹0 Free for Women).
+            <p className="text-[#52544D] leading-relaxed text-xs">
+              • <strong>Mumbai (Maharashtra Transport Dept):</strong> Metered Auto (₹27 first 1.5km + ₹18.22/km), Kaali-Peeli Taxi (₹33 first 1.5km + ₹21.90/km), BEST E-Bus (₹6-₹25), Local Train (₹5-₹20)<br />
+              • <strong>Delhi NCR (GNCTD Gazetted):</strong> Auto meter (₹30 first 1.5km + ₹11/km), DTC E-Bus (₹10-₹25), Pink Pass (₹0 Free for Women)<br />
+              • <strong>Mathura & Vrindavan:</strong> Shared Tempo / Vikram (₹15-₹60), E-Rickshaw Toto (₹10-₹20), Nagar Seva EV<br />
+              • <strong>Bengaluru:</strong> Karnataka Auto meter (₹30 first 2km + ₹15/km), BMTC Vajra AC Bus
             </p>
             <div className="text-[11px] font-bold text-[#64836D]">
-              Auto TSR + E-Rickshaw + DTC Bus + DMRC Metro
+              Maharashtra RTO + GNCTD + Karnataka Transport + Indian Railways Regulated Tariffs
             </div>
           </div>
 

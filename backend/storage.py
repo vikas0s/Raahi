@@ -166,7 +166,91 @@ def get_all_saved_routes(city: Optional[str] = None) -> List[SavedRoute]:
             )
         ]
         
+
+    # If city is Mumbai and no saved routes exist in DB yet, return default authentic Mumbai commutes
+    if (not routes) and city and "mumbai" in city.lower():
+        now_str = datetime.now().isoformat()
+        routes = [
+            SavedRoute(
+                id="mumbai-saved-1",
+                name="CSMT to BKC (Corporate Office Commute)",
+                origin="Chhatrapati Shivaji Maharaj Terminus (CSMT)",
+                destination="Bandra Kurla Complex (BKC)",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=26,
+                typical_fare_inr=35.0,
+                typical_transfers=1,
+                current_delay_minutes=0,
+                active_status="Normal Service (Metro Line 3 / Local Running)"
+            ),
+            SavedRoute(
+                id="mumbai-saved-2",
+                name="Andheri to Ghatkopar (Metro 1 Peak Hour)",
+                origin="Andheri Station",
+                destination="Ghatkopar Station",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=21,
+                typical_fare_inr=30.0,
+                typical_transfers=0,
+                current_delay_minutes=0,
+                active_status="Normal Service (Metro 1 Running Every 3m)"
+            ),
+            SavedRoute(
+                id="mumbai-saved-3",
+                name="Churchgate to Nariman Point & Marine Drive",
+                origin="Churchgate Railway Station",
+                destination="Marine Drive & Nariman Point",
+                city=city,
+                preferred_mode="cheapest",
+                created_at=now_str,
+                typical_duration_minutes=8,
+                typical_fare_inr=33.0,
+                typical_transfers=0,
+                current_delay_minutes=0,
+                active_status="Normal Service (Metered Kaali-Peeli Available)"
+            )
+        ]
+
+    # If city is Bengaluru and no saved routes exist in DB yet, return default authentic Bengaluru commutes
+    if (not routes) and city and ("bengaluru" in city.lower() or "bangalore" in city.lower()):
+        now_str = datetime.now().isoformat()
+        routes = [
+            SavedRoute(
+                id="blr-saved-1",
+                name="Majestic to Whitefield (Namma Metro Purple Line)",
+                origin="Majestic (KSR Bengaluru)",
+                destination="Whitefield (Kadugodi)",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=44,
+                typical_fare_inr=60.0,
+                typical_transfers=0,
+                current_delay_minutes=0,
+                active_status="Normal Service (Purple Line Running)"
+            ),
+            SavedRoute(
+                id="blr-saved-2",
+                name="Indiranagar to Electronic City Phase 1",
+                origin="Indiranagar 100ft Road",
+                destination="Electronic City Phase 1",
+                city=city,
+                preferred_mode="fastest",
+                created_at=now_str,
+                typical_duration_minutes=45,
+                typical_fare_inr=50.0,
+                typical_transfers=1,
+                current_delay_minutes=0,
+                active_status="Normal Service (BMTC Feeder Running)"
+            )
+        ]
+
     return routes
+
 
 def create_saved_route(item: SavedRouteCreate, duration: int = 35, fare: float = 40.0, transfers: int = 1) -> SavedRoute:
     new_id = f"route-{uuid.uuid4().hex[:8]}"
