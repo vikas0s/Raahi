@@ -16,6 +16,7 @@ interface Props {
   onSelectRoute: (route: RouteItinerary) => void;
   onBackToSearch: () => void;
   onRouteSaved?: () => void;
+  isLoading?: boolean;
 }
 
 export const PlanJourneyView: React.FC<Props> = ({
@@ -26,7 +27,8 @@ export const PlanJourneyView: React.FC<Props> = ({
   city,
   onSelectRoute,
   onBackToSearch,
-  onRouteSaved
+  onRouteSaved,
+  isLoading = false
 }) => {
   const { t } = useTranslation();
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -119,14 +121,27 @@ export const PlanJourneyView: React.FC<Props> = ({
           </div>
 
           <div className="space-y-3.5">
-            {routes.map((route) => (
-              <RouteComparisonCard
-                key={route.id}
-                route={route}
-                isSelected={selectedRoute?.id === route.id}
-                onSelect={() => onSelectRoute(route)}
-              />
-            ))}
+            {isLoading ? (
+              <div className="bg-[#FFFEFA] rounded-2xl border border-[#D8D4C7] p-8 text-center space-y-3 shadow-xs">
+                <div className="w-9 h-9 border-3 border-[#304B3C]/20 border-t-[#304B3C] rounded-full animate-spin mx-auto" />
+                <p className="font-heading font-bold text-base text-[#1F231F]">Calculating Transit Itineraries...</p>
+                <p className="text-xs text-[#52544D] font-medium">Evaluating Metro, Electric Buses, Shared Tempos & Feeder Autos</p>
+              </div>
+            ) : routes.length === 0 ? (
+              <div className="bg-[#FFFEFA] rounded-2xl border border-[#D8D4C7] p-8 text-center space-y-2 shadow-xs">
+                <p className="font-heading font-bold text-base text-[#1F231F]">No direct routes found</p>
+                <p className="text-xs text-[#52544D]">Try searching another nearby landmark or hub.</p>
+              </div>
+            ) : (
+              routes.map((route) => (
+                <RouteComparisonCard
+                  key={route.id}
+                  route={route}
+                  isSelected={selectedRoute?.id === route.id}
+                  onSelect={() => onSelectRoute(route)}
+                />
+              ))
+            )}
           </div>
 
           {/* Environmental Carbon Savings Metric Tile */}

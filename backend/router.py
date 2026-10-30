@@ -1344,86 +1344,210 @@ class TransitRouter:
             walk_mins = 0
             walk_dist = 0
         else:
-            walk1_mins = 2
-            arr_time = curr_time + timedelta(minutes=walk1_mins)
-            legs.append(TransitLeg(
-                id=str(uuid.uuid4())[:8],
-                mode="walk",
-                origin_name=orig["name"],
-                destination_name=f"{orig['name']} Auto / Tempo Stand",
-                origin_coords=start_pt,
-                destination_coords=[round(start_pt[0] + 0.0006, 5), round(start_pt[1] + 0.0005, 5)],
-                path_coords=[start_pt, [round(start_pt[0] + 0.0006, 5), round(start_pt[1] + 0.0005, 5)]],
-                duration_minutes=walk1_mins,
-                distance_meters=100,
-                departure_time=curr_time.strftime("%H:%M"),
-                arrival_time=arr_time.strftime("%H:%M"),
-                instructions="Walk to shared tempo / Vikram stand outside main gate.",
-                crowd_level="Low"
-            ))
-            curr_time = arr_time
+            orig_name_lower = orig["name"].lower()
+            dest_name_lower = dest["name"].lower()
+            is_gla = "gla" in orig_name_lower
+            is_bankey_bihari = "bihari" in dest_name_lower or "bankey" in dest_name_lower
 
-            tempo_dist = dist_km - 1.2
-            tempo_mins = max(18, int(tempo_dist * 2.1))
-            tempo_fare, tempo_desc = calculate_mathura_shared_tempo_fare(tempo_dist)
-            arr_time = curr_time + timedelta(minutes=tempo_mins)
+            if is_gla and is_bankey_bihari:
+                # Leg 1: GLA to Chatikara (Auto, ₹10, 7 mins)
+                chatikara_pt = [77.6355, 27.5685]
+                leg1_dur = 7
+                arr1 = curr_time + timedelta(minutes=leg1_dur)
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="auto",
+                    line_name="Shared Highway Auto (NH-19)",
+                    line_color="#E68A00",
+                    origin_name="GLA University (NH-19 Main Gate)",
+                    destination_name="Chatikara Road Junction (NH-19 Vrindavan Cut)",
+                    origin_coords=start_pt,
+                    destination_coords=chatikara_pt,
+                    path_coords=get_road_geometry(start_pt, chatikara_pt, mode="driving"),
+                    duration_minutes=leg1_dur,
+                    distance_meters=5400,
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr1.strftime("%H:%M"),
+                    stops_count=2,
+                    intermediate_stops=["GLA NH-19 Gate", "Chatikara Chauraha Stand"],
+                    instructions="Board shared Auto outside GLA gate on NH-19 to Chatikara Chauraha (Vrindavan Cut). Flat ₹10.",
+                    crowd_level="Low",
+                    fare_inr=10.0,
+                    fare_details="NH-19 Shared Auto: Flat ₹10 (GLA ➔ Chatikara)"
+                ))
+                curr_time = arr1
 
-            mid_pt = [round(dest["lon"] - 0.003, 5), round(dest["lat"] - 0.003, 5)]
-            legs.append(TransitLeg(
-                id=str(uuid.uuid4())[:8],
-                mode="auto",
-                line_name="Shared Tempo / Vikram (Braj Corridor)",
-                line_color="#E68A00",
-                origin_name=f"{orig['name']} Stand",
-                destination_name=f"{dest['name']} Chauraha Stand",
-                origin_coords=start_pt,
-                destination_coords=mid_pt,
-                path_coords=get_road_geometry(start_pt, mid_pt, mode="driving"),
-                duration_minutes=tempo_mins,
-                distance_meters=int(tempo_dist * 1050),
-                departure_time=curr_time.strftime("%H:%M"),
-                arrival_time=arr_time.strftime("%H:%M"),
-                stops_count=4,
-                intermediate_stops=["Highway Corridor", "Birla Mandir Marg", "Pagal Baba Stand", "Attalla Chungi"],
-                instructions="Board shared CNG Tempo/Vikram. Fixed corridor fare, departs when filled.",
-                crowd_level="Moderate",
-                fare_inr=tempo_fare,
-                fare_details=tempo_desc
-            ))
-            curr_time = arr_time
+                # Leg 2: Chatikara to Bankey Bihari Stand (Direct Shared Toto, ₹30, 14 mins)
+                bb_stand_pt = [77.6980, 27.5800]
+                leg2_dur = 14
+                arr2 = curr_time + timedelta(minutes=leg2_dur)
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="erickshaw",
+                    line_name="Direct Vrindavan Shared E-Rickshaw",
+                    line_color="#00897B",
+                    origin_name="Chatikara Road Junction (NH-19 Vrindavan Cut)",
+                    destination_name="Bankey Bihari Stand (Vidyapeeth Chauraha / VIP Parking)",
+                    origin_coords=chatikara_pt,
+                    destination_coords=bb_stand_pt,
+                    path_coords=get_road_geometry(chatikara_pt, bb_stand_pt, mode="driving"),
+                    duration_minutes=leg2_dur,
+                    distance_meters=6200,
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr2.strftime("%H:%M"),
+                    stops_count=3,
+                    intermediate_stops=["Vaishno Devi Dham", "Prem Mandir", "Bankey Bihari Stand"],
+                    instructions="Board direct shared E-Rickshaw from Chatikara stand directly to Bankey Bihari outer stand. Flat ₹30.",
+                    crowd_level="Moderate",
+                    fare_inr=30.0,
+                    fare_details="Direct Shared Toto: Flat ₹30 (Chatikara ➔ Bankey Bihari Stand)"
+                ))
+                curr_time = arr2
 
-            erick_mins = 6
-            erick_fare, erick_desc = 10.0, "Shared E-Rickshaw: ₹10 (Temple Doorstep Feeder)"
-            arr_time = curr_time + timedelta(minutes=erick_mins)
-            legs.append(TransitLeg(
-                id=str(uuid.uuid4())[:8],
-                mode="erickshaw",
-                line_name="Shared E-Rickshaw Feeder (Toto)",
-                line_color="#00897B",
-                origin_name=f"{dest['name']} Chauraha Stand",
-                destination_name=dest["name"],
-                origin_coords=mid_pt,
-                destination_coords=end_pt,
-                path_coords=get_road_geometry(mid_pt, end_pt, mode="driving"),
-                duration_minutes=erick_mins,
-                distance_meters=1200,
-                departure_time=curr_time.strftime("%H:%M"),
-                arrival_time=arr_time.strftime("%H:%M"),
-                stops_count=1,
-                intermediate_stops=[dest["name"]],
-                instructions="Hop onto shared battery E-Rickshaw through Kunj Gali directly to temple gate.",
-                crowd_level="Low",
-                fare_inr=erick_fare,
-                fare_details=erick_desc
-            ))
+                # Leg 3: Walk to Mandir (3 mins, 250m)
+                walk_dur = 3
+                arr3 = curr_time + timedelta(minutes=walk_dur)
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="walk",
+                    line_name="Temple Heritage Pedestrian Walk",
+                    line_color="#64836D",
+                    origin_name="Bankey Bihari Stand (Vidyapeeth Chauraha / VIP Parking)",
+                    destination_name="Shri Bankey Bihari Ji Mandir (Sanctum Entrance)",
+                    origin_coords=bb_stand_pt,
+                    destination_coords=end_pt,
+                    path_coords=[bb_stand_pt, end_pt],
+                    duration_minutes=walk_dur,
+                    distance_meters=250,
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr3.strftime("%H:%M"),
+                    stops_count=1,
+                    intermediate_stops=["Phool-Prasad Gali", "Mandir Gate"],
+                    instructions="Walk 2-3 mins through pedestrian temple bazaar to Mandir sanctum entrance. Commercial vehicles prohibited inside.",
+                    crowd_level="Low",
+                    fare_inr=0.0,
+                    fare_details="Pedestrian Walk (Free)"
+                ))
 
-            total_mins = walk1_mins + tempo_mins + erick_mins
-            total_fare = tempo_fare + erick_fare
-            title = "Shared Tempo + Local E-Rickshaw"
-            tag_reason = "⚡ The #1 local choice: Fast shared tempo along corridor + direct E-rickshaw to temple doorstep."
-            transfers = 1
-            walk_mins = walk1_mins
-            walk_dist = 100
+                total_mins = leg1_dur + leg2_dur + walk_dur
+                total_fare = 10.0 + 30.0
+                title = "Shared Auto to Chatikara + Direct E-Rickshaw to Mandir"
+                tag_reason = "🚀 Direct Local Commute: Shared Auto to Chatikara (₹10), direct shared E-Rickshaw to Vidyapeeth Stand (₹30), and 3-min walk to Mandir sanctum."
+                transfers = 2
+                walk_mins = walk_dur
+                walk_dist = 250
+            else:
+                walk1_mins = 2
+                arr_time = curr_time + timedelta(minutes=walk1_mins)
+                stand_name = "Chatikara Road Stand" if "chatikara" in orig_name_lower else f"{orig['name']} Stand"
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="walk",
+                    origin_name=orig["name"],
+                    destination_name=stand_name,
+                    origin_coords=start_pt,
+                    destination_coords=[round(start_pt[0] + 0.0006, 5), round(start_pt[1] + 0.0005, 5)],
+                    path_coords=[start_pt, [round(start_pt[0] + 0.0006, 5), round(start_pt[1] + 0.0005, 5)]],
+                    duration_minutes=walk1_mins,
+                    distance_meters=100,
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr_time.strftime("%H:%M"),
+                    instructions="Walk to shared tempo / Vikram stand outside main gate.",
+                    crowd_level="Low"
+                ))
+                curr_time = arr_time
+
+                tempo_dist = dist_km - 1.2
+                tempo_mins = max(18, int(tempo_dist * 2.1))
+                tempo_fare, tempo_desc = calculate_mathura_shared_tempo_fare(tempo_dist)
+                arr_time = curr_time + timedelta(minutes=tempo_mins)
+
+                mid_pt = [77.6980, 27.5800] if is_bankey_bihari else [round(dest["lon"] - 0.003, 5), round(dest["lat"] - 0.003, 5)]
+                dest_stand_title = "Bankey Bihari Stand (Vidyapeeth Chauraha)" if is_bankey_bihari else f"{dest['name']} Stand"
+                legs.append(TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="auto",
+                    line_name="Shared Tempo / Vikram (Braj Corridor)",
+                    line_color="#E68A00",
+                    origin_name=stand_name,
+                    destination_name=dest_stand_title,
+                    origin_coords=start_pt,
+                    destination_coords=mid_pt,
+                    path_coords=get_road_geometry(start_pt, mid_pt, mode="driving"),
+                    duration_minutes=tempo_mins,
+                    distance_meters=int(tempo_dist * 1050),
+                    departure_time=curr_time.strftime("%H:%M"),
+                    arrival_time=arr_time.strftime("%H:%M"),
+                    stops_count=4,
+                    intermediate_stops=["Highway Corridor", "Birla Mandir Marg", "Pagal Baba Stand", "Attalla Chungi"],
+                    instructions="Board shared CNG Tempo/Vikram. Fixed corridor fare, departs when filled.",
+                    crowd_level="Moderate",
+                    fare_inr=tempo_fare,
+                    fare_details=tempo_desc
+                ))
+                curr_time = arr_time
+
+                if is_bankey_bihari:
+                    walk_dur = 3
+                    arr3 = curr_time + timedelta(minutes=walk_dur)
+                    legs.append(TransitLeg(
+                        id=str(uuid.uuid4())[:8],
+                        mode="walk",
+                        line_name="Temple Heritage Pedestrian Walk",
+                        line_color="#64836D",
+                        origin_name="Bankey Bihari Stand (Vidyapeeth Chauraha)",
+                        destination_name=dest["name"],
+                        origin_coords=mid_pt,
+                        destination_coords=end_pt,
+                        path_coords=[mid_pt, end_pt],
+                        duration_minutes=walk_dur,
+                        distance_meters=250,
+                        departure_time=curr_time.strftime("%H:%M"),
+                        arrival_time=arr3.strftime("%H:%M"),
+                        stops_count=1,
+                        intermediate_stops=["Phool-Prasad Gali", "Mandir Gate"],
+                        instructions="Walk 2-3 mins through pedestrian temple bazaar to Mandir sanctum entrance.",
+                        crowd_level="Low",
+                        fare_inr=0.0,
+                        fare_details="Free Pedestrian Walk"
+                    ))
+                    total_mins = walk1_mins + tempo_mins + walk_dur
+                    total_fare = tempo_fare
+                    walk_dist = 350
+                    transfers = 1
+                else:
+                    erick_mins = 6
+                    erick_fare, erick_desc = 10.0, "Shared E-Rickshaw: ₹10 (Temple Doorstep Feeder)"
+                    arr_time = curr_time + timedelta(minutes=erick_mins)
+                    legs.append(TransitLeg(
+                        id=str(uuid.uuid4())[:8],
+                        mode="erickshaw",
+                        line_name="Shared E-Rickshaw Feeder (Toto)",
+                        line_color="#00897B",
+                        origin_name=dest_stand_title,
+                        destination_name=dest["name"],
+                        origin_coords=mid_pt,
+                        destination_coords=end_pt,
+                        path_coords=get_road_geometry(mid_pt, end_pt, mode="driving"),
+                        duration_minutes=erick_mins,
+                        distance_meters=1200,
+                        departure_time=curr_time.strftime("%H:%M"),
+                        arrival_time=arr_time.strftime("%H:%M"),
+                        stops_count=1,
+                        intermediate_stops=[dest["name"]],
+                        instructions="Hop onto shared battery E-Rickshaw directly to temple gate.",
+                        crowd_level="Low",
+                        fare_inr=erick_fare,
+                        fare_details=erick_desc
+                    ))
+                    total_mins = walk1_mins + tempo_mins + erick_mins
+                    total_fare = tempo_fare + erick_fare
+                    walk_dist = 100
+                    transfers = 2
+
+                title = "Shared Tempo + Local E-Rickshaw"
+                tag_reason = "🚀 Most Commuted Route: High-frequency Shared Tempo on arterial highway + doorstep Toto in narrow lanes."
+                walk_mins = walk1_mins
 
         avail = erickshaw_avail if dist_km <= 4.5 else (tempo_avail and erickshaw_avail)
         unavail_reason = None if avail else "Night service reduced (10:30 PM – 5 AM). Use 24/7 Station Reserved Auto."
@@ -1781,116 +1905,339 @@ class TransitRouter:
     def _build_mathura_multimodal_feeder_route(
         self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime, erick_avail: bool, tempo_avail: bool
     ) -> RouteItinerary:
-        """Door-to-door Braj transit: Home E-Rickshaw to Tempo Stand + Shared Tempo + Mandir Toto."""
+        """Door-to-door Braj transit with authentic local transit hubs (GLA -> Chatikara -> Prem Mandir -> Bankey Bihari)."""
         legs: List[TransitLeg] = []
         curr_time = base_time
 
+        orig_name_lower = orig["name"].lower()
+        dest_name_lower = dest["name"].lower()
+        is_gla = "gla" in orig_name_lower
+        is_bankey_bihari = "bihari" in dest_name_lower or "bankey" in dest_name_lower
+        is_prem_mandir = "prem" in dest_name_lower
+        is_chatikara = "chatikara" in orig_name_lower or "chatikara" in dest_name_lower
+
+        mathura_places = self.places.get("Mathura & Vrindavan", [])
+        chatikara_hub = next((p for p in mathura_places if "chatikara" in p["name"].lower()), {
+            "name": "Chatikara Road Junction (NH-19 Highway Cut)", "lat": 27.5685, "lon": 77.6355
+        })
+        prem_mandir_hub = next((p for p in mathura_places if "prem mandir" in p["name"].lower()), {
+            "name": "Prem Mandir (Vrindavan)", "lat": 27.5724, "lon": 77.6710
+        })
+
+        # ==============================================================================
+        # 1. SPECIALIZED SCENARIO: GLA UNIVERSITY -> BANKEY BIHARI MANDIR
+        # Ground truth sequence:
+        # Leg 1: GLA to Chatikara (Auto, ₹10)
+        # Leg 2: Chatikara to Prem Mandir (E-Rickshaw, ₹20)
+        # Leg 3: Prem Mandir to Bankey Bihari Stand (E-Rickshaw, ₹20)
+        # Leg 4: Bankey Bihari Stand to Mandir Entrance (Walk, Free)
+        # ==============================================================================
+        if is_gla and is_bankey_bihari:
+            # Leg 1: GLA -> Chatikara (Auto, ₹10, 7 mins)
+            leg1_start = [orig["lon"], orig["lat"]]
+            leg1_end = [chatikara_hub["lon"], chatikara_hub["lat"]]
+            leg1_dur = 7
+            arr1 = curr_time + timedelta(minutes=leg1_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="auto",
+                line_name="Shared Highway Auto / Tempo (NH-19)",
+                line_color="#E68A00",
+                origin_name="GLA University (NH-19 Main Gate)",
+                destination_name="Chatikara Road Junction (NH-19 Vrindavan Cut)",
+                origin_coords=leg1_start,
+                destination_coords=leg1_end,
+                path_coords=get_road_geometry(leg1_start, leg1_end, mode="driving"),
+                duration_minutes=leg1_dur,
+                distance_meters=5400,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr1.strftime("%H:%M"),
+                stops_count=2,
+                intermediate_stops=["GLA University NH-19 Gate", "Akbarpur Highway Cut", "Chatikara Chauraha Stand"],
+                instructions="Stand outside GLA University main gate on NH-19 and board passing shared Auto / Tempo to Chatikara Chauraha (Vrindavan Cut). Flat ₹10.",
+                crowd_level="Low",
+                fare_inr=10.0,
+                fare_details="NH-19 Shared Auto: Flat ₹10 (GLA ➔ Chatikara)"
+            ))
+            curr_time = arr1
+
+            # Leg 2: Chatikara -> Prem Mandir (E-Rickshaw, ₹20, 8 mins)
+            leg2_start = leg1_end
+            leg2_end = [prem_mandir_hub["lon"], prem_mandir_hub["lat"]]
+            leg2_dur = 8
+            arr2 = curr_time + timedelta(minutes=leg2_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="erickshaw",
+                line_name="Shared E-Rickshaw Feeder (Toto)",
+                line_color="#00897B",
+                origin_name="Chatikara Road Junction (NH-19 Vrindavan Cut)",
+                destination_name="Prem Mandir (Vrindavan)",
+                origin_coords=leg2_start,
+                destination_coords=leg2_end,
+                path_coords=get_road_geometry(leg2_start, leg2_end, mode="driving"),
+                duration_minutes=leg2_dur,
+                distance_meters=3800,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr2.strftime("%H:%M"),
+                stops_count=2,
+                intermediate_stops=["Chatikara Stand", "Vaishno Devi Dham", "Prem Mandir Gate 1"],
+                instructions="Take high-frequency shared E-Rickshaw (Toto) from Chatikara stand along Bhaktivedanta Swami Marg to Prem Mandir. Flat ₹20.",
+                crowd_level="Moderate",
+                fare_inr=20.0,
+                fare_details="Vrindavan Feeder Toto: Flat ₹20 (Chatikara ➔ Prem Mandir)"
+            ))
+            curr_time = arr2
+
+            # Leg 3: Prem Mandir -> Bankey Bihari Stand (E-Rickshaw, ₹20, 7 mins)
+            bb_stand_coords = [77.6980, 27.5800]
+            leg3_start = leg2_end
+            leg3_end = bb_stand_coords
+            leg3_dur = 7
+            arr3 = curr_time + timedelta(minutes=leg3_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="erickshaw",
+                line_name="Temple Corridor E-Rickshaw (Toto)",
+                line_color="#00897B",
+                origin_name="Prem Mandir Stand",
+                destination_name="Bankey Bihari Stand (Vidyapeeth Chauraha / VIP Parking)",
+                origin_coords=leg3_start,
+                destination_coords=leg3_end,
+                path_coords=get_road_geometry(leg3_start, leg3_end, mode="driving"),
+                duration_minutes=leg3_dur,
+                distance_meters=2800,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr3.strftime("%H:%M"),
+                stops_count=2,
+                intermediate_stops=["Prem Mandir Stand", "Raman Reti", "Vidyapeeth Chauraha Drop Point"],
+                instructions="Board E-Rickshaw from Prem Mandir stand to Bankey Bihari drop-point stand at Vidyapeeth Chauraha / Parking. Flat ₹20.",
+                crowd_level="Moderate",
+                fare_inr=20.0,
+                fare_details="Vrindavan Temple Toto: Flat ₹20 (Prem Mandir ➔ Bankey Bihari Stand)"
+            ))
+            curr_time = arr3
+
+            # Leg 4: Bankey Bihari Stand -> Shri Bankey Bihari Ji Mandir (Walk, Free, 3 mins)
+            mandir_coords = [dest["lon"], dest["lat"]]
+            walk_dur = 3
+            arr4 = curr_time + timedelta(minutes=walk_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                line_name="Temple Heritage Pedestrian Walk",
+                line_color="#64836D",
+                origin_name="Bankey Bihari Stand (Vidyapeeth Chauraha / VIP Parking)",
+                destination_name="Shri Bankey Bihari Ji Mandir (Sanctum Entrance)",
+                origin_coords=bb_stand_coords,
+                destination_coords=mandir_coords,
+                path_coords=[bb_stand_coords, [round(bb_stand_coords[0] + 0.0015, 5), round(bb_stand_coords[1] + 0.0008, 5)], mandir_coords],
+                duration_minutes=walk_dur,
+                distance_meters=250,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr4.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=["Phool-Prasad Gali", "Mandir Gate"],
+                instructions="Walk 2-3 mins through the pedestrian temple bazaar / phool-prasad gali to Shri Bankey Bihari Ji Mandir sanctum entrance. Commercial vehicles not permitted inside temple alleys.",
+                crowd_level="Low",
+                fare_inr=0.0,
+                fare_details="Pedestrian Heritage Walk (Free Walk to Mandir Gate)"
+            ))
+
+            total_fare = 10.0 + 20.0 + 20.0
+            total_mins = leg1_dur + leg2_dur + leg3_dur + walk_dur
+            return RouteItinerary(
+                id=f"route-gla-bihari-{uuid.uuid4().hex[:6]}",
+                title="Multi-Transport: GLA ➔ Chatikara ➔ Prem Mandir ➔ Bankey Bihari",
+                tag="Multi-Transport (Braj Feeder)",
+                tag_reason="Authentic local commute: Shared Auto on NH-19 to Chatikara (₹10), E-Rickshaw to Prem Mandir (₹20), Toto to Vidyapeeth Stand (₹20), and 3-min walk to Mandir sanctum.",
+                total_duration_minutes=total_mins,
+                departure_time=base_time.strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=total_mins)).strftime("%H:%M"),
+                total_fare_inr=total_fare,
+                fare_breakdown="Auto (₹10) + Toto (₹20) + Toto (₹20) + Walk (Free)",
+                route_type="mathura_shared",
+                transfers_count=3,
+                walking_duration_minutes=walk_dur,
+                walking_distance_meters=250,
+                overall_crowd="Moderate",
+                total_delay_minutes=0,
+                legs=legs,
+                eco_carbon_savings_kg=round(dist_km * 0.16, 1)
+            )
+
+        # ==============================================================================
+        # 2. GENERAL BRAJ MULTIMODAL ROUTE (WITH REAL INTERMEDIATE HUBS & MANDIR WALK)
+        # ==============================================================================
         start_pt = [orig["lon"], orig["lat"]]
         end_pt = [dest["lon"], dest["lat"]]
 
-        # Leg 1: E-Rickshaw from home to Highway Tempo Stand
+        # First Leg: Doorstep Feeder
         fm_dur = 6
         fm_fare = 10.0
         arr1 = curr_time + timedelta(minutes=fm_dur)
         tempo_stand_pt = [round(start_pt[0] + 0.008, 5), round(start_pt[1] + 0.008, 5)]
+        hub_drop_name = "Chatikara Road Junction (NH-19)" if is_gla else f"{orig['name']} Highway Stand"
+        if is_gla:
+            tempo_stand_pt = [chatikara_hub["lon"], chatikara_hub["lat"]]
+
         legs.append(TransitLeg(
             id=str(uuid.uuid4())[:8],
-            mode="erickshaw",
-            line_name="Doorstep E-Rickshaw (Toto)",
-            line_color="#00897B",
+            mode="auto" if is_gla else "erickshaw",
+            line_name="Shared Highway Auto (NH-19)" if is_gla else "Doorstep E-Rickshaw (Toto)",
+            line_color="#E68A00" if is_gla else "#00897B",
             origin_name=orig["name"],
-            destination_name=f"{orig['name']} Highway Tempo Stand",
+            destination_name=hub_drop_name,
             origin_coords=start_pt,
             destination_coords=tempo_stand_pt,
             path_coords=get_road_geometry(start_pt, tempo_stand_pt, mode="driving"),
             duration_minutes=fm_dur,
-            distance_meters=1400,
+            distance_meters=1400 if not is_gla else 5400,
             departure_time=curr_time.strftime("%H:%M"),
             arrival_time=arr1.strftime("%H:%M"),
             stops_count=1,
-            intermediate_stops=[f"{orig['name']} Colony Stand", f"{orig['name']} Highway Stand"],
-            instructions=f"Take doorstep E-Rickshaw (Toto) from your colony to Highway Tempo Stand. Flat ₹10.",
+            intermediate_stops=[orig["name"], hub_drop_name],
+            instructions=f"Take shared vehicle to {hub_drop_name}. Flat ₹10.",
             crowd_level="Low",
             fare_inr=fm_fare,
-            fare_details="Braj Local Toto Flat ₹10 Feeder"
+            fare_details="Braj Local Feeder: Flat ₹10"
         ))
         curr_time = arr1
 
-        # Leg 2: Shared Tempo / Vikram (Highway Arterial)
+        # Mid Leg: Main Arterial Corridor
         tempo_dist = max(3.0, dist_km - 2.5)
-        tempo_dur = max(16, int(tempo_dist * 2.1))
-        tempo_fare, tempo_desc = calculate_mathura_shared_tempo_fare(tempo_dist)
+        tempo_dur = max(14, int(tempo_dist * 2.0))
+        tempo_fare = 20.0 if is_gla else 25.0
         arr2 = curr_time + timedelta(minutes=tempo_dur)
-        chungi_pt = [round(end_pt[0] - 0.006, 5), round(end_pt[1] - 0.006, 5)]
+        dest_drop_name = "Prem Mandir Stand" if is_bankey_bihari else f"{dest['name']} Stand"
+        dest_stand_coords = [prem_mandir_hub["lon"], prem_mandir_hub["lat"]] if is_bankey_bihari else [round(end_pt[0] - 0.004, 5), round(end_pt[1] - 0.004, 5)]
+
         legs.append(TransitLeg(
             id=str(uuid.uuid4())[:8],
-            mode="auto",
-            line_name="Shared Tempo / Vikram Express",
-            line_color="#E68A00",
-            origin_name=f"{orig['name']} Highway Stand",
-            destination_name=f"{dest['name']} Chungi Gate",
+            mode="erickshaw" if is_gla else "auto",
+            line_name="Vrindavan Feeder E-Rickshaw" if is_gla else "Shared Tempo / Vikram Express",
+            line_color="#00897B" if is_gla else "#E68A00",
+            origin_name=hub_drop_name,
+            destination_name=dest_drop_name,
             origin_coords=tempo_stand_pt,
-            destination_coords=chungi_pt,
-            path_coords=get_road_geometry(tempo_stand_pt, chungi_pt, mode="driving"),
+            destination_coords=dest_stand_coords,
+            path_coords=get_road_geometry(tempo_stand_pt, dest_stand_coords, mode="driving"),
             duration_minutes=tempo_dur,
             distance_meters=int(tempo_dist * 1000),
             departure_time=curr_time.strftime("%H:%M"),
             arrival_time=arr2.strftime("%H:%M"),
-            stops_count=3,
-            intermediate_stops=["Mandi Chauraha", "Chatikara Road", f"{dest['name']} Chungi"],
-            instructions="Board high-frequency Shared Tempo / Vikram along the arterial road. Fixed corridor fare.",
+            stops_count=2,
+            intermediate_stops=[hub_drop_name, dest_drop_name],
+            instructions=f"Board shared transit to {dest_drop_name}. Fixed shared fare ₹{int(tempo_fare)}.",
             crowd_level="Moderate",
             fare_inr=tempo_fare,
-            fare_details=tempo_desc
+            fare_details=f"Shared Braj Corridor: ₹{int(tempo_fare)}"
         ))
         curr_time = arr2
 
-        # Leg 3: Temple Zone Battery Toto
-        lm_dur = 5
-        lm_fare = 10.0
-        arr3 = curr_time + timedelta(minutes=lm_dur)
-        legs.append(TransitLeg(
-            id=str(uuid.uuid4())[:8],
-            mode="erickshaw",
-            line_name="Temple Zone Battery Toto",
-            line_color="#00897B",
-            origin_name=f"{dest['name']} Chungi Gate",
-            destination_name=dest["name"],
-            origin_coords=chungi_pt,
-            destination_coords=end_pt,
-            path_coords=get_road_geometry(chungi_pt, end_pt, mode="driving"),
-            duration_minutes=lm_dur,
-            distance_meters=1100,
-            departure_time=curr_time.strftime("%H:%M"),
-            arrival_time=arr3.strftime("%H:%M"),
-            stops_count=1,
-            intermediate_stops=[f"{dest['name']} Chungi", dest["name"]],
-            instructions=f"Take direct battery Toto into the pedestrian temple zone directly to {dest['name']} entrance.",
-            crowd_level="Low",
-            fare_inr=lm_fare,
-            fare_details="Temple Zone Battery Toto Flat ₹10"
-        ))
+        # Final Leg: Last Mile or Walk to Temple
+        if is_bankey_bihari:
+            # Drop at Bankey Bihari Stand (₹20) + Walk (Free)
+            bb_stand_coords = [77.6980, 27.5800]
+            lm_dur = 7
+            arr3 = curr_time + timedelta(minutes=lm_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="erickshaw",
+                line_name="Temple Corridor E-Rickshaw (Toto)",
+                line_color="#00897B",
+                origin_name="Prem Mandir Stand",
+                destination_name="Bankey Bihari Stand (Vidyapeeth Chauraha / Parking)",
+                origin_coords=dest_stand_coords,
+                destination_coords=bb_stand_coords,
+                path_coords=get_road_geometry(dest_stand_coords, bb_stand_coords, mode="driving"),
+                duration_minutes=lm_dur,
+                distance_meters=2800,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr3.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=["Prem Mandir", "Bankey Bihari Stand"],
+                instructions="Take E-Rickshaw directly to Bankey Bihari outer stand (Vidyapeeth Chauraha). Flat ₹20.",
+                crowd_level="Moderate",
+                fare_inr=20.0,
+                fare_details="Temple Feeder Toto: Flat ₹20"
+            ))
+            curr_time = arr3
 
-        total_fare = fm_fare + tempo_fare + lm_fare
-        total_mins = fm_dur + tempo_dur + lm_dur
+            walk_dur = 3
+            arr4 = curr_time + timedelta(minutes=walk_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                line_name="Temple Pedestrian Concourse",
+                line_color="#64836D",
+                origin_name="Bankey Bihari Stand (Vidyapeeth Chauraha / Parking)",
+                destination_name="Shri Bankey Bihari Ji Mandir (Sanctum)",
+                origin_coords=bb_stand_coords,
+                destination_coords=end_pt,
+                path_coords=[bb_stand_coords, end_pt],
+                duration_minutes=walk_dur,
+                distance_meters=250,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr4.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=["Mandir Gali"],
+                instructions="Walk 2-3 mins through pedestrian temple alley to Mandir entrance. Commercial vehicles prohibited in galis.",
+                crowd_level="Low",
+                fare_inr=0.0,
+                fare_details="Free Pedestrian Walk"
+            ))
+            total_fare = fm_fare + tempo_fare + 20.0
+            total_mins = fm_dur + tempo_dur + lm_dur + walk_dur
+            walk_meters = 250
+            transfers = 3
+        else:
+            lm_dur = 5
+            arr3 = curr_time + timedelta(minutes=lm_dur)
+            legs.append(TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="erickshaw",
+                line_name="Temple Zone Battery Toto",
+                line_color="#00897B",
+                origin_name=dest_drop_name,
+                destination_name=dest["name"],
+                origin_coords=dest_stand_coords,
+                destination_coords=end_pt,
+                path_coords=get_road_geometry(dest_stand_coords, end_pt, mode="driving"),
+                duration_minutes=lm_dur,
+                distance_meters=1100,
+                departure_time=curr_time.strftime("%H:%M"),
+                arrival_time=arr3.strftime("%H:%M"),
+                stops_count=1,
+                intermediate_stops=[dest["name"]],
+                instructions=f"Take direct battery Toto to {dest['name']} entrance.",
+                crowd_level="Low",
+                fare_inr=10.0,
+                fare_details="Temple Zone Battery Toto Flat ₹10"
+            ))
+            total_fare = fm_fare + tempo_fare + 10.0
+            total_mins = fm_dur + tempo_dur + lm_dur
+            walk_meters = 50
+            transfers = 2
+
         return RouteItinerary(
             id=f"route-mathura-multi-{uuid.uuid4().hex[:6]}",
-            title="Multi-Transport: Home E-Rickshaw ➔ Highway Tempo ➔ Mandir Toto",
+            title=f"Multi-Transport: {orig['name'].split('(')[0].strip()} ➔ {dest['name'].split('(')[0].strip()}",
             tag="Multi-Transport (Braj Feeder)",
-            tag_reason="Complete door-to-door Braj transit: E-Rickshaw from home to Highway Tempo stand, fast shared corridor, and direct temple entrance drop.",
+            tag_reason="Complete door-to-door Braj transit: Feeder Auto/Toto on arterial highway, connecting shared corridor, and direct temple drop.",
             total_duration_minutes=total_mins,
             departure_time=base_time.strftime("%H:%M"),
             arrival_time=(base_time + timedelta(minutes=total_mins)).strftime("%H:%M"),
             total_fare_inr=total_fare,
-            fare_breakdown=f"Toto (₹{int(fm_fare)}) + Tempo (₹{int(tempo_fare)}) + Toto (₹{int(lm_fare)})",
-            route_type="bus_ebus",
-            transfers_count=2,
-            walking_duration_minutes=1,
-            walking_distance_meters=80,
+            fare_breakdown=f"Total: ₹{int(total_fare)} (Multi-Modal Local Slabs)",
+            route_type="mathura_shared",
+            transfers_count=transfers,
+            walking_duration_minutes=3 if is_bankey_bihari else 1,
+            walking_distance_meters=walk_meters,
             overall_crowd="Moderate",
             total_delay_minutes=0,
             legs=legs,
-            eco_carbon_savings_kg=round(dist_km * 0.12, 1)
+            eco_carbon_savings_kg=round(dist_km * 0.14, 1)
         )
 
 router_instance = TransitRouter()

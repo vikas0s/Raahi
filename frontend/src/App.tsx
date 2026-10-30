@@ -135,7 +135,10 @@ export const App: React.FC = () => {
   // Execute Route Planning
   const handleExecuteSearch = async (departureTime?: string, silent: boolean = false) => {
     if (!origin || !destination) return;
-    if (!silent) setIsSearching(true);
+    if (!silent) {
+      setIsSearching(true);
+      setActiveTab('plan'); // Immediately shift to 'plan' tab when tapping Search Journeys!
+    }
     try {
       const res = await planJourney(
         origin,
@@ -149,9 +152,6 @@ export const App: React.FC = () => {
       setDestLocation(res.destination);
       if (res.routes.length > 0) {
         setSelectedRoute(res.routes[0]);
-      }
-      if (!silent) {
-        setActiveTab('plan');
       }
     } catch (err) {
       console.error('Journey planning error:', err);
@@ -245,6 +245,7 @@ export const App: React.FC = () => {
               onSelectRoute={setSelectedRoute}
               onBackToSearch={() => setActiveTab('discover')}
               onRouteSaved={refreshSavedRoutes}
+              isLoading={isSearching}
             />
           )}
 
