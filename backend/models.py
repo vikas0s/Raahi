@@ -22,6 +22,7 @@ class TravelPreference(BaseModel):
     allow_taxi: bool = True
     pink_pass: bool = False # Delhi Govt free travel for women on DTC/cluster buses
     prefer_multimodal: bool = False # Doorstep Auto/E-Rickshaw + Metro chaining
+    prefer_rail: bool = False # Indian Railways & Local Suburban Trains
 
 class PlanRequest(BaseModel):
     origin: str
@@ -53,6 +54,12 @@ class TransitLeg(BaseModel):
     accessibility: bool = True
     fare_inr: float = 0.0
     fare_details: Optional[str] = None # e.g. "Govt notified: ₹30 first 1.5km + ₹11/km"
+    train_number: Optional[str] = None
+    train_name: Optional[str] = None
+    train_type: Optional[str] = None
+    platform: Optional[str] = None
+    coach_classes: Optional[List[str]] = None
+    data_source: Optional[str] = None
 
 class RouteItinerary(BaseModel):
     id: str

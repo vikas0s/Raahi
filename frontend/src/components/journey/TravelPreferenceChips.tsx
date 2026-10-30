@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, IndianRupee, Users, ArrowLeftRight, Footprints, Accessibility, Bus, CarTaxiFront, Sparkles, Layers } from 'lucide-react';
+import { Zap, IndianRupee, Users, ArrowLeftRight, Footprints, Accessibility, Bus, CarTaxiFront, Sparkles, Layers, Train } from 'lucide-react';
 import type { TravelPreferences } from '../../types/transit';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -7,9 +7,10 @@ interface Props {
   preferences: TravelPreferences;
   onChange: (prefs: TravelPreferences) => void;
   className?: string;
+  city?: string;
 }
 
-export const TravelPreferenceChips: React.FC<Props> = ({ preferences, onChange, className = '' }) => {
+export const TravelPreferenceChips: React.FC<Props> = ({ preferences, onChange, className = '', city = 'Delhi NCR' }) => {
   const { t } = useTranslation();
 
   const toggle = (key: keyof TravelPreferences) => {
@@ -27,13 +28,46 @@ export const TravelPreferenceChips: React.FC<Props> = ({ preferences, onChange, 
     onChange(updated);
   };
 
+  const isMumbai = city.toLowerCase().includes('mumbai');
+  const isMathura = city.toLowerCase().includes('mathura') || city.toLowerCase().includes('vrindavan');
+  const isBengaluru = city.toLowerCase().includes('bengaluru') || city.toLowerCase().includes('bangalore');
+
+  const ebusLabel = isMumbai
+    ? 'BEST Electric Bus'
+    : isMathura
+    ? 'Electric Nagar Seva'
+    : isBengaluru
+    ? 'BMTC Electric Bus'
+    : t('prefEBus');
+
+  const autoLabel = isMumbai
+    ? 'Auto & Kaali-Peeli Taxi'
+    : isMathura
+    ? 'Shared Tempo & Auto'
+    : isBengaluru
+    ? 'Metered Auto & Cab'
+    : t('prefAutoTaxi');
+
+  const multiLabel = isMumbai
+    ? 'Multi-Transport (Local / Metro)'
+    : isMathura
+    ? 'Multi-Transport (Tempo + Train)'
+    : t('prefMultiTransport');
+
+  const pinkLabel = isMumbai
+    ? 'Women Concession'
+    : isMathura
+    ? 'Women Concession'
+    : t('prefPinkPass');
+
   const chips: { key: keyof TravelPreferences; label: string; icon: React.ReactNode; isPink?: boolean }[] = [
-    { key: 'prefer_multimodal', label: t('prefMultiTransport'), icon: <Layers size={13} /> },
+    { key: 'prefer_multimodal', label: multiLabel, icon: <Layers size={13} /> },
+    { key: 'prefer_rail', label: isMumbai ? '🚆 Suburban Local Train' : t('prefRail'), icon: <Train size={13} /> },
     { key: 'fastest', label: t('prefFastest'), icon: <Zap size={13} /> },
     { key: 'cheapest', label: t('prefCheapest'), icon: <IndianRupee size={13} /> },
-    { key: 'prefer_ebus', label: t('prefEBus'), icon: <Bus size={13} /> },
-    { key: 'allow_auto', label: t('prefAutoTaxi'), icon: <CarTaxiFront size={13} /> },
-    { key: 'pink_pass', label: t('prefPinkPass'), icon: <Sparkles size={13} />, isPink: true },
+    { key: 'prefer_ebus', label: ebusLabel, icon: <Bus size={13} /> },
+    { key: 'allow_auto', label: autoLabel, icon: <CarTaxiFront size={13} /> },
+    { key: 'pink_pass', label: pinkLabel, icon: <Sparkles size={13} />, isPink: true },
     { key: 'less_crowded', label: t('prefLessCrowded'), icon: <Users size={13} /> },
     { key: 'fewer_transfers', label: t('prefFewerTransfers'), icon: <ArrowLeftRight size={13} /> },
     { key: 'less_walking', label: t('prefLessWalking'), icon: <Footprints size={13} /> },

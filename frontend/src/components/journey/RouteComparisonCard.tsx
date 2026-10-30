@@ -20,6 +20,9 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
     if (isUnavailable) {
       return 'bg-[#78716C]/15 text-[#57534E] border-[#A8A29E]/50 font-bold';
     }
+    if (route.tag.startsWith('🚆') || route.route_type === 'rail_connect') {
+      return 'bg-[#8B1E1E]/15 text-[#6B1414] border-[#8B1E1E]/40 font-bold ring-1 ring-[#8B1E1E]/20';
+    }
     switch (route.tag) {
       case 'Fastest':
         return 'bg-[#64836D]/18 text-[#253D30] border-[#64836D]/40 font-bold';
@@ -33,6 +36,18 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
         return 'bg-[#C8795A]/18 text-[#8C3D1E] border-[#C8795A]/40 font-bold';
       case 'Least Crowded':
         return 'bg-[#E7B75B]/30 text-[#6B4905] border-[#E7B75B]/50 font-bold';
+      case 'Govt Metered Taxi':
+        return 'bg-[#EAB308]/20 text-[#854D0E] border-[#EAB308]/50 font-bold ring-1 ring-[#EAB308]/30';
+      case 'Mumbai Suburban Local':
+        return 'bg-[#1E3A8A]/18 text-[#1E3A8A] border-[#1E3A8A]/45 font-extrabold ring-1 ring-[#1E3A8A]/25';
+      case 'Maha Mumbai Metro':
+        return 'bg-[#0D9488]/18 text-[#0F766E] border-[#0D9488]/45 font-bold';
+      case 'BEST Electric Bus':
+        return 'bg-[#15803D]/18 text-[#166534] border-[#15803D]/45 font-bold';
+      case 'Namma Metro':
+        return 'bg-[#7E22CE]/18 text-[#6B21A8] border-[#7E22CE]/45 font-bold';
+      case 'BMTC Electric Bus':
+        return 'bg-[#0284C7]/18 text-[#0369A1] border-[#0284C7]/45 font-bold';
       case 'DTC Electric Bus':
         return 'bg-[#00A86B]/15 text-[#006A44] border-[#00A86B]/40 font-bold';
       case 'Govt Metered Auto':
@@ -130,8 +145,10 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
           <React.Fragment key={leg.id || idx}>
             <div className="flex items-center gap-1.5 shrink-0 text-xs text-[#1F231F]">
               <TransitModeIcon mode={leg.mode} size={14} />
-              <span className="text-xs font-bold max-w-[95px] truncate">
-                {leg.line_name || (leg.mode === 'walk' ? `${leg.duration_minutes}m ${t('walking')}` : leg.mode)}
+              <span className="text-xs font-bold max-w-[120px] truncate">
+                {leg.mode === 'rail' && leg.train_number
+                  ? `${leg.train_number} ${leg.train_name || 'Train'}`
+                  : (leg.line_name || (leg.mode === 'walk' ? `${leg.duration_minutes}m ${t('walking')}` : leg.mode))}
               </span>
             </div>
             {idx < route.legs.length - 1 && (

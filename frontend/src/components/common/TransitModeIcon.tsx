@@ -25,7 +25,7 @@ export const TransitModeIcon: React.FC<Props> = ({ mode, className = '', size = 
     case 'erickshaw':
       return <Zap size={size} className={`text-[#00897B] ${className}`} />;
     case 'rail':
-      return <Landmark size={size} className={`text-[#304B3C] ${className}`} />;
+      return <Train size={size} className={`text-[#8B1E1E] ${className}`} />;
     default:
       return <Train size={size} className={className} />;
   }

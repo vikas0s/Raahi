@@ -23,6 +23,11 @@ from .storage import get_all_saved_routes, create_saved_route, delete_saved_rout
 from .chat_engine import chat_assistant_instance
 from .transit_data import PLACES_DATABASE
 from .otd_service import otd_service_instance, LiveVehicle
+from .rail.service import rail_service_instance
+from .rail.schemas import (
+    RailStation, TrainSummary, TrainSchedule, LiveRunningStatus,
+    StationBoardResponse, RailSearchResponse
+)
 
 app = FastAPI(
     title="Raahi Transit API",
@@ -200,9 +205,75 @@ async def get_live_vehicles(
     c = city.lower()
     if "mathura" in c or "vrindavan" in c or "braj" in c:
         return await otd_service_instance.fetch_mathura_live_vehicles()
+    elif "mumbai" in c:
+        return await otd_service_instance.fetch_mumbai_live_vehicles()
     elif "delhi" in c:
         return await otd_service_instance.fetch_live_vehicles(limit=limit)
     return []
+
+# ==============================================================================
+# Raahi RailConnect — Indian Railways & Local Train APIs
+# ==============================================================================
+
+@app.get("/api/rail/stations", response_model=List[RailStation])
+async def search_rail_stations(
+    query: str = Query("", description="Station name or code, e.g. MTJ, NDLS, Vrindavan"),
+    city: Optional[str] = Query(None, description="Optional city filter")
+):
+    """Search stations across Indian Railways and suburban networks."""
+    return await rail_service_instance.search_stations(query, city)
+
+@app.get("/api/rail/trains", response_model=RailSearchResponse)
+async def get_trains_between_stations(
+    from_station: str = Query(..., description="Origin IR Station Code, e.g. NDLS, MTJ"),
+    to_station: str = Query(..., description="Destination IR Station Code, e.g. MTJ, BDB"),
+    date: Optional[str] = Query(None, description="Travel date (YYYY-MM-DD)")
+):
+    """Fetch all direct and regional trains between two railway stations."""
+    from_s = rail_service_instance.get_station_by_code(from_station)
+    to_s = rail_service_instance.get_station_by_code(to_station)
+    if not from_s:
+        from_s = RailStation(code=from_station.upper(), name=f"{from_station.upper()} Station", city="Indian Railways", lat=28.61, lon=77.20)
+    if not to_s:
+        to_s = RailStation(code=to_station.upper(), name=f"{to_station.upper()} Station", city="Indian Railways", lat=27.48, lon=77.67)
+
+    trains = await rail_service_instance.get_trains_between(from_station, to_station, date)
+    source = trains[0].data_source if trains else "verified_schedule"
+    return RailSearchResponse(
+        from_station=from_s,
+        to_station=to_s,
+        date=date or datetime.now().strftime("%Y-%m-%d"),
+        trains_count=len(trains),
+        trains=trains,
+        data_source=source
+    )
+
+@app.get("/api/rail/schedule/{train_no}", response_model=TrainSchedule)
+async def get_train_schedule(train_no: str):
+    """Fetch complete station sequence, arrival, departure, halt, and platform info."""
+    schedule = await rail_service_instance.get_train_schedule(train_no)
+    if not schedule:
+        raise HTTPException(status_code=404, detail=f"Timetable for train #{train_no} not found")
+    return schedule
+
+@app.get("/api/rail/live-status/{train_no}", response_model=LiveRunningStatus)
+async def get_live_train_status(
+    train_no: str,
+    date: Optional[str] = Query(None, description="Travel date (YYYY-MM-DD)")
+):
+    """Fetch real-time running status, current location, ETA, and delay minutes."""
+    status = await rail_service_instance.get_live_running_status(train_no, date)
+    if not status:
+        raise HTTPException(status_code=404, detail=f"Live running status for train #{train_no} unavailable")
+    return status
+
+@app.get("/api/rail/station-board/{station_code}", response_model=StationBoardResponse)
+async def get_station_departure_board(
+    station_code: str,
+    hours: int = Query(4, ge=1, le=12, description="Departure lookahead window in hours")
+):
+    """Fetch live departure/arrival board for a railway station."""
+    return await rail_service_instance.get_station_board(station_code, hours)
 
 @app.websocket("/ws/telemetry")
 async def websocket_telemetry(websocket: WebSocket):

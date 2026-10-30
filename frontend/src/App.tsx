@@ -40,19 +40,24 @@ export const App: React.FC = () => {
 
   const handleCityChange = (newCity: string) => {
     setSelectedCity(newCity);
+    let newOrigin = origin;
+    let newDest = destination;
     if (newCity.toLowerCase().includes('mathura')) {
-      setOrigin('Mathura Junction Railway Station (MTJ)');
-      setDestination('Shri Bankey Bihari Ji Mandir (Vrindavan)');
+      newOrigin = 'Mathura Junction Railway Station (MTJ)';
+      newDest = 'Shri Bankey Bihari Ji Mandir (Vrindavan)';
     } else if (newCity.includes('Delhi')) {
-      setOrigin('Rajiv Chowk (Connaught Place)');
-      setDestination('Cyber City (Gurugram)');
+      newOrigin = 'Rajiv Chowk (Connaught Place)';
+      newDest = 'Cyber City (Gurugram)';
     } else if (newCity.includes('Mumbai')) {
-      setOrigin('Chhatrapati Shivaji Maharaj Terminus (CSMT)');
-      setDestination('Bandra Kurla Complex (BKC)');
+      newOrigin = 'Chhatrapati Shivaji Maharaj Terminus (CSMT)';
+      newDest = 'Bandra Kurla Complex (BKC)';
     } else if (newCity.includes('Bengaluru')) {
-      setOrigin('Majestic (KSR Bengaluru)');
-      setDestination('Whitefield (Kadugodi)');
+      newOrigin = 'Majestic (KSR Bengaluru)';
+      newDest = 'Whitefield (Kadugodi)';
     }
+    setOrigin(newOrigin);
+    setDestination(newDest);
+    handleExecuteSearch(newOrigin, newDest, newCity);
   };
   const [preferences, setPreferences] = useState<TravelPreferences>({
     fastest: true,
@@ -100,10 +105,12 @@ export const App: React.FC = () => {
   useEffect(() => {
     refreshIncidents();
     refreshSavedRoutes();
-
-    // Trigger initial search for realistic first view
-    handleExecuteSearch();
   }, [selectedCity]);
+
+  // Initial first view search
+  useEffect(() => {
+    handleExecuteSearch();
+  }, []);
 
   // WebSocket for Live Telemetry Updates
   useEffect(() => {
@@ -117,7 +124,7 @@ export const App: React.FC = () => {
           if (payload.type === 'SIMULATION_UPDATE') {
             refreshIncidents();
             // If user has routes computed, refresh route ranking seamlessly!
-            handleExecuteSearch(undefined, true);
+            handleExecuteSearch(undefined, undefined, undefined, undefined, true);
           }
         } catch (e) {
           // ignore
@@ -133,17 +140,26 @@ export const App: React.FC = () => {
   }, [origin, destination, selectedCity, preferences]);
 
   // Execute Route Planning
-  const handleExecuteSearch = async (departureTime?: string, silent: boolean = false) => {
-    if (!origin || !destination) return;
+  const handleExecuteSearch = async (
+    customOrigin?: string,
+    customDestination?: string,
+    customCity?: string,
+    departureTime?: string,
+    silent: boolean = false
+  ) => {
+    const o = customOrigin || origin;
+    const d = customDestination || destination;
+    const c = customCity || selectedCity;
+    if (!o || !d) return;
     if (!silent) {
       setIsSearching(true);
       setActiveTab('plan'); // Immediately shift to 'plan' tab when tapping Search Journeys!
     }
     try {
       const res = await planJourney(
-        origin,
-        destination,
-        selectedCity,
+        o,
+        d,
+        c,
         departureTime,
         preferences
       );
@@ -165,7 +181,7 @@ export const App: React.FC = () => {
     setOrigin(saved.origin);
     setDestination(saved.destination);
     setSelectedCity(saved.city);
-    handleExecuteSearch();
+    handleExecuteSearch(saved.origin, saved.destination, saved.city);
   };
 
   // Delete a Saved Commute
@@ -227,7 +243,7 @@ export const App: React.FC = () => {
               onOriginChange={setOrigin}
               onDestinationChange={setDestination}
               onPreferencesChange={(p) => setPreferences(p)}
-              onSearch={handleExecuteSearch}
+              onSearch={(depTime) => handleExecuteSearch(undefined, undefined, undefined, depTime)}
               onReplanSaved={handleReplanSaved}
               onNavigateToPlan={() => setActiveTab('plan')}
               onNavigateToLive={() => setActiveTab('live')}

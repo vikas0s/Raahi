@@ -123,7 +123,11 @@ export type TranslationKey =
   | 'accessibleRouting'
   | 'accessibleRoutingDesc'
   | 'reducedMotionSetting'
-  | 'reducedMotionDesc';
+  | 'reducedMotionDesc'
+  | 'navRail'
+  | 'prefRail'
+  | 'railConnectTitle'
+  | 'railConnectSubtitle';
 
 export const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -137,6 +141,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     navDiscover: 'Discover',
     navPlan: 'Plan a Journey',
     navLive: 'Live Transit',
+    navRail: 'RailConnect',
     navSaved: 'Saved Routes',
     navAssistant: 'AI Travel Assistant',
     navSettings: 'Settings',
@@ -175,6 +180,9 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     prefAutoTaxi: 'Auto & Taxi',
     prefPinkPass: 'Pink Ticket (Women Free)',
     prefMultiTransport: 'Multi-Transport (Auto + Metro)',
+    prefRail: '🚆 Indian Railways',
+    railConnectTitle: 'Raahi RailConnect — Indian Railways & Local Trains',
+    railConnectSubtitle: 'Direct trains, local EMUs, live delays & platform departure boards',
 
     // 3D Scene
     live3dTransitGrid: 'Live 3D Transit Grid',
@@ -192,7 +200,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
 
     // Telemetry Banner
     officialTelemetry: 'Official Transit Telemetry Grounding',
-    officialTelemetryDesc: 'All fares, line names, and stops adhere strictly to DMRC, DTC, and Indian Railways tariff charts.',
+    officialTelemetryDesc: 'All fares, line names, and stops adhere strictly to Maharashtra Transport Dept, GNCTD, DMRC, BEST, BMTC, and Indian Railways tariff charts.',
     viewSystemStatus: 'View System Status',
 
     // Plan Journey View
@@ -288,6 +296,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     navDiscover: 'खोजें (Discover)',
     navPlan: 'यात्रा योजना बनाएं',
     navLive: 'लाइव ट्रांजिट',
+    navRail: 'रेल कनेक्ट',
     navSaved: 'सुरक्षित मार्ग',
     navAssistant: 'एआई यात्रा सहायक',
     navSettings: 'सेटिंग्स',
@@ -326,6 +335,9 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     prefAutoTaxi: 'ऑटो और टैक्सी',
     prefPinkPass: 'गुलाबी टिकट (महिलाएं मुफ्त)',
     prefMultiTransport: 'मल्टी-ट्रांसपोर्ट (ऑटो + मेट्रो)',
+    prefRail: '🚆 भारतीय रेल / लोकल ट्रेन',
+    railConnectTitle: 'राही रेल कनेक्ट — भारतीय रेलवे व लोकल ट्रेन',
+    railConnectSubtitle: 'सीधी ट्रेनें, ईएमयू लोकल, लाइव रनिंग स्टेटस और प्लेटफार्म बोर्ड',
 
     // 3D Scene
     live3dTransitGrid: 'लाइव 3D ट्रांजिट मॉडल',
@@ -343,7 +355,7 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
 
     // Telemetry Banner
     officialTelemetry: 'आधिकारिक ट्रांजिट टेलीमेट्री डेटा',
-    officialTelemetryDesc: 'सभी किराए, लाइन के नाम और स्टेशन DMRC, DTC और भारतीय रेल के आधिकारिक टैरिफ चार्ट के अनुसार हैं।',
+    officialTelemetryDesc: 'सभी किराए, लाइन के नाम और स्टेशन महाराष्ट्र परिवहन विभाग, GNCTD, BEST, DMRC, और भारतीय रेल के आधिकारिक टैरिफ चार्ट के अनुसार हैं।',
     viewSystemStatus: 'सिस्टम स्थिति देखें',
 
     // Plan Journey View

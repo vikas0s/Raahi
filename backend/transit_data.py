@@ -745,32 +745,192 @@ PLACES_DATABASE: Dict[str, List[Dict[str, Any]]] = {
             "lat": 18.9400,
             "lon": 72.8353,
             "category": "railway_station",
-            "aliases": ["csmt", "vt", "victoria terminus", "south mumbai"],
-            "lines": ["Central Railway", "Harbour Line"]
+            "aliases": ["csmt", "vt", "victoria terminus", "south mumbai", "fort"],
+            "lines": ["Central Railway", "Harbour Line", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Churchgate Railway Station",
+            "lat": 18.9322,
+            "lon": 72.8264,
+            "category": "railway_station",
+            "aliases": ["churchgate", "wr terminus", "nariman point station", "marine lines"],
+            "lines": ["Western Railway", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
         },
         {
             "name": "Bandra Kurla Complex (BKC)",
             "lat": 19.0657,
             "lon": 72.8687,
             "category": "landmark",
-            "aliases": ["bkc", "bandra east", "financial district"],
-            "lines": ["Mumbai Metro Line 3", "BEST Electric Feeder"]
+            "aliases": ["bkc", "bandra east", "financial district", "mmrda grounds", "icici bkc"],
+            "lines": ["Mumbai Metro Line 3 (Aqua Line)", "BEST AC Electric Bus (Chalo Bus)", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi"]
+        },
+        {
+            "name": "Dadar Station (Central & Western interchange)",
+            "lat": 19.0178,
+            "lon": 72.8478,
+            "category": "railway_station",
+            "aliases": ["dadar", "dadar tt", "dadar western", "dadar central", "plaza cinema"],
+            "lines": ["Western Railway", "Central Railway", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
         },
         {
             "name": "Andheri Station",
             "lat": 19.1197,
             "lon": 72.8464,
             "category": "metro_station",
-            "aliases": ["andheri", "western suburbs", "andheri west"],
-            "lines": ["Western Railway", "Metro Line 1 (Versova-Ghatkopar)"]
+            "aliases": ["andheri", "western suburbs", "andheri west", "andheri east", "andheri local"],
+            "lines": ["Western Railway", "Harbour Line", "Mumbai Metro Line 1 (Versova-Ghatkopar)", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi"]
         },
         {
             "name": "Ghatkopar Station",
             "lat": 19.0863,
             "lon": 72.9084,
             "category": "metro_station",
-            "aliases": ["ghatkopar", "metro 1 terminal"],
-            "lines": ["Central Railway", "Metro Line 1"]
+            "aliases": ["ghatkopar", "metro 1 terminal", "ghatkopar west", "ghatkopar east"],
+            "lines": ["Central Railway", "Mumbai Metro Line 1 (Versova-Ghatkopar)", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Bandra Terminus & Bandra West (Linking Rd)",
+            "lat": 19.0544,
+            "lon": 72.8402,
+            "category": "railway_station",
+            "aliases": ["bandra", "bandra west", "linking road", "hill road", "bandra terminus", "bandra station"],
+            "lines": ["Western Railway", "Harbour Line", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Lower Parel / High Street Phoenix",
+            "lat": 18.9953,
+            "lon": 72.8306,
+            "category": "landmark",
+            "aliases": ["lower parel", "phoenix palladium", "high street phoenix", "currey road", "kamala mills"],
+            "lines": ["Western Railway", "Mumbai Monorail", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Mumbai Central Station (MMCT)",
+            "lat": 18.9696,
+            "lon": 72.8194,
+            "category": "railway_station",
+            "aliases": ["mumbai central", "mmct", "bct", "tardeo"],
+            "lines": ["Western Railway", "Mumbai Metro Line 3 (Aqua Line)", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Chhatrapati Shivaji Maharaj Int. Airport T2",
+            "lat": 19.0974,
+            "lon": 72.8742,
+            "category": "landmark",
+            "aliases": ["t2", "mumbai airport", "international airport", "csmi airport", "sahar"],
+            "lines": ["Mumbai Metro Line 3 (Aqua Line)", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST Airport Express Chalo"]
+        },
+        {
+            "name": "Mumbai Domestic Airport Terminal 1 (Santacruz)",
+            "lat": 19.0886,
+            "lon": 72.8535,
+            "category": "landmark",
+            "aliases": ["t1", "domestic airport", "santacruz airport", "vile parle airport"],
+            "lines": ["Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Borivali Railway Station",
+            "lat": 19.2290,
+            "lon": 72.8574,
+            "category": "railway_station",
+            "aliases": ["borivali", "borivali west", "borivali east", "national park borivali"],
+            "lines": ["Western Railway", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Thane Railway Station",
+            "lat": 19.1860,
+            "lon": 72.9759,
+            "category": "railway_station",
+            "aliases": ["thane", "thane junction", "thane west", "naupada", "ghodbunder"],
+            "lines": ["Central Railway", "Trans-Harbour Line", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Kurla Junction",
+            "lat": 19.0653,
+            "lon": 72.8794,
+            "category": "railway_station",
+            "aliases": ["kurla", "kurla west", "kurla terminus", "lokmanya tilak terminus", "ltt"],
+            "lines": ["Central Railway", "Harbour Line", "Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Colaba & Gateway of India",
+            "lat": 18.9220,
+            "lon": 72.8347,
+            "category": "landmark",
+            "aliases": ["colaba", "gateway of india", "taj hotel", "regal cinema", "cuffe parade"],
+            "lines": ["Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Marine Drive & Nariman Point",
+            "lat": 18.9268,
+            "lon": 72.8234,
+            "category": "landmark",
+            "aliases": ["marine drive", "nariman point", "queens necklace", "ncpa", "air india building"],
+            "lines": ["Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Versova Metro Station",
+            "lat": 19.1317,
+            "lon": 72.8176,
+            "category": "metro_station",
+            "aliases": ["versova", "versova beach", "yari road", "seven bungalows"],
+            "lines": ["Mumbai Metro Line 1 (Versova-Ghatkopar)", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Juhu Beach (Vile Parle)",
+            "lat": 19.0988,
+            "lon": 72.8264,
+            "category": "landmark",
+            "aliases": ["juhu", "juhu beach", "juhu circle", "jw marriott juhu"],
+            "lines": ["Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Powai (Hiranandani & IIT Bombay)",
+            "lat": 19.1197,
+            "lon": 72.9051,
+            "category": "landmark",
+            "aliases": ["powai", "hiranandani powai", "iit bombay", "powai lake"],
+            "lines": ["Maharashtra Govt Metered Auto", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Worli & Bandra-Worli Sea Link",
+            "lat": 19.0166,
+            "lon": 72.8183,
+            "category": "landmark",
+            "aliases": ["worli", "sea link", "worli sea face", "nehru planetarium", "atria mall"],
+            "lines": ["Mumbai Metro Line 3 (Aqua Line)", "Mumbai Metered Kaali-Peeli Taxi", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Vashi (Navi Mumbai Gateway)",
+            "lat": 19.0771,
+            "lon": 72.9986,
+            "category": "railway_station",
+            "aliases": ["vashi", "vashi plaza", "navi mumbai", "inorbit vashi"],
+            "lines": ["Harbour Line", "Trans-Harbour Line", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Kalyan Junction",
+            "lat": 19.2437,
+            "lon": 73.1355,
+            "category": "railway_station",
+            "aliases": ["kalyan", "kalyan station", "kalyan west"],
+            "lines": ["Central Railway", "Maharashtra Govt Metered Auto"]
+        },
+        {
+            "name": "Malad West & Inorbit Mall",
+            "lat": 19.1864,
+            "lon": 72.8488,
+            "category": "landmark",
+            "aliases": ["malad", "malad west", "inorbit malad", "link road malad"],
+            "lines": ["Western Railway", "Mumbai Metro Line 2A", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
+        },
+        {
+            "name": "Goregaon (Nesco & Western Express)",
+            "lat": 19.1551,
+            "lon": 72.8493,
+            "category": "landmark",
+            "aliases": ["goregaon", "nesco", "bombay exhibition centre", "oberoi mall goregaon"],
+            "lines": ["Western Railway", "Harbour Line", "Mumbai Metro Line 7", "Maharashtra Govt Metered Auto", "BEST AC Electric Bus (Chalo Bus)"]
         }
     ],
     "Bengaluru": [
@@ -780,34 +940,82 @@ PLACES_DATABASE: Dict[str, List[Dict[str, Any]]] = {
             "lon": 77.5695,
             "category": "railway_station",
             "aliases": ["majestic", "kempegowda station", "ksr", "central bus stand"],
-            "lines": ["Purple Line", "Green Line", "BMTC Hub"]
+            "lines": ["Purple Line", "Green Line", "BMTC Hub", "Karnataka Govt Metered Auto"]
         },
         {
             "name": "Indiranagar 100ft Road",
             "lat": 12.9784,
             "lon": 77.6408,
             "category": "landmark",
-            "aliases": ["indiranagar", "cmh road", "100 ft"],
-            "lines": ["Purple Line", "BMTC Feeder"]
+            "aliases": ["indiranagar", "cmh road", "100 ft", "indiranagar metro"],
+            "lines": ["Purple Line", "BMTC Feeder", "Karnataka Govt Metered Auto"]
         },
         {
             "name": "Electronic City Phase 1",
             "lat": 12.8452,
             "lon": 77.6602,
             "category": "landmark",
-            "aliases": ["ecity", "infosys gate", "wipro ecity"],
-            "lines": ["Yellow Line (Namma Metro)", "BMTC Vayu Vajra"]
+            "aliases": ["ecity", "infosys gate", "wipro ecity", "electronic city"],
+            "lines": ["Yellow Line (Namma Metro)", "BMTC Vayu Vajra", "Karnataka Govt Metered Auto"]
         },
         {
             "name": "Whitefield (Kadugodi)",
             "lat": 12.9961,
             "lon": 77.7601,
             "category": "metro_station",
-            "aliases": ["whitefield", "itpl", "kadugodi metro"],
-            "lines": ["Purple Line"]
+            "aliases": ["whitefield", "itpl", "kadugodi metro", "hopefarm"],
+            "lines": ["Purple Line", "BMTC Feeder", "Karnataka Govt Metered Auto"]
+        },
+        {
+            "name": "MG Road Metro Station",
+            "lat": 12.9756,
+            "lon": 77.6066,
+            "category": "metro_station",
+            "aliases": ["mg road", "brigade road", "trinity", "church street"],
+            "lines": ["Purple Line", "BMTC Hub", "Karnataka Govt Metered Auto"]
+        },
+        {
+            "name": "Koramangala Sony World Signal",
+            "lat": 12.9352,
+            "lon": 77.6245,
+            "category": "landmark",
+            "aliases": ["koramangala", "sony world", "80ft road koramangala", "forum mall"],
+            "lines": ["BMTC Vajra AC Bus", "Karnataka Govt Metered Auto"]
+        },
+        {
+            "name": "Kempegowda Int. Airport (KIA T1)",
+            "lat": 13.1986,
+            "lon": 77.7066,
+            "category": "landmark",
+            "aliases": ["kia", "bangalore airport", "bial", "kempegowda airport"],
+            "lines": ["BMTC Vayu Vajra Airport Express", "Airport Taxi"]
+        },
+        {
+            "name": "Yeshwanthpur Junction",
+            "lat": 13.0238,
+            "lon": 77.5501,
+            "category": "railway_station",
+            "aliases": ["yeshwanthpur", "ypr", "yeshvantpur station"],
+            "lines": ["Green Line", "Indian Railways (SWR)", "BMTC Feeder", "Karnataka Govt Metered Auto"]
+        },
+        {
+            "name": "Jayanagar 4th Block",
+            "lat": 12.9299,
+            "lon": 77.5838,
+            "category": "landmark",
+            "aliases": ["jayanagar", "4th block", "jayanagar complex", "south bangalore"],
+            "lines": ["Green Line", "BMTC Feeder", "Karnataka Govt Metered Auto"]
+        },
+        {
+            "name": "Hebbal Flyover",
+            "lat": 13.0358,
+            "lon": 77.5970,
+            "category": "landmark",
+            "aliases": ["hebbal", "manyata tech park feeder", "bellary road"],
+            "lines": ["BMTC Hub", "Airport Corridor", "Karnataka Govt Metered Auto"]
         }
     ],
-    "Mathura & Vrindavan": [
+        "Mathura & Vrindavan": [
         {
             "name": "Mathura Junction Railway Station (MTJ)",
             "lat": 27.4855,
@@ -1111,7 +1319,517 @@ PLACES_DATABASE: Dict[str, List[Dict[str, Any]]] = {
             "category": "landmark",
             "aliases": ["mathura refinery", "iocl refinery", "baad station", "refinery township", "delhi agra bypass mathura"],
             "lines": ["Shared Tempo / Vikram (Braj Corridor)", "Reserved Auto-Rickshaw (निजी ऑटो)"]
-        }
+        },
+        {
+            "name": "Chhata (Tehsil, Block & Railway Station)",
+            "lat": 27.7214,
+            "lon": 77.5028,
+            "category": "railway_station",
+            "aliases": [
+                        "chhata",
+                        "chata",
+                        "chatha",
+                        "chhata railway station",
+                        "chj",
+                        "chhata tehsil",
+                        "chhata block",
+                        "chhata mandi",
+                        "chhata chauraha",
+                        "nh-19 chhata"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Mathura-Kosi Electric Nagar Seva Bus",
+                        "Reserved Auto-Rickshaw (निजी ऑटो)"
+            ]
+},
+        {
+            "name": "Kosi Kalan (Town, Mandi & Railway Station)",
+            "lat": 27.7925,
+            "lon": 77.4328,
+            "category": "railway_station",
+            "aliases": [
+                        "kosi kalan",
+                        "kosi",
+                        "kosi station",
+                        "ksv",
+                        "kosi mandi",
+                        "kosi tehsil",
+                        "kosi kalan chauraha"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Mathura-Kosi Electric Nagar Seva Bus"
+            ]
+},
+        {
+            "name": "Chaumuhan (Block & Market)",
+            "lat": 27.6086,
+            "lon": 77.595,
+            "category": "landmark",
+            "aliases": [
+                        "chaumuhan",
+                        "chaumuha",
+                        "chomuha",
+                        "chaumuhan block",
+                        "chaumuhan market",
+                        "chaumuhan chauraha"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Akbarpur (NH-19 Village)",
+            "lat": 27.7011,
+            "lon": 77.5189,
+            "category": "landmark",
+            "aliases": [
+                        "akbarpur",
+                        "akbarpur chhata",
+                        "akbarpur village",
+                        "nh-19 akbarpur"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Ajhai (Village & Railway Station)",
+            "lat": 27.6667,
+            "lon": 77.545,
+            "category": "railway_station",
+            "aliases": [
+                        "ajhai",
+                        "ajhai station",
+                        "ajh",
+                        "ajhai village",
+                        "ajhai khurd",
+                        "ajhai kalan"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Vrindavan Road Railway Station (VRBD)",
+            "lat": 27.5789,
+            "lon": 77.6328,
+            "category": "railway_station",
+            "aliases": [
+                        "vrindavan road",
+                        "vrbd",
+                        "vrindavan road station",
+                        "vrindavan road railway"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Bhuteshwar Railway Station (BTSR)",
+            "lat": 27.5011,
+            "lon": 77.6711,
+            "category": "railway_station",
+            "aliases": [
+                        "bhuteshwar station",
+                        "btsr",
+                        "bhuteshwar railway",
+                        "bhuteshwar halt"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Farah (Block, Deendayal Dham & Station)",
+            "lat": 27.3236,
+            "lon": 77.7656,
+            "category": "railway_station",
+            "aliases": [
+                        "farah",
+                        "farah station",
+                        "far",
+                        "deendayal dham",
+                        "pt deendayal dham",
+                        "farah block",
+                        "farah town"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Raya (Block, Town & Railway Station)",
+            "lat": 27.5583,
+            "lon": 77.7889,
+            "category": "railway_station",
+            "aliases": [
+                        "raya",
+                        "raya station",
+                        "raya junction",
+                        "raya town",
+                        "raya block",
+                        "raya sadabad road"
+            ],
+            "lines": [
+                        "North Eastern Railway (Passenger / Express)",
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Mant (Tehsil & Block Headquarters)",
+            "lat": 27.6186,
+            "lon": 77.7328,
+            "category": "landmark",
+            "aliases": [
+                        "mant",
+                        "mat",
+                        "mant tehsil",
+                        "mant block",
+                        "mant town",
+                        "mat block"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Naujheel (Block & Rural Center)",
+            "lat": 27.8464,
+            "lon": 77.6433,
+            "category": "landmark",
+            "aliases": [
+                        "naujheel",
+                        "naujhil",
+                        "naujheel block",
+                        "naujhil town",
+                        "bajna naujheel"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Mahavan (Historic Tehsil & Town)",
+            "lat": 27.435,
+            "lon": 77.7478,
+            "category": "landmark",
+            "aliases": [
+                        "mahavan",
+                        "mahavaan",
+                        "mahavan tehsil",
+                        "mahavan town",
+                        "chaurasi khamba mahavan"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Sonkh (Historic Town & Kila)",
+            "lat": 27.4778,
+            "lon": 77.5361,
+            "category": "landmark",
+            "aliases": [
+                        "sonkh",
+                        "sonkh town",
+                        "sonkh kila",
+                        "sonkh mandi"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Aring (Town & Market)",
+            "lat": 27.4967,
+            "lon": 77.5611,
+            "category": "landmark",
+            "aliases": [
+                        "aring",
+                        "ading",
+                        "aring town",
+                        "aring govardhan road"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Jait (NH-19 Village)",
+            "lat": 27.5611,
+            "lon": 77.6389,
+            "category": "landmark",
+            "aliases": [
+                        "jait",
+                        "jayt",
+                        "jait village",
+                        "nh-19 jait"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Bati (Village)",
+            "lat": 27.5611,
+            "lon": 77.6189,
+            "category": "landmark",
+            "aliases": [
+                        "bati",
+                        "bati village",
+                        "bati mathura"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Maghera (Village)",
+            "lat": 27.5911,
+            "lon": 77.5811,
+            "category": "landmark",
+            "aliases": [
+                        "maghera",
+                        "maghera village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Mora (Village)",
+            "lat": 27.5211,
+            "lon": 77.5711,
+            "category": "landmark",
+            "aliases": [
+                        "mora",
+                        "mora village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Datiya (Village)",
+            "lat": 27.5089,
+            "lon": 77.5911,
+            "category": "landmark",
+            "aliases": [
+                        "datiya",
+                        "datiya village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Phenchari (Village)",
+            "lat": 27.5411,
+            "lon": 77.5611,
+            "category": "landmark",
+            "aliases": [
+                        "phenchari",
+                        "phenchari village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Khamini (Village)",
+            "lat": 27.4811,
+            "lon": 77.5811,
+            "category": "landmark",
+            "aliases": [
+                        "khamini",
+                        "khamini village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Asgarpur (Village)",
+            "lat": 27.495,
+            "lon": 77.6089,
+            "category": "landmark",
+            "aliases": [
+                        "asgarpur",
+                        "asgarpur village"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Ral (Village)",
+            "lat": 27.5111,
+            "lon": 77.5389,
+            "category": "landmark",
+            "aliases": [
+                        "ral",
+                        "ral village"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Magorra (Town & Thana)",
+            "lat": 27.3811,
+            "lon": 77.5189,
+            "category": "landmark",
+            "aliases": [
+                        "magorra",
+                        "magora",
+                        "magorra thana"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Lohaban (Village)",
+            "lat": 27.5028,
+            "lon": 77.7389,
+            "category": "landmark",
+            "aliases": [
+                        "lohaban",
+                        "lohaban village"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Daharuwa & Kaliyanpur (Villages)",
+            "lat": 27.5311,
+            "lon": 77.7511,
+            "category": "landmark",
+            "aliases": [
+                        "daharuwa",
+                        "kaliyanpur",
+                        "dahrua"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Diwana Khurd & Diwana Kalan (Villages)",
+            "lat": 27.5489,
+            "lon": 77.7689,
+            "category": "landmark",
+            "aliases": [
+                        "diwana khurd",
+                        "diwana kalan",
+                        "diwana"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Panigaon (Village & Bridge)",
+            "lat": 27.5889,
+            "lon": 77.7289,
+            "category": "landmark",
+            "aliases": [
+                        "panigaon",
+                        "panigaon pul",
+                        "panigaon bridge"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Sihora & Khirari (Villages)",
+            "lat": 27.5211,
+            "lon": 77.8389,
+            "category": "landmark",
+            "aliases": [
+                        "sihora",
+                        "khirari",
+                        "itauli"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+},
+        {
+            "name": "Dholi Pyau (City Hub)",
+            "lat": 27.4789,
+            "lon": 77.6711,
+            "category": "landmark",
+            "aliases": [
+                        "dholi pyau",
+                        "dholi pyau mathura",
+                        "dholi pyau railway colony"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)",
+                        "Reserved Auto-Rickshaw (निजी ऑटो)"
+            ]
+},
+        {
+            "name": "Krishna Nagar (Commercial Center)",
+            "lat": 27.4989,
+            "lon": 77.665,
+            "category": "landmark",
+            "aliases": [
+                        "krishna nagar",
+                        "krishna nagar mathura",
+                        "krishna nagar market"
+            ],
+            "lines": [
+                        "Shared E-Rickshaw Feeder (Toto)",
+                        "Reserved Auto-Rickshaw (निजी ऑटो)"
+            ]
+},
+        {
+            "name": "Aurangabad (Mathura South)",
+            "lat": 27.465,
+            "lon": 77.685,
+            "category": "landmark",
+            "aliases": [
+                        "aurangabad",
+                        "aurangabad mathura",
+                        "aurangabad thana"
+            ],
+            "lines": [
+                        "Shared Tempo / Vikram (Braj Corridor)",
+                        "Shared E-Rickshaw Feeder (Toto)"
+            ]
+},
+        {
+            "name": "Baad Railway Station (BAAD)",
+            "lat": 27.4111,
+            "lon": 77.7089,
+            "category": "railway_station",
+            "aliases": [
+                        "baad station",
+                        "baad",
+                        "bad railway station",
+                        "bad station mathura"
+            ],
+            "lines": [
+                        "Northern Railway (EMU / Passenger)",
+                        "Shared Tempo / Vikram (Braj Corridor)"
+            ]
+}
     ]
 }
 
@@ -1344,7 +2062,105 @@ TRANSIT_LINES: Dict[str, Dict[str, Any]] = {
         "avg_speed_kmh": 10,
         "operator": "Braj Heritage Kunj Gali Rickshaw Pullers",
         "service_key": "cycle_rickshaw"
-    }
+    },
+    "Mumbai Suburban Railway (Western Line)": {
+        "color": "#1E3A8A",
+        "mode": "rail",
+        "fare_type": "mumbai_local",
+        "avg_speed_kmh": 42,
+        "operator": "Western Railway (Suburban)"
+    },
+    "Mumbai Suburban Railway (Central Line)": {
+        "color": "#B91C1C",
+        "mode": "rail",
+        "fare_type": "mumbai_local",
+        "avg_speed_kmh": 40,
+        "operator": "Central Railway (Suburban)"
+    },
+    "Mumbai Suburban Railway (Harbour Line)": {
+        "color": "#047857",
+        "mode": "rail",
+        "fare_type": "mumbai_local",
+        "avg_speed_kmh": 38,
+        "operator": "Central Railway (Harbour)"
+    },
+    "Mumbai Metro Line 1 (Versova-Ghatkopar)": {
+        "color": "#0284C7",
+        "mode": "metro",
+        "fare_type": "mumbai_metro",
+        "avg_speed_kmh": 32,
+        "operator": "MMOPL / Maha Mumbai Metro"
+    },
+    "Mumbai Metro Line 2A & 7": {
+        "color": "#F59E0B",
+        "mode": "metro",
+        "fare_type": "mumbai_metro",
+        "avg_speed_kmh": 35,
+        "operator": "Maha Mumbai Metro (MMMOCL)"
+    },
+    "Mumbai Metro Line 3 (Aqua Line)": {
+        "color": "#0D9488",
+        "mode": "metro",
+        "fare_type": "mumbai_metro",
+        "avg_speed_kmh": 40,
+        "operator": "MMRC Underground Aqua Line"
+    },
+    "BEST AC Electric Bus (Chalo Bus)": {
+        "color": "#15803D",
+        "mode": "bus",
+        "fare_type": "best_bus",
+        "avg_speed_kmh": 20,
+        "operator": "Brihanmumbai Electric Supply & Transport (BEST)"
+    },
+    "BEST Ordinary Bus": {
+        "color": "#B45309",
+        "mode": "bus",
+        "fare_type": "best_bus",
+        "avg_speed_kmh": 18,
+        "operator": "Brihanmumbai Electric Supply & Transport (BEST)"
+    },
+    "Maharashtra Govt Metered Auto": {
+        "color": "#E68A00",
+        "mode": "auto",
+        "fare_type": "mumbai_auto",
+        "avg_speed_kmh": 26,
+        "operator": "Maharashtra Transport Dept (Regulated Meter)"
+    },
+    "Mumbai Metered Kaali-Peeli Taxi": {
+        "color": "#EAB308",
+        "mode": "taxi",
+        "fare_type": "mumbai_taxi",
+        "avg_speed_kmh": 30,
+        "operator": "Maharashtra Transport Dept (Metered Black & Yellow Taxi)"
+    },
+    "Purple Line (Namma Metro)": {
+        "color": "#7E22CE",
+        "mode": "metro",
+        "fare_type": "namma_metro",
+        "avg_speed_kmh": 34,
+        "operator": "Bangalore Metro Rail Corporation (BMRCL)"
+    },
+    "Green Line (Namma Metro)": {
+        "color": "#15803D",
+        "mode": "metro",
+        "fare_type": "namma_metro",
+        "avg_speed_kmh": 34,
+        "operator": "Bangalore Metro Rail Corporation (BMRCL)"
+    },
+    "BMTC Vajra AC Bus": {
+        "color": "#0284C7",
+        "mode": "bus",
+        "fare_type": "bmtc_bus",
+        "avg_speed_kmh": 20,
+        "operator": "Bangalore Metropolitan Transport Corporation"
+    },
+    "Karnataka Govt Metered Auto": {
+        "color": "#E68A00",
+        "mode": "auto",
+        "fare_type": "bengaluru_auto",
+        "avg_speed_kmh": 25,
+        "operator": "Karnataka Transport Dept (Regulated Meter)"
+    },
 }
 
 # ==============================================================================
@@ -1602,3 +2418,238 @@ def calculate_mathura_taxi_fare(dist_km: float):
     return float(rounded), f"Private Tour Taxi (Limited App Cabs): ~₹{rounded:.0f}"
 
 
+
+
+# ==============================================================================
+# Official Maharashtra Government (Mumbai) Gazetted Tariffs & Fare Regimes
+# ==============================================================================
+# Regulated strictly as per Maharashtra Transport Department revised tariff (Sept 2026):
+# 1. Metered Auto-Rickshaw:
+#    - Minimum Fare: ₹27.00 for first 1.5 km
+#    - Subsequent Rate: ₹18.22 per km
+#    - Night Surcharge: 25% (12:00 AM - 5:00 AM)
+# 2. Mumbai Black & Yellow Taxi (Kaali-Peeli Taxi):
+#    - Minimum Fare: ₹33.00 for first 1.5 km
+#    - Subsequent Rate: ₹21.90 per km
+#    - Night Surcharge: 25% (12:00 AM - 5:00 AM)
+#    - AC Taxi Surcharge: 10% over regular taxi fare
+# 3. BEST Bus Slabs (AC Electric Chalo & Non-AC Ordinary)
+# 4. Mumbai Suburban Railway (Western / Central / Harbour 2nd Class & AC Local)
+# 5. Mumbai Metro (Line 1 / 2A / 7 / 3 Aqua Line)
+# ==============================================================================
+
+MAHARASHTRA_GOVT_FARES = {
+    "auto_rickshaw": {
+        "base_fare": 27.0,
+        "base_km": 1.5,
+        "per_km": 18.22,
+        "night_surcharge_pct": 25,
+        "night_start_hour": 0,
+        "night_end_hour": 5
+    },
+    "kaali_peeli_taxi": {
+        "base_fare": 33.0,
+        "base_km": 1.5,
+        "per_km": 21.90,
+        "night_surcharge_pct": 25,
+        "ac_surcharge_pct": 10,
+        "night_start_hour": 0,
+        "night_end_hour": 5
+    },
+    "best_bus": {
+        "ac_slabs": [
+            (5.0, 6.0),
+            (10.0, 13.0),
+            (15.0, 19.0),
+            (999.0, 25.0)
+        ],
+        "non_ac_slabs": [
+            (5.0, 5.0),
+            (10.0, 10.0),
+            (15.0, 15.0),
+            (999.0, 20.0)
+        ]
+    },
+    "suburban_rail": {
+        "second_class": [
+            (10.0, 5.0),
+            (35.0, 10.0),
+            (45.0, 15.0),
+            (999.0, 20.0)
+        ],
+        "ac_local": [
+            (10.0, 35.0),
+            (20.0, 65.0),
+            (35.0, 90.0),
+            (999.0, 115.0)
+        ]
+    },
+    "metro": {
+        "slabs": [
+            (3.0, 10.0),
+            (12.0, 20.0),
+            (18.0, 30.0),
+            (25.0, 40.0),
+            (999.0, 50.0)
+        ]
+    }
+}
+
+def calculate_mumbai_auto_fare(dist_km: float, is_night: bool = False):
+    """
+    Calculates official Maharashtra Transport Department regulated Auto-Rickshaw meter fare:
+    - ₹27.00 for first 1.5 km (downing meter)
+    - ₹18.22 per km thereafter
+    - Night surcharge: 25% (12:00 AM to 5:00 AM)
+    Source: Maharashtra Transport Department tariff revision, September 2026.
+    """
+    base_km = 1.5
+    base_fare = 27.0
+    per_km = 18.22
+    
+    if dist_km <= base_km:
+        fare = base_fare
+    else:
+        fare = base_fare + (dist_km - base_km) * per_km
+        
+    if is_night:
+        fare *= 1.25
+        night_str = " (incl. 25% Night Surcharge 12AM-5AM)"
+    else:
+        night_str = ""
+        
+    rounded_fare = round(fare, 1)
+    return float(rounded_fare), f"Maharashtra Transport Dept Meter: ₹{base_fare:.0f} (first 1.5km) + ₹{per_km:.2f}/km{night_str}"
+
+
+def calculate_mumbai_taxi_fare(dist_km: float, is_ac: bool = False, is_night: bool = False):
+    """
+    Calculates official Mumbai Black & Yellow Taxi (Metered Kaali-Peeli Taxi) fare:
+    - ₹33.00 for first 1.5 km minimum fare
+    - ₹21.90 per km thereafter
+    - Night surcharge: 25% (12:00 AM to 5:00 AM)
+    - AC taxi surcharge: 10% over regular taxi fare
+    Source: revised metered taxi tariff, September 2026.
+    """
+    base_km = 1.5
+    base_fare = 33.0
+    per_km = 21.90
+    
+    if dist_km <= base_km:
+        fare = base_fare
+    else:
+        fare = base_fare + (dist_km - base_km) * per_km
+        
+    if is_ac:
+        fare *= 1.10
+        ac_str = " AC"
+    else:
+        ac_str = " Non-AC"
+        
+    if is_night:
+        fare *= 1.25
+        night_str = " (incl. 25% Night Surcharge 12AM-5AM)"
+    else:
+        night_str = ""
+        
+    rounded_fare = round(fare, 1)
+    return float(rounded_fare), f"Mumbai Kaali-Peeli Taxi Meter{ac_str}: ₹{base_fare:.0f} (first 1.5km) + ₹{per_km:.2f}/km{night_str}"
+
+
+def calculate_best_bus_fare(dist_km: float, is_electric: bool = True):
+    """Calculates official BEST AC Chalo / Ordinary bus fare slabs."""
+    slabs = MAHARASHTRA_GOVT_FARES["best_bus"]["ac_slabs"] if is_electric else MAHARASHTRA_GOVT_FARES["best_bus"]["non_ac_slabs"]
+    bus_name = "BEST AC Electric Chalo Bus" if is_electric else "BEST Ordinary Bus"
+    for max_km, fare in slabs:
+        if dist_km <= max_km:
+            return fare, f"{bus_name}: ₹{int(fare)} (up to {int(max_km) if max_km < 900 else 'all'} km)"
+    return (25.0 if is_electric else 20.0), f"{bus_name} Max Fare"
+
+
+def calculate_mumbai_local_fare(dist_km: float, is_ac: bool = False):
+    """Calculates Mumbai Suburban Railway (Western/Central/Harbour) fare."""
+    slabs = MAHARASHTRA_GOVT_FARES["suburban_rail"]["ac_local"] if is_ac else MAHARASHTRA_GOVT_FARES["suburban_rail"]["second_class"]
+    type_name = "Mumbai Suburban AC Local" if is_ac else "Mumbai Suburban Local (2nd Class)"
+    for max_km, fare in slabs:
+        if dist_km <= max_km:
+            return fare, f"{type_name}: ₹{int(fare)}"
+    return (115.0 if is_ac else 20.0), f"{type_name} Max Fare"
+
+
+def calculate_mumbai_metro_fare(dist_km: float):
+    """Calculates Mumbai Metro (MMRDA / MMRC Line 3 Aqua Line) fare."""
+    slabs = MAHARASHTRA_GOVT_FARES["metro"]["slabs"]
+    for max_km, fare in slabs:
+        if dist_km <= max_km:
+            return fare, f"Mumbai Metro (MMRDA/MMRC Slab): ₹{int(fare)}"
+    return 50.0, "Mumbai Metro Max Fare"
+
+
+# ==============================================================================
+# Official Karnataka Government (Bengaluru) Gazetted Tariffs & Fare Regimes
+# ==============================================================================
+
+KARNATAKA_GOVT_FARES = {
+    "auto_rickshaw": {
+        "base_fare": 30.0,
+        "base_km": 2.0,
+        "per_km": 15.0,
+        "night_surcharge_pct": 50,
+        "night_start_hour": 22,
+        "night_end_hour": 6
+    },
+    "bmtc_bus": {
+        "vajra_ac_slabs": [
+            (3.0, 10.0),
+            (7.0, 15.0),
+            (12.0, 20.0),
+            (18.0, 25.0),
+            (25.0, 30.0),
+            (999.0, 35.0)
+        ],
+        "ordinary_slabs": [
+            (2.0, 5.0),
+            (6.0, 10.0),
+            (11.0, 15.0),
+            (17.0, 20.0),
+            (999.0, 25.0)
+        ]
+    },
+    "namma_metro": {
+        "slabs": [
+            (3.0, 10.0),
+            (6.0, 15.0),
+            (10.0, 25.0),
+            (15.0, 35.0),
+            (25.0, 50.0),
+            (999.0, 60.0)
+        ]
+    }
+}
+
+def calculate_bengaluru_auto_fare(dist_km: float, is_night: bool = False):
+    base_km = 2.0
+    base_fare = 30.0
+    per_km = 15.0
+    fare = base_fare if dist_km <= base_km else base_fare + (dist_km - base_km) * per_km
+    night_str = ""
+    if is_night:
+        fare *= 1.5
+        night_str = " (incl. 50% Karnataka Govt Night Surcharge 10PM-6AM)"
+    return float(round(fare, 1)), f"Karnataka Transport Dept Meter: ₹{base_fare:.0f} (first 2km) + ₹{per_km:.0f}/km{night_str}"
+
+
+def calculate_bmtc_bus_fare(dist_km: float, is_vajra: bool = True):
+    slabs = KARNATAKA_GOVT_FARES["bmtc_bus"]["vajra_ac_slabs"] if is_vajra else KARNATAKA_GOVT_FARES["bmtc_bus"]["ordinary_slabs"]
+    name = "BMTC Vajra AC Bus" if is_vajra else "BMTC Ordinary Bus"
+    for max_km, fare in slabs:
+        if dist_km <= max_km:
+            return fare, f"{name}: ₹{int(fare)}"
+    return 35.0 if is_vajra else 25.0, f"{name} Max Fare"
+
+
+def calculate_namma_metro_fare(dist_km: float):
+    for max_km, fare in KARNATAKA_GOVT_FARES["namma_metro"]["slabs"]:
+        if dist_km <= max_km:
+            return fare, f"Namma Metro (BMRCL Slab): ₹{int(fare)}"
+    return 60.0, "Namma Metro Max Fare"

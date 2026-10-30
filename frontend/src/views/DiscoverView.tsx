@@ -96,6 +96,7 @@ export const DiscoverView: React.FC<Props> = ({
             <TravelPreferenceChips
               preferences={preferences}
               onChange={onPreferencesChange}
+              city={city}
             />
           </div>
         </div>

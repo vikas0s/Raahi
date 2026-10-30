@@ -16,7 +16,10 @@ from .transit_data import (
     calculate_delhi_taxi_fare,
     is_transit_operational, get_closed_message,
     calculate_mathura_erickshaw_fare, calculate_mathura_shared_tempo_fare,
-    calculate_mathura_ebus_fare, calculate_mathura_reserved_auto_fare, calculate_mathura_taxi_fare
+    calculate_mathura_ebus_fare, calculate_mathura_reserved_auto_fare, calculate_mathura_taxi_fare,
+    calculate_mumbai_auto_fare, calculate_mumbai_taxi_fare, calculate_best_bus_fare,
+    calculate_mumbai_local_fare, calculate_mumbai_metro_fare,
+    calculate_bengaluru_auto_fare, calculate_bmtc_bus_fare, calculate_namma_metro_fare
 )
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -181,18 +184,66 @@ class TransitRouter:
             simulated_delays = {}
             
         city = request.city or "Delhi NCR"
-        is_mathura = "mathura" in city.lower() or "vrindavan" in city.lower() or "braj" in city.lower()
+        c_low = city.lower()
+        if "mathura" in c_low or "vrindavan" in c_low or "braj" in c_low:
+            city = "Mathura & Vrindavan"
+        elif "mumbai" in c_low:
+            city = "Mumbai"
+        elif "bengaluru" in c_low or "bangalore" in c_low:
+            city = "Bengaluru"
+        else:
+            city = "Delhi NCR"
+
+        # Intelligent auto-detection of city based on user query
+        q_o = (request.origin or "").strip().lower()
+        q_d = (request.destination or "").strip().lower()
+
+        def _check_city(city_key):
+            p_list = self.places.get(city_key, [])
+            for q in (q_o, q_d):
+                if not q:
+                    continue
+                for p in p_list:
+                    if q == p["name"].lower() or q in p["name"].lower():
+                        return True
+                    for a in p.get("aliases", []):
+                        if q == a.lower() or q in a.lower():
+                            return True
+            return False
+
+        if _check_city("Mumbai"):
+            city = "Mumbai"
+        elif _check_city("Mathura & Vrindavan"):
+            city = "Mathura & Vrindavan"
+        elif _check_city("Bengaluru"):
+            city = "Bengaluru"
+
+        is_mathura = (city == "Mathura & Vrindavan")
+
         origin_dict = self.find_place(request.origin, city)
         dest_dict = self.find_place(request.destination, city)
-        
-        if not origin_dict or not dest_dict:
-            if is_mathura:
-                m_places = self.places.get("Mathura & Vrindavan", [])
-                origin_dict = origin_dict or (m_places[0] if m_places else None) # Mathura Junction
-                dest_dict = dest_dict or (m_places[21] if len(m_places) > 21 else m_places[-1]) # Bankey Bihari Ji
-            else:
-                origin_dict = origin_dict or self.places["Delhi NCR"][0] # Rajiv Chowk
-                dest_dict = dest_dict or self.places["Delhi NCR"][4]   # Cyber City
+
+        # Enforce city-specific places so no cross-city pollution happens
+        city_places = self.places.get(city, [])
+        def _in_city(p):
+            if not p:
+                return False
+            return any(p["name"] == cp["name"] for cp in city_places)
+
+        if not _in_city(origin_dict) or not _in_city(dest_dict):
+            if city == "Mumbai":
+                origin_dict = origin_dict if _in_city(origin_dict) else (city_places[0] if city_places else None) # CSMT
+                dest_dict = dest_dict if _in_city(dest_dict) else (city_places[2] if len(city_places) > 2 else city_places[-1]) # BKC
+            elif city == "Mathura & Vrindavan":
+                origin_dict = origin_dict if _in_city(origin_dict) else (city_places[0] if city_places else None) # Mathura Jn
+                dest_dict = dest_dict if _in_city(dest_dict) else (city_places[21] if len(city_places) > 21 else city_places[-1]) # Bankey Bihari
+            elif city == "Bengaluru":
+                origin_dict = origin_dict if _in_city(origin_dict) else (city_places[0] if city_places else None) # Majestic
+                dest_dict = dest_dict if _in_city(dest_dict) else (city_places[3] if len(city_places) > 3 else city_places[-1]) # Whitefield
+            else: # Delhi NCR
+                d_places = self.places.get("Delhi NCR", [])
+                origin_dict = origin_dict if _in_city(origin_dict) else (d_places[0] if d_places else None) # Rajiv Chowk
+                dest_dict = dest_dict if _in_city(dest_dict) else (d_places[4] if len(d_places) > 4 else d_places[-1]) # Cyber City
 
         origin_loc = GeoLocation(
             name=origin_dict["name"],
@@ -227,9 +278,31 @@ class TransitRouter:
         if dist_km < 0.2:
             dist_km = 1.2
 
-        # Route directly to Mathura & Vrindavan transit engine
+        # Route to city-specific transit engines
         if is_mathura:
             return self._plan_mathura_journey(
+                origin_dict=origin_dict,
+                dest_dict=dest_dict,
+                origin_loc=origin_loc,
+                dest_loc=dest_loc,
+                dist_km=dist_km,
+                base_time=base_time,
+                request=request,
+                simulated_delays=simulated_delays
+            )
+        elif city == "Mumbai":
+            return self._plan_mumbai_journey(
+                origin_dict=origin_dict,
+                dest_dict=dest_dict,
+                origin_loc=origin_loc,
+                dest_loc=dest_loc,
+                dist_km=dist_km,
+                base_time=base_time,
+                request=request,
+                simulated_delays=simulated_delays
+            )
+        elif city == "Bengaluru":
+            return self._plan_bengaluru_journey(
                 origin_dict=origin_dict,
                 dest_dict=dest_dict,
                 origin_loc=origin_loc,
@@ -306,11 +379,21 @@ class TransitRouter:
             r6 = self._build_delhi_erickshaw_short_route(origin_dict, dest_dict, dist_km, base_time)
             routes.append(r6)
 
+        # 7. OPTION 7: INDIAN RAILWAYS / LOCAL SUBURBAN COMMUTER TRAIN (RAAHI RAILCONNECT)
+        try:
+            from .rail.service import rail_service_instance
+            rail_routes = rail_service_instance.find_rail_routes_sync(origin_dict, dest_dict, base_time, dist_km, city)
+            routes.extend(rail_routes)
+        except Exception:
+            pass
+
         # Sort according to user preference (unavailable services always pushed to bottom)
         def _avail_key(r):
             return 0 if r.service_available else 1
 
-        if getattr(request.preferences, "prefer_multimodal", False):
+        if getattr(request.preferences, "prefer_rail", False):
+            routes.sort(key=lambda r: (_avail_key(r), 0 if (r.route_type == "rail_connect" or "🚆" in r.tag) else 1, r.total_duration_minutes))
+        elif getattr(request.preferences, "prefer_multimodal", False):
             routes.sort(key=lambda r: (_avail_key(r), 0 if "Multi-Transport" in r.tag else 1, r.total_duration_minutes))
         elif request.preferences.cheapest or request.preferences.pink_pass:
             routes.sort(key=lambda r: (_avail_key(r), r.total_fare_inr, r.total_duration_minutes))
@@ -1279,11 +1362,21 @@ class TransitRouter:
         r5 = self._build_mathura_taxi_route(origin_dict, dest_dict, dist_km, base_time)
         routes.append(r5)
 
+        # 6. OPTION 6: INDIAN RAILWAYS & MATHURA-VRINDAVAN RAIL BUS (RAAHI RAILCONNECT)
+        try:
+            from .rail.service import rail_service_instance
+            rail_routes = rail_service_instance.find_rail_routes_sync(origin_dict, dest_dict, base_time, dist_km, "Mathura & Vrindavan")
+            routes.extend(rail_routes)
+        except Exception:
+            pass
+
         # Sort according to user preference
         def _avail_key(r):
             return 0 if r.service_available else 1
 
-        if request.preferences.cheapest:
+        if getattr(request.preferences, "prefer_rail", False):
+            routes.sort(key=lambda r: (_avail_key(r), 0 if (r.route_type == "rail_connect" or "🚆" in r.tag) else 1, r.total_duration_minutes))
+        elif request.preferences.cheapest:
             routes.sort(key=lambda r: (_avail_key(r), r.total_fare_inr, r.total_duration_minutes))
         elif request.preferences.prefer_ebus:
             routes.sort(key=lambda r: (_avail_key(r), 0 if "Electric" in r.tag else 1, r.total_duration_minutes))
@@ -2238,6 +2331,665 @@ class TransitRouter:
             total_delay_minutes=0,
             legs=legs,
             eco_carbon_savings_kg=round(dist_km * 0.14, 1)
+        )
+
+
+    def _plan_mumbai_journey(
+        self,
+        origin_dict: Dict,
+        dest_dict: Dict,
+        origin_loc: GeoLocation,
+        dest_loc: GeoLocation,
+        dist_km: float,
+        base_time: datetime,
+        request: PlanRequest,
+        simulated_delays: Dict[str, int]
+    ) -> PlanResponse:
+        """
+        Specialized transit routing engine for Mumbai Metropolitan Region (MMR).
+        Regulated modes:
+        1. Mumbai Suburban Railway (Western, Central & Harbour Local Trains - Lifeline of Mumbai)
+        2. Maha Mumbai Metro (Line 3 Aqua Line, Line 1 Versova-Ghatkopar, Line 2A & 7)
+        3. Maharashtra Govt Metered Kaali-Peeli Taxi (Regulated Tariff: ₹33 first 1.5km + ₹21.90/km, 25% night 12AM-5AM)
+        4. Maharashtra Govt Metered Auto Rickshaw (Suburban Mumbai: ₹27 first 1.5km + ₹18.22/km, 25% night 12AM-5AM)
+           - Note: Auto rickshaws restricted in South Mumbai (Island City) south of Bandra/Sion by Maharashtra RTO.
+        5. BEST AC Electric Bus (Chalo Bus) & Non-AC Ordinary Bus (Gazetted Slabs)
+        6. Direct Cab (BluSmart EV / On-Demand Taxi)
+        7. Indian Railways Long-Distance / Express (RailConnect)
+        """
+        routes: List[RouteItinerary] = []
+        is_night = base_time.hour >= 0 and base_time.hour < 5
+
+        # 1. Official Maharashtra Govt Metered Kaali-Peeli Taxi (Black & Yellow Taxi)
+        r_taxi = self._build_mumbai_kaali_peeli_route(origin_dict, dest_dict, dist_km, base_time, is_night)
+        routes.append(r_taxi)
+
+        # 2. Official Maharashtra Govt Metered Auto-Rickshaw (Suburbs)
+        r_auto = self._build_mumbai_auto_route(origin_dict, dest_dict, dist_km, base_time, is_night)
+        routes.append(r_auto)
+
+        # 3. Mumbai Suburban Railway (Local Trains - Lifeline of Mumbai)
+        r_local = self._build_mumbai_local_train_route(origin_dict, dest_dict, dist_km, base_time)
+        routes.append(r_local)
+
+        # 4. Maha Mumbai Metro (Line 3 Aqua Line / Line 1 / Line 2A & 7)
+        r_metro = self._build_mumbai_metro_route(origin_dict, dest_dict, dist_km, base_time)
+        routes.append(r_metro)
+
+        # 5. BEST AC Electric Bus (Chalo Bus)
+        r_best_ac = self._build_best_ebus_route(origin_dict, dest_dict, dist_km, base_time)
+        routes.append(r_best_ac)
+
+        # 6. BEST Ordinary Bus (Non-AC)
+        r_best_ord = self._build_best_ordinary_bus_route(origin_dict, dest_dict, dist_km, base_time)
+        routes.append(r_best_ord)
+
+        # 7. Direct Cab (BluSmart EV / On-Demand Taxi)
+        r_cab = self._build_direct_cab_route(origin_dict, dest_dict, dist_km, base_time)
+        routes.append(r_cab)
+
+        # 8. Indian Railways (RailConnect)
+        try:
+            from .rail.service import rail_service_instance
+            rail_routes = rail_service_instance.find_rail_routes_sync(origin_dict, dest_dict, base_time, dist_km, "Mumbai")
+            routes.extend(rail_routes)
+        except Exception:
+            pass
+
+        # Sort routes based on user preferences
+        def _avail_key(r):
+            return 0 if r.service_available else 1
+
+        if getattr(request.preferences, "prefer_rail", False):
+            routes.sort(key=lambda r: (_avail_key(r), 0 if (r.route_type in ("rail_connect", "mumbai_local") or "🚆" in r.tag or "Suburban" in r.tag) else 1, r.total_duration_minutes))
+        elif request.preferences.cheapest:
+            routes.sort(key=lambda r: (_avail_key(r), r.total_fare_inr, r.total_duration_minutes))
+        elif request.preferences.prefer_ebus:
+            routes.sort(key=lambda r: (_avail_key(r), 0 if "BEST" in r.tag else 1, r.total_duration_minutes))
+        elif request.preferences.allow_auto and not request.preferences.fastest:
+            routes.sort(key=lambda r: (_avail_key(r), 0 if "Metered" in r.tag else 1, r.total_duration_minutes))
+        elif request.preferences.fewer_transfers:
+            routes.sort(key=lambda r: (_avail_key(r), r.transfers_count, r.total_duration_minutes))
+        else:
+            # Default fastest
+            routes.sort(key=lambda r: (_avail_key(r), r.total_duration_minutes, r.total_fare_inr))
+
+        active_disruptions = sum(1 for d in simulated_delays.values() if d > 0)
+        return PlanResponse(
+            origin=origin_loc,
+            destination=dest_loc,
+            generated_at=datetime.now().isoformat(),
+            routes=routes,
+            active_disruptions_count=active_disruptions
+        )
+
+    def _build_mumbai_kaali_peeli_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime, is_night: bool
+    ) -> RouteItinerary:
+        """Official Mumbai Black & Yellow Taxi (Metered Kaali-Peeli Taxi) route."""
+        fare, fare_desc = calculate_mumbai_taxi_fare(dist_km, is_ac=False, is_night=is_night)
+        duration_mins = max(8, int((dist_km / 28.0) * 60))
+        arr_time = base_time + timedelta(minutes=duration_mins)
+
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        leg = TransitLeg(
+            id=str(uuid.uuid4())[:8],
+            mode="taxi",
+            line_name="Mumbai Metered Kaali-Peeli Taxi",
+            line_color="#EAB308",
+            origin_name=orig["name"],
+            destination_name=dest["name"],
+            origin_coords=start_pt,
+            destination_coords=end_pt,
+            path_coords=get_road_geometry(start_pt, end_pt, mode="driving"),
+            duration_minutes=duration_mins,
+            distance_meters=int(dist_km * 1050),
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            stops_count=0,
+            intermediate_stops=[],
+            instructions=f"Flag down metered Kaali-Peeli taxi at {orig['name']}. Pay strictly as per Maharashtra Transport Department electronic meter.",
+            crowd_level="Low",
+            fare_inr=fare,
+            fare_details=fare_desc
+        )
+
+        return RouteItinerary(
+            id=f"route-mumbai-taxi-{uuid.uuid4().hex[:6]}",
+            title=f"Mumbai Metered Kaali-Peeli Taxi — {dist_km:.1f} km",
+            tag="Govt Metered Taxi",
+            tag_reason=f"⚡ Official Maharashtra Govt Gazetted Meter: ₹33 first 1.5km + ₹21.90/km (Tariff Revision Sept 2026). Permitted across all Mumbai (Island City & Suburbs).",
+            total_duration_minutes=duration_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="mumbai_taxi",
+            transfers_count=0,
+            walking_duration_minutes=1,
+            walking_distance_meters=40,
+            overall_crowd="Low",
+            total_delay_minutes=0,
+            legs=[leg],
+            eco_carbon_savings_kg=round(dist_km * 0.04, 1)
+        )
+
+    def _build_mumbai_auto_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime, is_night: bool
+    ) -> RouteItinerary:
+        """Official Maharashtra Govt Metered Auto Rickshaw (Suburban Mumbai)."""
+        # South Mumbai restriction check (lat < 19.04 is South Mumbai / Island City south of Bandra/Sion)
+        is_south_mumbai_only = (orig.get("lat", 0) < 19.04 and dest.get("lat", 0) < 19.04)
+
+        duration_mins = max(7, int((dist_km / 25.0) * 60))
+        arr_time = base_time + timedelta(minutes=duration_mins)
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        if is_south_mumbai_only:
+            leg = TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="auto",
+                line_name="Maharashtra Govt Metered Auto",
+                line_color="#E68A00",
+                origin_name=orig["name"],
+                destination_name=dest["name"],
+                origin_coords=start_pt,
+                destination_coords=end_pt,
+                path_coords=[start_pt, end_pt],
+                duration_minutes=duration_mins,
+                distance_meters=int(dist_km * 1050),
+                departure_time=base_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                stops_count=0,
+                instructions="Auto-rickshaws restricted in South Mumbai (Island City) by Maharashtra RTO.",
+                crowd_level="Low",
+                fare_inr=0.0,
+                fare_details="Service restricted south of Bandra / Sion"
+            )
+            return RouteItinerary(
+                id=f"route-mumbai-auto-{uuid.uuid4().hex[:6]}",
+                title=f"Maharashtra Govt Metered Auto — {dist_km:.1f} km",
+                tag="Auto Restricted in South Mumbai",
+                tag_reason="Auto-rickshaws are legally restricted in South Mumbai (Island City south of Bandra/Mahim) by Maharashtra RTO. Please take Metered Kaali-Peeli Taxi or BEST Bus.",
+                total_duration_minutes=duration_mins,
+                departure_time=base_time.strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                total_fare_inr=0.0,
+                fare_breakdown="Restricted in South Mumbai (Island City) by Maharashtra RTO",
+                route_type="mumbai_auto",
+                transfers_count=0,
+                walking_duration_minutes=0,
+                walking_distance_meters=0,
+                overall_crowd="Low",
+                total_delay_minutes=0,
+                service_available=False,
+                unavailable_reason="Auto-rickshaws restricted in South Mumbai (Island City south of Bandra/Mahim) by Maharashtra RTO. Please take Metered Kaali-Peeli Taxi or BEST Bus.",
+                legs=[leg],
+                eco_carbon_savings_kg=0.0
+            )
+
+        fare, fare_desc = calculate_mumbai_auto_fare(dist_km, is_night=is_night)
+        leg = TransitLeg(
+            id=str(uuid.uuid4())[:8],
+            mode="auto",
+            line_name="Maharashtra Govt Metered Auto",
+            line_color="#E68A00",
+            origin_name=orig["name"],
+            destination_name=dest["name"],
+            origin_coords=start_pt,
+            destination_coords=end_pt,
+            path_coords=get_road_geometry(start_pt, end_pt, mode="driving"),
+            duration_minutes=duration_mins,
+            distance_meters=int(dist_km * 1050),
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            stops_count=0,
+            intermediate_stops=[],
+            instructions=f"Take doorstep metered Auto-Rickshaw in suburban corridor ({dist_km:.1f} km). Pay strictly by Maharashtra Transport Department gazetted meter.",
+            crowd_level="Low",
+            fare_inr=fare,
+            fare_details=fare_desc
+        )
+
+        return RouteItinerary(
+            id=f"route-mumbai-auto-{uuid.uuid4().hex[:6]}",
+            title=f"Maharashtra Govt Metered Auto — {dist_km:.1f} km",
+            tag="Govt Metered Auto",
+            tag_reason=f"Direct suburban doorstep ride ({dist_km:.1f} km). Regulated Maharashtra Govt meter: ₹27 first 1.5km + ₹18.22/km (Tariff Revision Sept 2026).",
+            total_duration_minutes=duration_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="mumbai_auto",
+            transfers_count=0,
+            walking_duration_minutes=1,
+            walking_distance_meters=40,
+            overall_crowd="Low",
+            total_delay_minutes=0,
+            legs=[leg],
+            eco_carbon_savings_kg=round(dist_km * 0.05, 1)
+        )
+
+    def _build_mumbai_local_train_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime
+    ) -> RouteItinerary:
+        """Mumbai Suburban Railway (Western / Central / Harbour Local Trains)."""
+        fare, fare_desc = calculate_mumbai_local_fare(dist_km, is_ac=False)
+        train_duration = max(10, int((dist_km / 38.0) * 60))
+        total_mins = train_duration + 4
+        arr_time = base_time + timedelta(minutes=total_mins)
+
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        line_name = "Mumbai Suburban Railway (Western Line)" if orig.get("lon", 72.84) < 72.85 else "Mumbai Suburban Railway (Central Line)"
+
+        legs = [
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                origin_name=orig["name"],
+                destination_name=f"{orig['name']} Local Platform",
+                origin_coords=start_pt,
+                destination_coords=[round(start_pt[0] + 0.0002, 5), round(start_pt[1] + 0.0002, 5)],
+                path_coords=[start_pt, [round(start_pt[0] + 0.0002, 5), round(start_pt[1] + 0.0002, 5)]],
+                duration_minutes=2,
+                distance_meters=100,
+                departure_time=base_time.strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=2)).strftime("%H:%M"),
+                instructions="Enter station and proceed to suburban local train platform.",
+                crowd_level="Moderate"
+            ),
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="rail",
+                line_name=line_name,
+                line_color="#1E3A8A",
+                origin_name=orig["name"],
+                destination_name=dest["name"],
+                origin_coords=start_pt,
+                destination_coords=end_pt,
+                path_coords=interpolate_points(start_pt, end_pt, num_points=6),
+                duration_minutes=train_duration,
+                distance_meters=int(dist_km * 1000),
+                departure_time=(base_time + timedelta(minutes=2)).strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=train_duration + 2)).strftime("%H:%M"),
+                stops_count=max(2, int(dist_km / 3.0)),
+                instructions=f"Board fast suburban local train ({dist_km:.1f} km). Quickest arterial corridor across Mumbai.",
+                crowd_level="High",
+                fare_inr=fare,
+                fare_details=fare_desc
+            ),
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="walk",
+                origin_name=f"{dest['name']} Platform",
+                destination_name=dest["name"],
+                origin_coords=end_pt,
+                destination_coords=end_pt,
+                path_coords=[end_pt, end_pt],
+                duration_minutes=2,
+                distance_meters=80,
+                departure_time=(base_time + timedelta(minutes=train_duration + 2)).strftime("%H:%M"),
+                arrival_time=arr_time.strftime("%H:%M"),
+                instructions="Exit platform to destination gate.",
+                crowd_level="Moderate"
+            )
+        ]
+
+        return RouteItinerary(
+            id=f"route-mumbai-local-{uuid.uuid4().hex[:6]}",
+            title=f"Mumbai Suburban Local Train — {dist_km:.1f} km",
+            tag="Mumbai Suburban Local",
+            tag_reason=f"Lifeline of Mumbai: Western & Central Suburban Railway. Lowest fare (₹{int(fare)}) and beats highway traffic completely.",
+            total_duration_minutes=total_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="mumbai_local",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=180,
+            overall_crowd="High",
+            total_delay_minutes=0,
+            legs=legs,
+            eco_carbon_savings_kg=round(dist_km * 0.16, 1)
+        )
+
+    def _build_mumbai_metro_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime
+    ) -> RouteItinerary:
+        """Maha Mumbai Metro (Line 3 Aqua Line / Line 1 / Line 2A & 7)."""
+        fare, fare_desc = calculate_mumbai_metro_fare(dist_km)
+        metro_dur = max(8, int((dist_km / 34.0) * 60))
+        total_mins = metro_dur + 5
+        arr_time = base_time + timedelta(minutes=total_mins)
+
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        line_name = "Mumbai Metro Line 3 (Aqua Line)" if (orig.get("lat", 0) < 19.08 or dest.get("lat", 0) < 19.08) else "Mumbai Metro Line 1 (Versova-Ghatkopar)"
+        line_color = "#0D9488" if "Aqua" in line_name else "#0284C7"
+
+        legs = [
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="metro",
+                line_name=line_name,
+                line_color=line_color,
+                origin_name=orig["name"],
+                destination_name=dest["name"],
+                origin_coords=start_pt,
+                destination_coords=end_pt,
+                path_coords=interpolate_points(start_pt, end_pt, num_points=6),
+                duration_minutes=metro_dur,
+                distance_meters=int(dist_km * 1000),
+                departure_time=(base_time + timedelta(minutes=2)).strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=metro_dur + 2)).strftime("%H:%M"),
+                stops_count=max(2, int(dist_km / 2.0)),
+                instructions=f"Board air-conditioned {line_name} ({dist_km:.1f} km). 100% on-time rapid underground/elevated transit.",
+                crowd_level="Moderate",
+                fare_inr=fare,
+                fare_details=fare_desc
+            )
+        ]
+
+        return RouteItinerary(
+            id=f"route-mumbai-metro-{uuid.uuid4().hex[:6]}",
+            title=f"Maha Mumbai Metro (AC) — {dist_km:.1f} km",
+            tag="Maha Mumbai Metro",
+            tag_reason=f"Modern air-conditioned rapid transit: Metro Line 3 Aqua Line & Line 1. Gazetted MMRDA/MMRC tariff (₹{int(fare)}).",
+            total_duration_minutes=total_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="mumbai_metro",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=160,
+            overall_crowd="Moderate",
+            total_delay_minutes=0,
+            legs=legs,
+            eco_carbon_savings_kg=round(dist_km * 0.18, 1)
+        )
+
+    def _build_best_ebus_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime
+    ) -> RouteItinerary:
+        """BEST AC Electric Bus (Chalo Bus / Olectra EV)."""
+        fare, fare_desc = calculate_best_bus_fare(dist_km, is_electric=True)
+        bus_dur = max(12, int((dist_km / 20.0) * 60) + 4)
+        total_mins = bus_dur + 4
+        arr_time = base_time + timedelta(minutes=total_mins)
+
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        legs = [
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="ebus",
+                line_name="BEST AC Electric Bus (Chalo Bus)",
+                line_color="#15803D",
+                origin_name=orig["name"],
+                destination_name=dest["name"],
+                origin_coords=start_pt,
+                destination_coords=end_pt,
+                path_coords=get_road_geometry(start_pt, end_pt, mode="driving"),
+                duration_minutes=bus_dur,
+                distance_meters=int(dist_km * 1020),
+                departure_time=(base_time + timedelta(minutes=2)).strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=bus_dur + 2)).strftime("%H:%M"),
+                stops_count=max(3, int(dist_km / 1.2)),
+                instructions=f"Board BEST AC Electric Chalo Bus outside {orig['name']}. Tap Chalo Card or buy ticket for ₹{int(fare)}.",
+                crowd_level="Moderate",
+                fare_inr=fare,
+                fare_details=fare_desc
+            )
+        ]
+
+        return RouteItinerary(
+            id=f"route-mumbai-best-ac-{uuid.uuid4().hex[:6]}",
+            title=f"BEST AC Electric Bus (Chalo Bus) — {dist_km:.1f} km",
+            tag="BEST Electric Bus",
+            tag_reason=f"Brihanmumbai Electric Supply & Transport (BEST): Gazetted AC electric fare slab ₹{int(fare)}. Chalo Card enabled.",
+            total_duration_minutes=total_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="best_ebus",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=140,
+            overall_crowd="Moderate",
+            total_delay_minutes=0,
+            legs=legs,
+            eco_carbon_savings_kg=round(dist_km * 0.15, 1)
+        )
+
+    def _build_best_ordinary_bus_route(
+        self, orig: Dict, dest: Dict, dist_km: float, base_time: datetime
+    ) -> RouteItinerary:
+        """BEST Ordinary Bus (Non-AC)."""
+        fare, fare_desc = calculate_best_bus_fare(dist_km, is_electric=False)
+        bus_dur = max(14, int((dist_km / 19.0) * 60) + 4)
+        total_mins = bus_dur + 4
+        arr_time = base_time + timedelta(minutes=total_mins)
+
+        start_pt = [orig["lon"], orig["lat"]]
+        end_pt = [dest["lon"], dest["lat"]]
+
+        legs = [
+            TransitLeg(
+                id=str(uuid.uuid4())[:8],
+                mode="bus",
+                line_name="BEST Ordinary Bus",
+                line_color="#B45309",
+                origin_name=orig["name"],
+                destination_name=dest["name"],
+                origin_coords=start_pt,
+                destination_coords=end_pt,
+                path_coords=get_road_geometry(start_pt, end_pt, mode="driving"),
+                duration_minutes=bus_dur,
+                distance_meters=int(dist_km * 1020),
+                departure_time=(base_time + timedelta(minutes=2)).strftime("%H:%M"),
+                arrival_time=(base_time + timedelta(minutes=bus_dur + 2)).strftime("%H:%M"),
+                stops_count=max(4, int(dist_km / 1.0)),
+                instructions=f"Board BEST Non-AC Ordinary Bus. Standard economical route ticket: ₹{int(fare)}.",
+                crowd_level="Moderate",
+                fare_inr=fare,
+                fare_details=fare_desc
+            )
+        ]
+
+        return RouteItinerary(
+            id=f"route-mumbai-best-ord-{uuid.uuid4().hex[:6]}",
+            title=f"BEST Ordinary Bus — {dist_km:.1f} km",
+            tag="Lowest Fare",
+            tag_reason=f"BEST Ordinary non-AC bus. Budget friendly gazetted fare ₹{int(fare)}.",
+            total_duration_minutes=total_mins,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=arr_time.strftime("%H:%M"),
+            total_fare_inr=fare,
+            fare_breakdown=fare_desc,
+            route_type="best_ordinary",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=140,
+            overall_crowd="Moderate",
+            total_delay_minutes=0,
+            legs=legs,
+            eco_carbon_savings_kg=round(dist_km * 0.12, 1)
+        )
+
+    def _plan_bengaluru_journey(
+        self,
+        origin_dict: Dict,
+        dest_dict: Dict,
+        origin_loc: GeoLocation,
+        dest_loc: GeoLocation,
+        dist_km: float,
+        base_time: datetime,
+        request: PlanRequest,
+        simulated_delays: Dict[str, int]
+    ) -> PlanResponse:
+        """Specialized transit routing engine for Bengaluru (BMRCL & BMTC)."""
+        routes: List[RouteItinerary] = []
+        is_night = base_time.hour >= 22 or base_time.hour < 6
+
+        # 1. Namma Metro
+        metro_fare, metro_desc = calculate_namma_metro_fare(dist_km)
+        metro_dur = max(10, int((dist_km / 34.0) * 60) + 4)
+        r_metro = RouteItinerary(
+            id=f"route-blr-metro-{uuid.uuid4().hex[:6]}",
+            title=f"Namma Metro (Purple / Green Line) — {dist_km:.1f} km",
+            tag="Namma Metro",
+            tag_reason=f"Bangalore Metro Rail Corporation (BMRCL): Slabs ₹10-₹60. Avoids Outer Ring Road & Silk Board traffic.",
+            total_duration_minutes=metro_dur + 4,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=(base_time + timedelta(minutes=metro_dur + 4)).strftime("%H:%M"),
+            total_fare_inr=metro_fare,
+            fare_breakdown=metro_desc,
+            route_type="bengaluru_metro",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=150,
+            overall_crowd="Moderate",
+            total_delay_minutes=0,
+            legs=[
+                TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="metro",
+                    line_name="Purple Line (Namma Metro)",
+                    line_color="#7E22CE",
+                    origin_name=origin_dict["name"],
+                    destination_name=dest_dict["name"],
+                    origin_coords=[origin_dict["lon"], origin_dict["lat"]],
+                    destination_coords=[dest_dict["lon"], dest_dict["lat"]],
+                    path_coords=interpolate_points([origin_dict["lon"], origin_dict["lat"]], [dest_dict["lon"], dest_dict["lat"]], num_points=6),
+                    duration_minutes=metro_dur,
+                    distance_meters=int(dist_km * 1000),
+                    departure_time=base_time.strftime("%H:%M"),
+                    arrival_time=(base_time + timedelta(minutes=metro_dur)).strftime("%H:%M"),
+                    stops_count=max(2, int(dist_km / 2.0)),
+                    instructions=f"Take Namma Metro from {origin_dict['name']} to {dest_dict['name']}.",
+                    crowd_level="Moderate",
+                    fare_inr=metro_fare,
+                    fare_details=metro_desc
+                )
+            ],
+            eco_carbon_savings_kg=round(dist_km * 0.16, 1)
+        )
+        routes.append(r_metro)
+
+        # 2. BMTC Vajra AC Bus
+        vajra_fare, vajra_desc = calculate_bmtc_bus_fare(dist_km, is_vajra=True)
+        vajra_dur = max(14, int((dist_km / 20.0) * 60) + 5)
+        r_vajra = RouteItinerary(
+            id=f"route-blr-vajra-{uuid.uuid4().hex[:6]}",
+            title=f"BMTC Vajra AC Bus — {dist_km:.1f} km",
+            tag="BMTC Electric Bus",
+            tag_reason=f"Bangalore Metropolitan Transport Corporation: Gazetted Vajra AC bus slab ₹{int(vajra_fare)}.",
+            total_duration_minutes=vajra_dur + 4,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=(base_time + timedelta(minutes=vajra_dur + 4)).strftime("%H:%M"),
+            total_fare_inr=vajra_fare,
+            fare_breakdown=vajra_desc,
+            route_type="bmtc_bus",
+            transfers_count=0,
+            walking_duration_minutes=4,
+            walking_distance_meters=140,
+            overall_crowd="Moderate",
+            total_delay_minutes=0,
+            legs=[
+                TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="ebus",
+                    line_name="BMTC Vajra AC Bus",
+                    line_color="#0284C7",
+                    origin_name=origin_dict["name"],
+                    destination_name=dest_dict["name"],
+                    origin_coords=[origin_dict["lon"], origin_dict["lat"]],
+                    destination_coords=[dest_dict["lon"], dest_dict["lat"]],
+                    path_coords=get_road_geometry([origin_dict["lon"], origin_dict["lat"]], [dest_dict["lon"], dest_dict["lat"]], mode="driving"),
+                    duration_minutes=vajra_dur,
+                    distance_meters=int(dist_km * 1020),
+                    departure_time=base_time.strftime("%H:%M"),
+                    arrival_time=(base_time + timedelta(minutes=vajra_dur)).strftime("%H:%M"),
+                    stops_count=max(3, int(dist_km / 1.5)),
+                    instructions=f"Board BMTC Vajra AC bus to {dest_dict['name']}.",
+                    crowd_level="Moderate",
+                    fare_inr=vajra_fare,
+                    fare_details=vajra_desc
+                )
+            ],
+            eco_carbon_savings_kg=round(dist_km * 0.14, 1)
+        )
+        routes.append(r_vajra)
+
+        # 3. Karnataka Govt Metered Auto
+        auto_fare, auto_desc = calculate_bengaluru_auto_fare(dist_km, is_night=is_night)
+        auto_dur = max(8, int((dist_km / 25.0) * 60))
+        r_auto = RouteItinerary(
+            id=f"route-blr-auto-{uuid.uuid4().hex[:6]}",
+            title=f"Karnataka Govt Metered Auto — {dist_km:.1f} km",
+            tag="Govt Metered Auto",
+            tag_reason=f"Regulated Karnataka Govt Auto Meter: ₹30 first 2km + ₹15/km (Night surcharge 50% 10PM-6AM).",
+            total_duration_minutes=auto_dur,
+            departure_time=base_time.strftime("%H:%M"),
+            arrival_time=(base_time + timedelta(minutes=auto_dur)).strftime("%H:%M"),
+            total_fare_inr=auto_fare,
+            fare_breakdown=auto_desc,
+            route_type="bengaluru_auto",
+            transfers_count=0,
+            walking_duration_minutes=1,
+            walking_distance_meters=40,
+            overall_crowd="Low",
+            total_delay_minutes=0,
+            legs=[
+                TransitLeg(
+                    id=str(uuid.uuid4())[:8],
+                    mode="auto",
+                    line_name="Karnataka Govt Metered Auto",
+                    line_color="#E68A00",
+                    origin_name=origin_dict["name"],
+                    destination_name=dest_dict["name"],
+                    origin_coords=[origin_dict["lon"], origin_dict["lat"]],
+                    destination_coords=[dest_dict["lon"], dest_dict["lat"]],
+                    path_coords=get_road_geometry([origin_dict["lon"], origin_dict["lat"]], [dest_dict["lon"], dest_dict["lat"]], mode="driving"),
+                    duration_minutes=auto_dur,
+                    distance_meters=int(dist_km * 1050),
+                    departure_time=base_time.strftime("%H:%M"),
+                    arrival_time=(base_time + timedelta(minutes=auto_dur)).strftime("%H:%M"),
+                    stops_count=0,
+                    instructions=f"Hire metered auto from {origin_dict['name']}. Pay strictly as per Karnataka Transport Dept meter.",
+                    crowd_level="Low",
+                    fare_inr=auto_fare,
+                    fare_details=auto_desc
+                )
+            ],
+            eco_carbon_savings_kg=round(dist_km * 0.05, 1)
+        )
+        routes.append(r_auto)
+
+        # 4. Direct Cab
+        routes.append(self._build_direct_cab_route(origin_dict, dest_dict, dist_km, base_time))
+
+        routes.sort(key=lambda r: (0 if r.service_available else 1, r.total_duration_minutes, r.total_fare_inr))
+        active_disruptions = sum(1 for d in simulated_delays.values() if d > 0)
+        return PlanResponse(
+            origin=origin_loc,
+            destination=dest_loc,
+            generated_at=datetime.now().isoformat(),
+            routes=routes,
+            active_disruptions_count=active_disruptions
         )
 
 router_instance = TransitRouter()
