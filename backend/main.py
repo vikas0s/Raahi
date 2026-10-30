@@ -377,6 +377,10 @@ async def get_station_departure_board(
 async def websocket_telemetry(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
+        await websocket.send_json({
+            "type": "CONNECTION_ESTABLISHED",
+            "server_time": datetime.now().isoformat()
+        })
         while True:
             data = await websocket.receive_text()
             # Echo or process client ping
@@ -384,5 +388,5 @@ async def websocket_telemetry(websocket: WebSocket):
                 "type": "HEARTBEAT_ACK",
                 "server_time": datetime.now().isoformat()
             })
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
         ws_manager.disconnect(websocket)
