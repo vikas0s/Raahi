@@ -28,6 +28,8 @@ class PlanRequest(BaseModel):
     origin: str
     destination: str
     city: str = "Delhi NCR"
+    origin_coords: Optional[List[float]] = None # [lon, lat] or [lat, lon]
+    destination_coords: Optional[List[float]] = None # [lon, lat] or [lat, lon]
     departure_time: Optional[str] = None # ISO format or HH:MM
     arrival_time: Optional[str] = None # ISO format or HH:MM when Arrive By is chosen
     time_mode: Optional[Literal["now", "depart_at", "arrive_by"]] = "now"
@@ -167,3 +169,14 @@ class StopDeparture(BaseModel):
     status: str
     crowd: str
     platform: Optional[str] = None
+
+class ReverseGeocodeResponse(BaseModel):
+    status: str = "ok"
+    lat: float
+    lon: float
+    city: str
+    matched_transit_city: Optional[str] = None
+    locality: Optional[str] = None
+    formatted_address: Optional[str] = None
+    state: Optional[str] = None
+

@@ -126,6 +126,16 @@ def test_railconnect():
     assert has_train, "Expected Indian Railways / Rail Bus route in journey comparison options"
     print("[PASS] RailConnect integrated journey planning comparison passed")
 
+def test_reverse_geocode():
+    # Test Mathura coordinates
+    res = client.get("/places/reverse-geocode?lat=27.4924&lon=77.6737")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "ok"
+    assert "Mathura" in data["city"]
+    assert data["matched_transit_city"] == "Mathura & Vrindavan"
+    print(f"[PASS] Reverse geocoding passed (detected: {data['city']})")
+
 if __name__ == "__main__":
     test_health()
     test_search_places()
@@ -134,5 +144,6 @@ if __name__ == "__main__":
     test_delays_and_simulation()
     test_saved_routes()
     test_railconnect()
+    test_reverse_geocode()
     print("\nALL BACKEND UNIT TESTS PASSED SUCCESSFULLY!")
 

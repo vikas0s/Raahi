@@ -14,8 +14,9 @@ interface Props {
   preferences: TravelPreferences;
   savedRoutes: SavedRoute[];
   incidents: TransitIncident[];
-  onOriginChange: (val: string) => void;
-  onDestinationChange: (val: string) => void;
+  onOriginChange: (val: string, coords?: [number, number]) => void;
+  onDestinationChange: (val: string, coords?: [number, number]) => void;
+  onUseCurrentLocation?: (name: string, coords: [number, number]) => void;
   onPreferencesChange: (prefs: TravelPreferences) => void;
   onSearch: (departureTime?: string, arrivalTime?: string, timeMode?: TimeMode) => void;
   onReplanSaved: (route: SavedRoute) => void;
@@ -33,6 +34,7 @@ export const DiscoverView: React.FC<Props> = ({
   incidents,
   onOriginChange,
   onDestinationChange,
+  onUseCurrentLocation,
   onPreferencesChange,
   onSearch,
   onReplanSaved,
@@ -84,6 +86,7 @@ export const DiscoverView: React.FC<Props> = ({
             city={city}
             onOriginChange={onOriginChange}
             onDestinationChange={onDestinationChange}
+            onUseCurrentLocation={onUseCurrentLocation}
             onSubmit={onSearch}
             isLoading={isLoading}
           />

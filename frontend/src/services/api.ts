@@ -11,7 +11,8 @@ import {
   TrainSchedule,
   LiveRunningStatus,
   StationBoardResponse,
-  RailSearchResponse
+  RailSearchResponse,
+  ReverseGeocodeResult
 } from '../types/transit';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -68,12 +69,16 @@ export async function planJourney(
   departureTime?: string,
   arrivalTime?: string,
   timeMode: TimeMode = 'now',
-  preferences?: Partial<TravelPreferences>
+  preferences?: Partial<TravelPreferences>,
+  originCoords?: [number, number],
+  destinationCoords?: [number, number]
 ): Promise<PlanResponse> {
   const payload = {
     origin,
     destination,
     city,
+    origin_coords: originCoords,
+    destination_coords: destinationCoords,
     departure_time: departureTime,
     arrival_time: arrivalTime,
     time_mode: timeMode,
@@ -281,4 +286,22 @@ export async function getStationLiveBoard(stationCode: string, hours: number = 4
   const res = await fetch(`${API_BASE}/api/rail/station-board/${encodeURIComponent(stationCode)}?hours=${hours}`);
   if (!res.ok) throw new Error(`Station board fetch failed for ${stationCode}`);
   return await res.json();
+}
+
+export async function reverseGeocode(lat: number, lon: number): Promise<ReverseGeocodeResult> {
+  try {
+    const res = await fetch(`${API_BASE}/places/reverse-geocode?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
+    if (!res.ok) throw new Error('Reverse geocoding failed');
+    return await res.json();
+  } catch (err) {
+    console.warn('Reverse geocoding API error:', err);
+    return {
+      status: 'fallback',
+      lat,
+      lon,
+      city: 'Current Location',
+      matched_transit_city: null,
+      locality: 'Current Location'
+    };
+  }
 }
