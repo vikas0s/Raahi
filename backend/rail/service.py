@@ -265,15 +265,33 @@ class RailConnectService:
         dest_lat = dest_dict.get("lat", 0.0)
         dest_lon = dest_dict.get("lon", 0.0)
 
-        if not orig_station and orig_lat and orig_lon:
-            nearest = self.find_nearest_rail_station(orig_lat, orig_lon, max_dist_km=25.0, city=norm_city)
-            if nearest:
-                orig_station = nearest[0]
+        # For local journeys (< 35 km), only suggest rail if both endpoints are stations
+        # or destination is explicitly close (<= 2.5 km) to a railway station.
+        if dist_km < 35.0:
+            if not orig_station and not dest_station:
+                return []
+            if not orig_station and orig_lat and orig_lon:
+                nearest = self.find_nearest_rail_station(orig_lat, orig_lon, max_dist_km=2.5, city=norm_city)
+                if nearest:
+                    orig_station = nearest[0]
+                else:
+                    return []
+            if not dest_station and dest_lat and dest_lon:
+                nearest = self.find_nearest_rail_station(dest_lat, dest_lon, max_dist_km=2.5, city=norm_city)
+                if nearest:
+                    dest_station = nearest[0]
+                else:
+                    return []
+        else:
+            if not orig_station and orig_lat and orig_lon:
+                nearest = self.find_nearest_rail_station(orig_lat, orig_lon, max_dist_km=15.0, city=norm_city)
+                if nearest:
+                    orig_station = nearest[0]
 
-        if not dest_station and dest_lat and dest_lon:
-            nearest = self.find_nearest_rail_station(dest_lat, dest_lon, max_dist_km=25.0, city=norm_city)
-            if nearest:
-                dest_station = nearest[0]
+            if not dest_station and dest_lat and dest_lon:
+                nearest = self.find_nearest_rail_station(dest_lat, dest_lon, max_dist_km=15.0, city=norm_city)
+                if nearest:
+                    dest_station = nearest[0]
 
         if not orig_station or not dest_station or orig_station.code == dest_station.code:
             return []

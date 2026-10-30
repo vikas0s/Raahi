@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 """
 FastAPI application for Raahi — Your City, Effortlessly Connected.
 """
@@ -397,6 +398,29 @@ async def get_station_departure_board(
 ):
     """Fetch live departure/arrival board for a railway station."""
     return await rail_service_instance.get_station_board(station_code, hours)
+
+class GoogleMapsKeyPayload(BaseModel):
+    api_key: str
+
+@app.get("/api/settings/google-maps-status")
+def get_google_maps_status():
+    """Check if Google Maps API key is configured."""
+    from .google_maps_service import google_maps_service_instance
+    return {
+        "configured": google_maps_service_instance.is_configured(),
+        "masked_key": google_maps_service_instance.get_api_key_masked()
+    }
+
+@app.post("/api/settings/google-maps-key")
+def update_google_maps_key(payload: GoogleMapsKeyPayload):
+    """Dynamically save and activate Google Maps API key."""
+    from .google_maps_service import google_maps_service_instance
+    success = google_maps_service_instance.set_api_key(payload.api_key)
+    return {
+        "success": success,
+        "configured": google_maps_service_instance.is_configured(),
+        "masked_key": google_maps_service_instance.get_api_key_masked()
+    }
 
 @app.websocket("/ws/telemetry")
 async def websocket_telemetry(websocket: WebSocket):
