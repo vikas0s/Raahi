@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { MapPin, Bell, Bot, Crosshair, AlertCircle, Loader2, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MapPin, Bell, Bot, Crosshair, AlertCircle, Loader2, Check, User, LogIn, LogOut, ChevronDown } from 'lucide-react';
 import type { AppLanguage } from '../../types/transit';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { useLocation } from '../../context/LocationContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   selectedCity: string;
@@ -12,6 +13,7 @@ interface Props {
   disruptionsCount: number;
   onOpenAssistant: () => void;
   onOpenNotifications: () => void;
+  onOpenAuth?: () => void;
 }
 
 const DEFAULT_CITIES = [
@@ -28,9 +30,13 @@ export const TopBar: React.FC<Props> = ({
   onLanguageChange,
   disruptionsCount,
   onOpenAssistant,
-  onOpenNotifications
+  onOpenNotifications,
+  onOpenAuth
 }) => {
   const { t, setLanguage } = useTranslation();
+  const { user, isAuthenticated, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const {
     isLocating,
     permissionStatus,
@@ -67,6 +73,20 @@ export const TopBar: React.FC<Props> = ({
       recenterMap();
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#F7F5EF]/95 backdrop-blur-md border-b border-[#E3E0D6] px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4">
@@ -239,6 +259,66 @@ export const TopBar: React.FC<Props> = ({
           <span className="hidden md:inline font-bold">{t('raahiAiButton')}</span>
           <span className="w-1.5 h-1.5 rounded-full bg-[#E7B75B] animate-pulse" />
         </button>
+
+        {/* User Account / Profile Menu */}
+        {isAuthenticated && user ? (
+          <div className="relative" ref={userMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowUserMenu((prev) => !prev)}
+              aria-label="User Account Menu"
+              className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-xl bg-[#EEECE3] hover:bg-[#E3E0D6] border border-[#D8D4C7] transition-all cursor-pointer shadow-2xs"
+            >
+              <div className="w-6 h-6 rounded-lg bg-[#253D30] text-[#FFFEFA] text-[10px] font-extrabold flex items-center justify-center uppercase shrink-0">
+                {user.name ? user.name.slice(0, 2) : 'U'}
+              </div>
+              <span className="text-xs font-bold text-[#1F231F] max-w-[85px] truncate hidden md:inline">
+                {user.name.split(' ')[0]}
+              </span>
+              <ChevronDown size={12} className="text-[#52544D] hidden sm:inline" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-2 w-60 bg-[#FFFEFA] rounded-2xl border border-[#D8D4C7] p-2 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-1">
+                <div className="px-3 py-2.5 border-b border-[#E3E0D6]">
+                  <p className="font-bold text-[#1F231F] text-xs truncate">{user.name}</p>
+                  <p className="text-[11px] text-[#52544D] truncate">{user.email}</p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#64836D]/15 text-[#253D30] uppercase">
+                      {user.role}
+                    </span>
+                    <span className="text-[10px] text-[#4E7C5F] font-semibold">
+                      ✓ {language === 'hi' ? 'सक्रिय खाता' : 'Active Account'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      signOut();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-xs font-bold text-[#BD4F44] hover:bg-[#BD4F44]/10 transition-colors cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                    <span>{t('signOut') || 'Sign Out'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenAuth}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EEECE3] hover:bg-[#E3E0D6] text-[#253D30] text-xs font-bold border border-[#D8D4C7] transition-all cursor-pointer shadow-2xs hover:border-[#4E7C5F]"
+          >
+            <LogIn size={14} className="stroke-[2.2]" />
+            <span className="hidden sm:inline">{t('signIn') || 'Sign In'}</span>
+          </button>
+        )}
       </div>
     </header>
   );

@@ -10,6 +10,98 @@ class GeoLocation(BaseModel):
     city: str = "Delhi NCR"
     state: Optional[str] = None
     country: Optional[str] = None
+    place_id: Optional[str] = None
+    raw_query: Optional[str] = None
+    is_ambiguous: bool = False
+    disambiguation_options: List[str] = Field(default_factory=list)
+    confidence: float = 1.0
+
+
+# ==============================================================================
+# Persistent MongoDB Models & API Schemas
+# ==============================================================================
+
+class CityResponse(BaseModel):
+    id: str
+    name: str
+    country: str = "India"
+    timezone: str = "Asia/Kolkata"
+    center_lat: float
+    center_lon: float
+    is_active: bool = True
+    supported_transport_modes: List[str] = Field(default_factory=list)
+
+
+class StationResponse(BaseModel):
+    id: str
+    name: str
+    city_id: str
+    latitude: float
+    longitude: float
+    stop_type: str = "metro_station"
+    external_stop_id: Optional[str] = None
+    source: Optional[str] = None
+
+
+class RouteResponse(BaseModel):
+    id: str
+    external_route_id: Optional[str] = None
+    agency_id: str
+    city_id: str
+    route_name: str
+    route_type: str
+    line_color: str = "#304B3C"
+    source: Optional[str] = None
+
+
+class SavedPlaceCreate(BaseModel):
+    name: str
+    address: str
+    category: str = "favorite"
+    latitude: float
+    longitude: float
+    city: str = "Delhi NCR"
+
+
+class SavedPlaceResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    address: str
+    category: str
+    latitude: float
+    longitude: float
+    city: str
+    created_at: str
+
+
+class UserPreferencesUpdate(BaseModel):
+    preferred_language: Optional[str] = None
+    selected_city: Optional[str] = None
+    accessible_only: Optional[bool] = None
+    reduced_motion: Optional[bool] = None
+    travel_preferences: Optional[Dict[str, Any]] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    id: str
+    user_id: str
+    preferred_language: str = "en"
+    selected_city: str = "Delhi NCR"
+    accessible_only: bool = False
+    reduced_motion: bool = False
+    travel_preferences: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DatabaseHealthResponse(BaseModel):
+    status: str
+    database: str
+    engine: str
+    latency_ms: float
+    collections_count: int
+    ping: bool
+    is_connected: bool
+    error: Optional[str] = None
     aliases: List[str] = []
 
 class ResolvedPlace(BaseModel):
@@ -21,6 +113,98 @@ class ResolvedPlace(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
+    place_id: Optional[str] = None
+    raw_query: Optional[str] = None
+    is_ambiguous: bool = False
+    disambiguation_options: List[str] = Field(default_factory=list)
+    confidence: float = 1.0
+
+
+# ==============================================================================
+# Persistent MongoDB Models & API Schemas
+# ==============================================================================
+
+class CityResponse(BaseModel):
+    id: str
+    name: str
+    country: str = "India"
+    timezone: str = "Asia/Kolkata"
+    center_lat: float
+    center_lon: float
+    is_active: bool = True
+    supported_transport_modes: List[str] = Field(default_factory=list)
+
+
+class StationResponse(BaseModel):
+    id: str
+    name: str
+    city_id: str
+    latitude: float
+    longitude: float
+    stop_type: str = "metro_station"
+    external_stop_id: Optional[str] = None
+    source: Optional[str] = None
+
+
+class RouteResponse(BaseModel):
+    id: str
+    external_route_id: Optional[str] = None
+    agency_id: str
+    city_id: str
+    route_name: str
+    route_type: str
+    line_color: str = "#304B3C"
+    source: Optional[str] = None
+
+
+class SavedPlaceCreate(BaseModel):
+    name: str
+    address: str
+    category: str = "favorite"
+    latitude: float
+    longitude: float
+    city: str = "Delhi NCR"
+
+
+class SavedPlaceResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    address: str
+    category: str
+    latitude: float
+    longitude: float
+    city: str
+    created_at: str
+
+
+class UserPreferencesUpdate(BaseModel):
+    preferred_language: Optional[str] = None
+    selected_city: Optional[str] = None
+    accessible_only: Optional[bool] = None
+    reduced_motion: Optional[bool] = None
+    travel_preferences: Optional[Dict[str, Any]] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    id: str
+    user_id: str
+    preferred_language: str = "en"
+    selected_city: str = "Delhi NCR"
+    accessible_only: bool = False
+    reduced_motion: bool = False
+    travel_preferences: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DatabaseHealthResponse(BaseModel):
+    status: str
+    database: str
+    engine: str
+    latency_ms: float
+    collections_count: int
+    ping: bool
+    is_connected: bool
+    error: Optional[str] = None
     place_id: Optional[str] = None
     raw_query: Optional[str] = None
     is_ambiguous: bool = False
@@ -162,6 +346,11 @@ class SavedRouteCreate(BaseModel):
     destination: str
     city: str = "Delhi NCR"
     preferred_mode: str = "fastest"
+    typical_duration_minutes: int = 30
+    typical_fare_inr: float = 40.0
+    typical_transfers: int = 0
+    current_delay_minutes: int = 0
+    active_status: str = "Normal Service"
 
 class SavedRoute(BaseModel):
     id: str
@@ -233,3 +422,182 @@ class ReverseGeocodeResponse(BaseModel):
     formatted_address: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
+    place_id: Optional[str] = None
+    raw_query: Optional[str] = None
+    is_ambiguous: bool = False
+    disambiguation_options: List[str] = Field(default_factory=list)
+    confidence: float = 1.0
+
+
+# ==============================================================================
+# Persistent MongoDB Models & API Schemas
+# ==============================================================================
+
+class CityResponse(BaseModel):
+    id: str
+    name: str
+    country: str = "India"
+    timezone: str = "Asia/Kolkata"
+    center_lat: float
+    center_lon: float
+    is_active: bool = True
+    supported_transport_modes: List[str] = Field(default_factory=list)
+
+
+class StationResponse(BaseModel):
+    id: str
+    name: str
+    city_id: str
+    latitude: float
+    longitude: float
+    stop_type: str = "metro_station"
+    external_stop_id: Optional[str] = None
+    source: Optional[str] = None
+
+
+class RouteResponse(BaseModel):
+    id: str
+    external_route_id: Optional[str] = None
+    agency_id: str
+    city_id: str
+    route_name: str
+    route_type: str
+    line_color: str = "#304B3C"
+    source: Optional[str] = None
+
+
+class SavedPlaceCreate(BaseModel):
+    name: str
+    address: str
+    category: str = "favorite"
+    latitude: float
+    longitude: float
+    city: str = "Delhi NCR"
+
+
+class SavedPlaceResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    address: str
+    category: str
+    latitude: float
+    longitude: float
+    city: str
+    created_at: str
+
+
+class UserPreferencesUpdate(BaseModel):
+    preferred_language: Optional[str] = None
+    selected_city: Optional[str] = None
+    accessible_only: Optional[bool] = None
+    reduced_motion: Optional[bool] = None
+    travel_preferences: Optional[Dict[str, Any]] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    id: str
+    user_id: str
+    preferred_language: str = "en"
+    selected_city: str = "Delhi NCR"
+    accessible_only: bool = False
+    reduced_motion: bool = False
+    travel_preferences: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DatabaseHealthResponse(BaseModel):
+    status: str
+    database: str
+    engine: str
+    latency_ms: float
+    collections_count: int
+    ping: bool
+    is_connected: bool
+    error: Optional[str] = None
+
+
+# ==============================================================================
+# Persistent MongoDB Models & API Schemas
+# ==============================================================================
+
+class CityResponse(BaseModel):
+    id: str
+    name: str
+    country: str = "India"
+    timezone: str = "Asia/Kolkata"
+    center_lat: float
+    center_lon: float
+    is_active: bool = True
+    supported_transport_modes: List[str] = Field(default_factory=list)
+
+
+class StationResponse(BaseModel):
+    id: str
+    name: str
+    city_id: str
+    latitude: float
+    longitude: float
+    stop_type: str = "metro_station"
+    external_stop_id: Optional[str] = None
+    source: Optional[str] = None
+
+
+class RouteResponse(BaseModel):
+    id: str
+    external_route_id: Optional[str] = None
+    agency_id: str
+    city_id: str
+    route_name: str
+    route_type: str
+    line_color: str = "#304B3C"
+    source: Optional[str] = None
+
+
+class SavedPlaceCreate(BaseModel):
+    name: str
+    address: str
+    category: str = "favorite"
+    latitude: float
+    longitude: float
+    city: str = "Delhi NCR"
+
+
+class SavedPlaceResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    address: str
+    category: str
+    latitude: float
+    longitude: float
+    city: str
+    created_at: str
+
+
+class UserPreferencesUpdate(BaseModel):
+    preferred_language: Optional[str] = None
+    selected_city: Optional[str] = None
+    accessible_only: Optional[bool] = None
+    reduced_motion: Optional[bool] = None
+    travel_preferences: Optional[Dict[str, Any]] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    id: str
+    user_id: str
+    preferred_language: str = "en"
+    selected_city: str = "Delhi NCR"
+    accessible_only: bool = False
+    reduced_motion: bool = False
+    travel_preferences: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DatabaseHealthResponse(BaseModel):
+    status: str
+    database: str
+    engine: str
+    latency_ms: float
+    collections_count: int
+    ping: bool
+    is_connected: bool
+    error: Optional[str] = None

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Compass, Route, Radio, Bookmark, Bot, Settings, ShieldCheck } from 'lucide-react';
+import { Compass, Route, Radio, Bookmark, Bot, Settings, ShieldCheck, LogIn, LogOut, User } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 
-export type NavTab = 'discover' | 'plan' | 'live' | 'saved' | 'assistant' | 'settings';
+export type NavTab = 'discover' | 'plan' | 'live' | 'saved' | 'assistant' | 'settings' | 'auth';
 
 interface Props {
   activeTab: NavTab;
@@ -18,6 +19,7 @@ export const SidebarNavigation: React.FC<Props> = ({
   savedRoutesCount = 0
 }) => {
   const { t } = useTranslation();
+  const { user, isAuthenticated, signOut } = useAuth();
 
   const navItems = [
     { id: 'discover' as NavTab, label: t('navDiscover'), icon: <Compass size={17} /> },
@@ -79,6 +81,40 @@ export const SidebarNavigation: React.FC<Props> = ({
             );
           })}
         </nav>
+
+        {/* User Account / Profile Section */}
+        {isAuthenticated && user ? (
+          <div className="p-3 rounded-2xl bg-[#FFFEFA] border border-[#E3E0D6] shadow-[0_1px_4px_rgba(41,45,41,0.02)] mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-[#253D30] text-[#FFFEFA] text-xs font-extrabold flex items-center justify-center uppercase shrink-0">
+                  {user.name ? user.name.slice(0, 2) : 'U'}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#1F231F] truncate">{user.name}</p>
+                  <p className="text-[10px] text-[#52544D] truncate">{user.email}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => signOut()}
+                title={t('signOut') || 'Sign Out'}
+                className="p-1.5 rounded-lg text-[#52544D] hover:text-[#BD4F44] hover:bg-[#BD4F44]/10 transition-colors cursor-pointer"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onTabChange('auth')}
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#EEECE3] hover:bg-[#E3E0D6] border border-[#D8D4C7] text-xs font-bold text-[#253D30] transition-colors cursor-pointer mb-3 shadow-2xs"
+          >
+            <LogIn size={15} />
+            <span>{t('signIn') || 'Sign In / Join Raahi'}</span>
+          </button>
+        )}
 
         {/* Bottom Mission Card (CropXpert-style subtle info surface) */}
         <div className="p-3.5 rounded-2xl bg-[#FFFEFA] border border-[#E3E0D6] shadow-[0_1px_4px_rgba(41,45,41,0.02)] text-left">

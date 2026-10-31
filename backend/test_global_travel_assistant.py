@@ -28,8 +28,8 @@ import asyncio
 from unittest.mock import patch, MagicMock
 
 # Force UTF-8 output on Windows
-if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8")
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    getattr(sys.stdout, "reconfigure")(encoding="utf-8")
 
 from backend.models import (
     ChatRequest, ChatResponse, CanonicalJourneyRequest,
@@ -106,9 +106,10 @@ class TestGlobalTravelAssistant(unittest.TestCase):
         req = ChatRequest(message="How do I get from Bengaluru airport to Electronic City?")
         res = self.loop.run_until_complete(chat_assistant_instance.process_message(req))
         self.assertIsNotNone(res.canonical_request)
-        self.assertIn("Bengaluru", res.canonical_request.origin.city)
+        assert res.canonical_request is not None
+        self.assertIn("Bengaluru", res.canonical_request.origin.city or "")
         self.assertIn("Electronic City", res.canonical_request.destination.name)
-        self.assertIn("Bengaluru", res.canonical_request.destination.city)
+        self.assertIn("Bengaluru", res.canonical_request.destination.city or "")
         self.assertEqual(res.coverage_type, "full_transit")
         self.assertIsNotNone(res.route_data)
         print("[PASS] 5. Bengaluru Airport -> Electronic City verified.")
@@ -123,8 +124,10 @@ class TestGlobalTravelAssistant(unittest.TestCase):
         # Correctly recognizes that international public transit schedules are not connected
         self.assertEqual(res.coverage_type, "road_only")
         self.assertIsNotNone(res.route_data)
+        self.assertIsNotNone(res.route_data)
+        assert res.route_data is not None
         self.assertFalse(res.route_data.transit_coverage_available)
-        self.assertIn("Public transit schedules", res.route_data.coverage_advisory)
+        self.assertIn("Public transit schedules", res.route_data.coverage_advisory or "")
         print("[PASS] 6. London King's Cross -> Heathrow (honest road coverage) verified.")
 
     # 7. Supported International Driving Route (Paris -> Eiffel Tower)
@@ -231,15 +234,17 @@ class TestGlobalTravelAssistant(unittest.TestCase):
         drive_route = routes[0]
         # Fare must NOT be hallucinated as a verified exact public transit ticket
         self.assertEqual(drive_route.fare_provenance, "estimated_meter")
-        self.assertIn("Estimated", drive_route.fare_breakdown)
+        self.assertIn("Estimated", drive_route.fare_breakdown or "")
         print("[PASS] 13. Missing fare labeled as estimate/unavailable rather than hallucinated.")
 
     # 14. Missing Public Transit Dataset (Honest Explanation with Road Alternative)
     def test_14_missing_public_transit_dataset_notice(self):
         req = ChatRequest(message="London Kings Cross to Heathrow by public transport")
         res = self.loop.run_until_complete(chat_assistant_instance.process_message(req))
+        self.assertIsNotNone(res.route_data)
+        assert res.route_data is not None
         self.assertFalse(res.route_data.transit_coverage_available)
-        self.assertIn("Public transit schedules", res.route_data.coverage_advisory)
+        self.assertIn("Public transit schedules", res.route_data.coverage_advisory or "")
         print("[PASS] 14. Missing transit dataset reports honest explanation and road alternative.")
 
     # 15. Follow-Up Requesting Cheapest Route
@@ -283,6 +288,8 @@ class TestGlobalTravelAssistant(unittest.TestCase):
         res2 = self.loop.run_until_complete(chat_assistant_instance.process_message(req2))
 
         # Verify old Mathura context was COMPLETELY replaced by Mumbai!
+        self.assertIsNotNone(res2.canonical_request)
+        assert res2.canonical_request is not None
         self.assertIn("Mumbai Central", res2.canonical_request.origin.name)
         self.assertIn("Gateway of India", res2.canonical_request.destination.name)
         self.assertNotIn("Mathura", res2.canonical_request.origin.name)
@@ -319,7 +326,9 @@ class TestGlobalTravelAssistant(unittest.TestCase):
 
     # 20. Confirmation That No Geolocation Permission is Requested Automatically
     def test_20_no_automatic_geolocation(self):
-        with open("frontend/src/context/LocationContext.tsx", "r", encoding="utf-8") as f:
+        from pathlib import Path
+        loc_file = Path(__file__).resolve().parent.parent / "frontend" / "src" / "context" / "LocationContext.tsx"
+        with open(loc_file, "r", encoding="utf-8") as f:
             code = f.read()
         # Verify watchPosition or getCurrentPosition is never called automatically on mount
         self.assertNotIn("useEffect(() => {\n    requestLocation();", code)

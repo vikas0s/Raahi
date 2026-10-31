@@ -126,7 +126,7 @@ export function exportWavBlob(samples: Float32Array, sampleRate: number): Blob {
 }
 
 function downsampleBuffer(buffer: Float32Array, sampleRate: number, outSampleRate: number): Float32Array {
-  if (outSampleRate === sampleRate || outSampleRate > sampleRate) {
+  if (outSampleRate >= sampleRate) {
     return buffer;
   }
   const ratio = sampleRate / outSampleRate;

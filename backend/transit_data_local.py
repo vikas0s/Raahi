@@ -3287,7 +3287,7 @@ TRANSIT_OPERATING_HOURS: Dict[str, Dict[str, Any]] = {
         "last_entry_hour": 23,      # 11:00 PM (last metro departs ~11:00-11:15 PM)
         "last_entry_minute": 0,
         "label": "DMRC Metro",
-        "closed_message": "Metro service closed (11 PM – 6 AM). Last train has departed.",
+        "closed_message": "Metro service closed for the night (11 PM – 6 AM). First morning service starts at 06:00 AM.",
     },
     "airport_express": {
         "first_service_hour": 4,

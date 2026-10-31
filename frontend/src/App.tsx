@@ -13,6 +13,7 @@ import { LiveTransitView } from './views/LiveTransitView';
 import { SavedRoutesView } from './views/SavedRoutesView';
 
 import { SettingsView } from './views/SettingsView';
+import { AuthView } from './views/AuthView';
 
 import { RaahiAssistant } from './components/assistant/RaahiAssistant';
 
@@ -880,6 +881,7 @@ export const App: React.FC = () => {
         onOpenAssistant={() => setIsAssistantOpen(true)}
 
         onOpenNotifications={() => setActiveTab('live')}
+        onOpenAuth={() => setActiveTab('auth')}
 
       />
 
@@ -1034,12 +1036,20 @@ export const App: React.FC = () => {
               onDelete={handleDeleteSaved}
 
               onRefresh={refreshSavedRoutes}
+              onOpenAuth={() => setActiveTab('auth')}
 
             />
 
           )}
 
 
+
+                    {activeTab === 'auth' && (
+            <AuthView
+              onSuccess={() => setActiveTab('discover')}
+              onCancel={() => setActiveTab('discover')}
+            />
+          )}
 
           {activeTab === 'settings' && (
 

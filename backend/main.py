@@ -1,13 +1,37 @@
+
+from .mongodb.connection import (
+    get_async_db,
+    check_mongo_health,
+    close_mongo_connection
+)
+from .mongodb.repositories import (
+    CityRepository,
+    StationRepository,
+    RouteRepository,
+    SavedRouteRepository,
+    SavedPlaceRepository,
+    UserPreferenceRepository,
+    AIConversationRepository
+)
+from .models import (
+    CityResponse, StationResponse, RouteResponse,
+    SavedPlaceCreate, SavedPlaceResponse,
+    UserPreferencesUpdate, UserPreferencesResponse,
+    DatabaseHealthResponse
+)
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 """
 FastAPI application for Raahi — Your City, Effortlessly Connected.
 """
+import os
 import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query, HTTPException, WebSocket, WebSocketDisconnect, File, UploadFile
+from fastapi import FastAPI, Query, HTTPException, WebSocket, WebSocketDisconnect, File, UploadFile, Depends
+from .auth import auth_router, get_current_user, get_optional_current_user, UserResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load unified root .env configuration
@@ -32,20 +56,56 @@ from .rail.schemas import (
     StationBoardResponse, RailSearchResponse
 )
 
-app = FastAPI(
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Check MongoDB health and ensure indexes/records are ready
+    try:
+        health = await check_mongo_health()
+        if health.get("is_connected"):
+            db = get_async_db()
+            stn_count = await db.stations.count_documents({})
+            if stn_count == 0:
+                from .mongodb.seeder import seed_mongodb
+                seed_mongodb()
+    except Exception as e:
+        print(f"MongoDB startup verification: {e}")
+    yield
+    # Shutdown: Close client cleanly
+    try:
+        await close_mongo_connection()
+    except Exception:
+        pass
+
+app = FastAPI(lifespan=lifespan, 
     title="Raahi Transit API",
     description="Intelligent Public Transit Route Planning Engine (MISSION BHARAT DEV-P05)",
     version="1.0.0"
 )
 
-# Enable CORS for frontend Vite dev server (port 5173, etc.)
+# Enable CORS for frontend Vite dev server (supports credentials & HttpOnly cookies)
+CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000"
+]
+env_cors = os.getenv("CORS_ORIGINS")
+if env_cors:
+    CORS_ORIGINS.extend([o.strip() for o in env_cors.split(",") if o.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:[0-9]+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
 
 # WebSocket Connection Manager for Telemetry and Incident Broadcasting
 class ConnectionManager:
@@ -255,6 +315,230 @@ async def synthesize_speech_endpoint(req: TTSRequest):
         return TTSResponse(status="ok", audio_base64=audio_base64)
     except Exception as e:
         return TTSResponse(status="error", error=str(e))
+
+
+# ==============================================================================
+# Persistent MongoDB Transit & Mobility APIs
+# ==============================================================================
+
+@app.get("/api/health/database", response_model=DatabaseHealthResponse)
+async def get_database_health():
+    """Checks MongoDB database connectivity, latency, and status without leaking secrets."""
+    return await check_mongo_health()
+
+
+@app.get("/api/health")
+async def combined_health_check():
+    """Combined service and database health check."""
+    db_health = await check_mongo_health()
+    return {
+        "status": "healthy" if db_health.get("is_connected") else "degraded",
+        "service": "Raahi Transit API",
+        "timestamp": datetime.now().isoformat(),
+        "database": db_health,
+        "cities_supported": list(PLACES_DATABASE.keys()),
+        "version": "1.0.0"
+    }
+
+
+@app.get("/api/cities", response_model=List[CityResponse])
+async def list_cities(active_only: bool = True):
+    """Retrieve supported transit cities from MongoDB."""
+    db = get_async_db()
+    repo = CityRepository(db)
+    cities = await repo.get_all(active_only=active_only)
+    if not cities:
+        # Fallback to in-memory metadata
+        return [
+            CityResponse(
+                id=c.lower().replace(" ", "-").replace("&", "").strip(),
+                name=c,
+                center_lat=KNOWN_TRANSIT_HUBS.get(c, (28.6139, 77.2090))[0],
+                center_lon=KNOWN_TRANSIT_HUBS.get(c, (28.6139, 77.2090))[1],
+                is_active=True,
+                supported_transport_modes=["metro", "bus", "rail", "auto"]
+            )
+            for c in PLACES_DATABASE.keys()
+        ]
+    return [CityResponse(**c) for c in cities]
+
+
+@app.get("/api/stations", response_model=List[StationResponse])
+async def list_stations(
+    city_id: Optional[str] = Query(None, description="City ID (e.g. delhi-ncr, mumbai)"),
+    stop_type: Optional[str] = Query(None, description="Stop type (e.g. metro_station, railway_station)"),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0)
+):
+    """Retrieve persisted transit stations from MongoDB with pagination."""
+    db = get_async_db()
+    repo = StationRepository(db)
+    stations = await repo.get_by_city(city_id=city_id, stop_type=stop_type, limit=limit, offset=offset)
+    return [StationResponse(**s) for s in stations]
+
+
+@app.get("/api/stations/search", response_model=List[StationResponse])
+async def search_stations_api(
+    q: str = Query(..., min_length=1, description="Station search query"),
+    city: Optional[str] = Query(None, description="Optional city name or ID filter"),
+    limit: int = Query(15, ge=1, le=50)
+):
+    """Search transit stations using MongoDB index."""
+    db = get_async_db()
+    repo = StationRepository(db)
+    city_id = None
+    if city:
+        city_clean = city.lower()
+        if "delhi" in city_clean:
+            city_id = "delhi-ncr"
+        elif "mumbai" in city_clean:
+            city_id = "mumbai"
+        elif "bengaluru" in city_clean or "bangalore" in city_clean:
+            city_id = "bengaluru"
+        elif "mathura" in city_clean or "vrindavan" in city_clean:
+            city_id = "mathura-vrindavan"
+
+    stations = await repo.search(query=q, city_id=city_id, limit=limit)
+    return [StationResponse(**s) for s in stations]
+
+
+@app.get("/api/stations/nearby", response_model=List[StationResponse])
+async def find_nearby_stations(
+    lat: float = Query(..., description="Latitude"),
+    lon: float = Query(..., description="Longitude"),
+    radius_meters: float = Query(3000, ge=100, le=25000, description="Search radius in meters"),
+    limit: int = Query(10, ge=1, le=50)
+):
+    """Geospatial proximity query for stations near coordinates using MongoDB 2dsphere index."""
+    db = get_async_db()
+    repo = StationRepository(db)
+    nearby = await repo.find_nearby(lat=lat, lon=lon, max_distance_meters=radius_meters, limit=limit)
+    return [StationResponse(**s) for s in nearby]
+
+
+@app.get("/api/routes", response_model=List[RouteResponse])
+async def list_transit_routes(
+    city_id: Optional[str] = Query(None, description="City ID filter"),
+    route_type: Optional[str] = Query(None, description="Route type (e.g. suburban_rail, metro)")
+):
+    """Retrieve persisted transit routes from MongoDB."""
+    db = get_async_db()
+    repo = RouteRepository(db)
+    routes = await repo.get_by_city(city_id=city_id, route_type=route_type)
+    return [RouteResponse(**r) for r in routes]
+
+
+@app.get("/api/saved-places", response_model=List[SavedPlaceResponse])
+async def get_saved_places(current_user: Optional[UserResponse] = Depends(get_optional_current_user)):
+    """Retrieve user saved places (Home, Work, Favorites) from MongoDB."""
+    db = get_async_db()
+    repo = SavedPlaceRepository(db)
+    uid = current_user.id if current_user else "user-demo-default"
+    places = await repo.get_by_user(user_id=uid)
+    return [
+        SavedPlaceResponse(
+            id=p["id"],
+            user_id=p["user_id"],
+            name=p["name"],
+            address=p["address"],
+            category=p["category"],
+            latitude=p["latitude"],
+            longitude=p["longitude"],
+            city=p["city"],
+            created_at=str(p.get("created_at", ""))
+        )
+        for p in places
+    ]
+
+
+@app.post("/api/saved-places", response_model=SavedPlaceResponse)
+async def add_saved_place(payload: SavedPlaceCreate, current_user: Optional[UserResponse] = Depends(get_optional_current_user)):
+    """Create or update a user saved place in MongoDB."""
+    db = get_async_db()
+    repo = SavedPlaceRepository(db)
+    uid = current_user.id if current_user else "user-demo-default"
+    created = await repo.create(payload.model_dump(), user_id=uid)
+    return SavedPlaceResponse(
+        id=created["id"],
+        user_id=created["user_id"],
+        name=created["name"],
+        address=created["address"],
+        category=created["category"],
+        latitude=created["latitude"],
+        longitude=created["longitude"],
+        city=created["city"],
+        created_at=str(created.get("created_at", ""))
+    )
+
+
+@app.delete("/api/saved-places/{place_id}")
+async def delete_saved_place_endpoint(place_id: str, current_user: Optional[UserResponse] = Depends(get_optional_current_user)):
+    """Delete a saved place from MongoDB."""
+    db = get_async_db()
+    repo = SavedPlaceRepository(db)
+    uid = current_user.id if current_user else "user-demo-default"
+    success = await repo.delete(place_id=place_id, user_id=uid)
+    if not success:
+        raise HTTPException(status_code=404, detail="Saved place not found")
+    return {"success": True, "deleted_id": place_id}
+
+
+@app.get("/api/preferences", response_model=UserPreferencesResponse)
+async def get_user_preferences(current_user: Optional[UserResponse] = Depends(get_optional_current_user)):
+    """Retrieve persistent user preferences from MongoDB."""
+    db = get_async_db()
+    repo = UserPreferenceRepository(db)
+    uid = current_user.id if current_user else "user-demo-default"
+    pref = await repo.get_by_user(user_id=uid)
+    return UserPreferencesResponse(
+        id=pref["id"],
+        user_id=pref["user_id"],
+        preferred_language=pref.get("preferred_language", "en"),
+        selected_city=pref.get("selected_city", "Delhi NCR"),
+        accessible_only=pref.get("accessible_only", False),
+        reduced_motion=pref.get("reduced_motion", False),
+        travel_preferences=pref.get("travel_preferences", {})
+    )
+
+
+@app.put("/api/preferences", response_model=UserPreferencesResponse)
+async def update_user_preferences(payload: UserPreferencesUpdate, current_user: Optional[UserResponse] = Depends(get_optional_current_user)):
+    """Update user preferences in MongoDB."""
+    db = get_async_db()
+    repo = UserPreferenceRepository(db)
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    uid = current_user.id if current_user else "user-demo-default"
+    pref = await repo.update(user_id=uid, updates=updates)
+    return UserPreferencesResponse(
+        id=pref["id"],
+        user_id=pref["user_id"],
+        preferred_language=pref.get("preferred_language", "en"),
+        selected_city=pref.get("selected_city", "Delhi NCR"),
+        accessible_only=pref.get("accessible_only", False),
+        reduced_motion=pref.get("reduced_motion", False),
+        travel_preferences=pref.get("travel_preferences", {})
+    )
+
+
+@app.get("/api/saved-routes", response_model=List[SavedRoute])
+def get_saved_routes_api(city: Optional[str] = Query(None, description="Optional city filter")):
+    """Retrieve saved routes backed by MongoDB with SQLite fallback."""
+    return get_all_saved_routes(city=city)
+
+
+@app.post("/api/saved-routes", response_model=SavedRoute)
+def create_saved_route_api(route: SavedRouteCreate):
+    """Create a saved commute in MongoDB and persistent storage."""
+    return create_saved_route(route)
+
+
+@app.delete("/api/saved-routes/{route_id}")
+def delete_saved_route_api(route_id: str):
+    """Delete a saved commute from MongoDB."""
+    success = delete_saved_route(route_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Saved route not found")
+    return {"message": "Route deleted successfully", "id": route_id}
 
 @app.get("/saved-routes", response_model=List[SavedRoute])
 def list_saved_routes(city: Optional[str] = Query(None)):

@@ -1111,7 +1111,7 @@ export const TransitMap: React.FC<Props> = ({
 
     }
 
-  }, [isMapReady, userLat, userLon, userAcc, detectedLocality, selectedRoute]);
+  }, [isMapReady, userLat, userLon, userAcc, detectedLocality, selectedRoute, hasExplicitlyLocated]);
 
 
 
@@ -1141,7 +1141,7 @@ export const TransitMap: React.FC<Props> = ({
 
     }
 
-  }, [recenterCount, isMapReady, userLat, userLon]);
+  }, [recenterCount, isMapReady, userLat, userLon, hasExplicitlyLocated]);
 
 
 

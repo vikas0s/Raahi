@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Clock, ArrowRight, CheckCircle2, Calendar, Compass, AlertCircle, Info } from 'lucide-react';
+import { Radio, Clock, ArrowRight, CheckCircle2, Calendar, Compass, Info } from 'lucide-react';
 import { DemoControls } from '../components/live/DemoControls';
 import type { TransitIncident, CityRealtimeContext } from '../types/transit';
 import { DelayStatusBadge } from '../components/common/DelayStatusBadge';

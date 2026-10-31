@@ -22,8 +22,8 @@ load_dotenv()
 logger = logging.getLogger("raahi.gemini")
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-FALLBACK_GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-3.8-flash"]
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+FALLBACK_GEMINI_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"]
 DEFAULT_TIMEOUT_SEC = 14.0
 
 class GeminiConfigurationError(Exception):

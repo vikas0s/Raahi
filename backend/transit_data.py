@@ -3359,7 +3359,7 @@ TRANSIT_OPERATING_HOURS: Dict[str, Dict[str, Any]] = {
         "last_entry_hour": 23,      # 11:00 PM (last metro departs ~11:00-11:15 PM)
         "last_entry_minute": 0,
         "label": "DMRC Metro",
-        "closed_message": "Metro service closed (11 PM – 6 AM). Last train has departed.",
+        "closed_message": "Metro service closed for the night (11 PM – 6 AM). First morning service starts at 06:00 AM.",
     },
     "airport_express": {
         "first_service_hour": 4,
@@ -3402,6 +3402,46 @@ TRANSIT_OPERATING_HOURS: Dict[str, Dict[str, Any]] = {
         "label": "Shared E-Rickshaw Feeder (Toto)",
         "closed_message": "Local E-Rickshaw frequency reduced for night. Available near Mathura Junction 24/7.",
     },
+    "mumbai_metro": {
+        "first_service_hour": 5,
+        "first_service_minute": 30,
+        "last_entry_hour": 23,
+        "last_entry_minute": 30,
+        "label": "Maha Mumbai Metro (Lines 1, 2A, 7, 3)",
+        "closed_message": "Mumbai Metro is closed for the night (11:30 PM – 5:30 AM). First train starts at 05:30 AM. Use 24/7 Kaali-Peeli Taxi or Night Cabs.",
+    },
+    "mumbai_local": {
+        "first_service_hour": 4,
+        "first_service_minute": 0,
+        "last_entry_hour": 1,
+        "last_entry_minute": 30,
+        "label": "Mumbai Suburban Railway (Local Trains)",
+        "closed_message": "Suburban local trains closed for nightly track maintenance (01:30 AM – 04:00 AM). First morning local starts at 04:00 AM. Use 24/7 Kaali-Peeli Taxi.",
+    },
+    "best_bus": {
+        "first_service_hour": 5,
+        "first_service_minute": 0,
+        "last_entry_hour": 23,
+        "last_entry_minute": 0,
+        "label": "BEST Bus (Chalo / Electric)",
+        "closed_message": "Regular BEST bus service ended (11:00 PM – 5:00 AM). Limited night bus routes operate on arterial corridors.",
+    },
+    "bengaluru_metro": {
+        "first_service_hour": 5,
+        "first_service_minute": 0,
+        "last_entry_hour": 23,
+        "last_entry_minute": 0,
+        "label": "Namma Metro (BMRCL)",
+        "closed_message": "Namma Metro closed for the night (11:00 PM – 5:00 AM). First train starts at 05:00 AM.",
+    },
+    "bmtc_bus": {
+        "first_service_hour": 5,
+        "first_service_minute": 0,
+        "last_entry_hour": 23,
+        "last_entry_minute": 0,
+        "label": "BMTC Bus",
+        "closed_message": "Regular BMTC bus service ended (11:00 PM – 5:00 AM). Limited night services available.",
+    },
 }
 
 
@@ -3417,6 +3457,10 @@ def is_transit_operational(service_key: str, current_hour: int, current_minute: 
     current_total = current_hour * 60 + current_minute
     first_total = first_h * 60 + first_m
     last_total = last_h * 60 + last_m
+
+    if last_total < first_total:
+        # Wrap around midnight (e.g. 04:00 AM to 01:30 AM next morning)
+        return current_total >= first_total or current_total <= last_total
 
     return first_total <= current_total <= last_total
 

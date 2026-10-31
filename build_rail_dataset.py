@@ -1081,4 +1081,3 @@ RAIL_STATIONS: Dict[str, RailStation] = {
     return content
 
 print("Template ready")
-'''

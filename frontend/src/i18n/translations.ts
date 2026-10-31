@@ -202,6 +202,26 @@ export type TranslationKey =
   | 'transitApiTitle'
   | 'activeServices'
   | 'engNotesTitle'
+    | 'signIn'
+  | 'signOut'
+  | 'cloudSyncTitle'
+  | 'cloudSyncDesc'
+  | 'authSignIn'
+  | 'authSignUp'
+  | 'authWelcomeBack'
+  | 'authCreateHeading'
+  | 'authSignInSub'
+  | 'authCreateSub'
+  | 'authFullName'
+  | 'authEmail'
+  | 'authPassword'
+  | 'authForgotPassword'
+  | 'authConfirmPassword'
+  | 'authRememberMe'
+  | 'authDemoAccount'
+  | 'authDontHaveAccount'
+  | 'authAlreadyHaveAccount'
+  | 'authGuestExplore'
   | 'engNotesDesc';
 
 export const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
@@ -438,6 +458,27 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     transitApiTitle: 'Transit API Credentials & Fare Calculation Engines',
     activeServices: '3 Active Services',
     engNotesTitle: 'MISSION BHARAT DEV-P05 Engineering Notes',
+        // Auth & Cloud Sync
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    cloudSyncTitle: 'Sync your commutes across devices',
+    cloudSyncDesc: 'Sign in or create an account to securely access your saved routes anywhere.',
+    authSignIn: 'Sign In',
+    authSignUp: 'Create Account',
+    authWelcomeBack: 'Welcome back to Raahi',
+    authCreateHeading: 'Create your Raahi account',
+    authSignInSub: 'Sign in to access your saved commutes and personalized travel preferences.',
+    authCreateSub: 'Join thousands of commuters travelling smarter and faster across Indian cities.',
+    authFullName: 'Full Name',
+    authEmail: 'Email Address',
+    authPassword: 'Password',
+    authForgotPassword: 'Forgot Password?',
+    authConfirmPassword: 'Confirm Password',
+    authRememberMe: 'Remember me on this browser',
+    authDemoAccount: 'Try Demo Commuter Account',
+    authDontHaveAccount: "Don't have an account?",
+    authAlreadyHaveAccount: 'Already have an account?',
+    authGuestExplore: 'Continue as Guest / Explore Transit',
     engNotesDesc: 'Raahi is designed to minimize multi-modal commuter friction across Indian megacities. All simulated alerts are transparently designated as [SIMULATED] to preserve data integrity.'
   },
   hi: {
@@ -673,7 +714,28 @@ export const translations: Record<AppLanguage, Record<TranslationKey, string>> =
     transitApiTitle: 'ट्रांजिट एपीआई क्रेडेंशियल एवं किराया गणना इंजन',
     activeServices: '3 सक्रिय सेवाएं',
     engNotesTitle: 'मिशन भारत DEV-P05 इंजीनियरिंग विवरण',
-    engNotesDesc: 'राही को भारतीय महानगरों में दैनिक यात्रा को सरल और सुगम बनाने के लिए तैयार किया गया है। डेटा प्रामाणिकता के लिए सभी नकली अलर्ट को [सिम्युलेटेड] के रूप में चिन्हित किया गया है।'
+    // Auth & Cloud Sync
+    signIn: 'साइन इन',
+    signOut: 'लॉग आउट',
+    cloudSyncTitle: 'अपनी सहेजी गई यात्राओं को सिंक करें',
+    cloudSyncDesc: 'किसी भी डिवाइस पर अपने दैनिक मार्गों तक पहुँचने के लिए साइन इन करें।',
+    authSignIn: 'साइन इन',
+    authSignUp: 'नया खाता बनाएं',
+    authWelcomeBack: 'राही में पुनः आपका स्वागत है',
+    authCreateHeading: 'अपना राही खाता बनाएं',
+    authSignInSub: 'अपने सहेजे गए मार्गों और प्राथमिकताओं तक पहुँचने के लिए साइन इन करें।',
+    authCreateSub: 'भारतीय शहरों में सुगम यात्रा के लिए हजारों यात्रियों से जुड़ें।',
+    authFullName: 'पूरा नाम',
+    authEmail: 'ईमेल पता',
+    authPassword: 'पासवर्ड',
+    authForgotPassword: 'पासवर्ड भूल गए?',
+    authConfirmPassword: 'पासवर्ड की पुष्टि करें',
+    authRememberMe: 'इस ब्राउज़र पर मुझे याद रखें',
+    authDemoAccount: 'डेमो यात्री खाता आज़माएं',
+    authDontHaveAccount: 'खाता नहीं है?',
+    authAlreadyHaveAccount: 'पहले से खाता है?',
+    authGuestExplore: 'अतिथि के रूप में जारी रखें / ट्रांजिट देखें',
+    engNotesDesc: 'राही को भारतीय महानगरों में दैनिक यात्रा को सरल और सुगम बनाने के लिए तैयार किया गया है। डेटा प्रामाणिकता के लिए सभी नकली अलर्ट को [सिम्युलेटेड] के रूप में चिन्हित किया गया है।' 
   }
 };
 

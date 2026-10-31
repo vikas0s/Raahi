@@ -4,12 +4,15 @@ import './index.css';
 import App from './App.tsx';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { LocationProvider } from './context/LocationContext';
+import { AuthProvider } from './context/AuthContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LanguageProvider>
       <LocationProvider>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </LocationProvider>
     </LanguageProvider>
   </StrictMode>,

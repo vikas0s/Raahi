@@ -1,0 +1,32 @@
+[tool.pyrefly]
+python-interpreter-path = "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/python.exe"
+search-path = [
+    ".",
+    "backend",
+    "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
+]
+site-packages-path = [
+    "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
+]
+ignore-missing-imports = [
+    "dotenv",
+    "dotenv.*",
+    "sqlalchemy",
+    "sqlalchemy.*",
+    "httpx",
+    "httpx.*",
+    "google",
+    "google.*"
+]
+
+[tool.pyrefly.errors]
+missing-import = "ignore"
+
+[tool.pyright]
+include = ["."]
+extraPaths = [
+    ".",
+    "backend",
+    "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
+]
+

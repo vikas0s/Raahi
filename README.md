@@ -25,7 +25,9 @@
 - **Framework**: FastAPI (Python 3.14) + Uvicorn + Pydantic v2
 - **Routing Engine**: Multi-criteria routing calculating Fastest, Lowest Fare, and Least Crowded routes with realistic lat/lon coordinates
 - **Simulation**: Incident simulator for trackside signal delays, bus breakdowns, peak surges, and monsoon weather
-- **Persistence**: SQLite (`raahi_transit.db`) for saved commutes
+- **Persistent Database**: MongoDB (using official `pymongo` with `AsyncMongoClient` connection pooling and fallback SQLite)
+- **Geospatial Indexing**: MongoDB `2dsphere` index on GeoJSON coordinates for high-speed spatial proximity searches (`/api/stations/nearby`)
+- **Collections Architecture**: `cities`, `stations`, `transit_agencies`, `routes`, `trips`, `stop_times`, `service_calendars`, `users`, `saved_routes`, `saved_places`, `user_preferences`, `ai_conversations`, `recent_searches`
 - **Live Telemetry**: WebSockets (`/ws/telemetry`) broadcasting live disruption updates
 - **Conversational AI**: Grounded Raahi AI engine handling English, Hindi, and Roman-script Hinglish
 
@@ -79,3 +81,32 @@ Run the frontend TypeScript & production build check:
 cd frontend
 npm run build
 ```
+
+
+---
+
+## Database Architecture & MongoDB Integration
+
+Raahi connects to MongoDB via the official `pymongo` driver with asynchronous connection pooling via `AsyncMongoClient` in FastAPI request handlers.
+
+### Key MongoDB Collections & Indexes
+1. `cities`: Unique index on `name`, index on `is_active`.
+2. `stations`: `2dsphere` index on `location`, compound index on `city_id` + `name`, sparse unique on `external_stop_id`.
+3. `transit_agencies`: Index on `city_id`.
+4. `routes`: Index on `city_id` and `agency_id`.
+5. `trips`: Index on `route_id` and `service_id`.
+6. `stop_times`: Compound index on `trip_id` + `stop_sequence`, index on `stop_id`.
+7. `saved_routes`: Index on `user_id` + `city`, index on `created_at`.
+8. `saved_places`: Index on `user_id`.
+9. `user_preferences`: Unique index on `user_id`.
+10. `ai_conversations`: Unique index on `session_id`, index on `user_id`.
+
+### MongoDB Commands
+- **Idempotent Data Seeder**:
+  ```powershell
+  python -m backend.mongodb.seeder
+  ```
+- **Run MongoDB Integration Test Suite**:
+  ```powershell
+  python -m backend.test_mongodb_integration
+  ```

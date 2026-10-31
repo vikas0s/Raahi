@@ -94,7 +94,11 @@ class RaahiAIAssistant:
 
         # 1. INTENT: Check Live Delays & Disruption
         if any(w in lower_text for w in ["delay", "late", "status", "ruk", "gadbad", "chal rahi hai", "der", "deri", "jam"]):
-            target_city = req.city or (session.current_journey.origin.city if session.current_journey else "Delhi NCR")
+            target_city: str = "Delhi NCR"
+            if req.city:
+                target_city = req.city
+            elif session.current_journey and session.current_journey.origin and session.current_journey.origin.city:
+                target_city = session.current_journey.origin.city
             return self._handle_delay_inquiry(session, target_city, detected_lang)
 
         # 2. INTENT: Follow-up on Existing Journey (e.g. "Sabse sasta kaunsa hai?", "Aur fastest?", "Walking wala dikhao")
@@ -500,7 +504,7 @@ class RaahiAIAssistant:
                 temperature=0.25,
                 user_query=user_query
             )
-            if res and res.strip():
+            if res and res.strip() and provider not in ('local_knowledge', 'fallback'):
                 return res.strip()
             return self._build_template_route_response(req, routes[0], coverage_type, lang)
         except Exception as err:

@@ -1,0 +1,27 @@
+# Pyrefly Configuration for Raahi
+python-interpreter-path = "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/python.exe"
+
+search-path = [
+    ".",
+    "backend",
+    "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
+]
+
+site-packages-path = [
+    "C:/Users/dell/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
+]
+
+ignore-missing-imports = [
+    "dotenv",
+    "dotenv.*",
+    "sqlalchemy",
+    "sqlalchemy.*",
+    "httpx",
+    "httpx.*",
+    "google",
+    "google.*"
+]
+
+[errors]
+missing-import = "ignore"
+

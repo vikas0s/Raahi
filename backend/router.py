@@ -321,6 +321,50 @@ class TransitRouter:
 
 
     def _resolve_city_places(self, city: str) -> List[Dict[str, Any]]:
+        c = (city or "").strip().lower()
+        if "mathura" in c or "vrindavan" in c or "braj" in c:
+            key = "Mathura & Vrindavan"
+            cid = "mathura-vrindavan"
+        elif "mumbai" in c:
+            key = "Mumbai"
+            cid = "mumbai"
+        elif "bengaluru" in c or "bangalore" in c:
+            key = "Bengaluru"
+            cid = "bengaluru"
+        else:
+            key = "Delhi NCR"
+            cid = "delhi-ncr"
+
+        if not hasattr(self, "_mongo_stations_cache"):
+            self._mongo_stations_cache = {}
+
+        if cid in self._mongo_stations_cache:
+            return self._mongo_stations_cache[cid]
+
+        try:
+            from .mongodb.connection import get_sync_db
+            db = get_sync_db()
+            if db:
+                stations = list(db.stations.find({"city_id": cid}))
+                if stations:
+                    converted = [
+                        {
+                            "name": s["name"],
+                            "lat": s["latitude"],
+                            "lon": s["longitude"],
+                            "type": s.get("stop_type", "metro_station"),
+                            "source": "mongodb"
+                        }
+                        for s in stations
+                    ]
+                    self._mongo_stations_cache[cid] = converted
+                    return converted
+        except Exception:
+            pass
+
+        return self.places.get(key, [])
+
+    def _old_resolve_city_places(self, city: str) -> List[Dict[str, Any]]:
 
 
 
@@ -1335,71 +1379,40 @@ class TransitRouter:
 
 
 
-        )
-
-
-
-
-
-
+        )        # Straight-line distance
+        dist_km = haversine_km(origin_dict["lat"], origin_dict["lon"], dest_dict["lat"], dest_dict["lon"])
+        if dist_km < 0.2:
+            dist_km = 1.2
 
         now = datetime.now()
+        is_arrive_by = (getattr(request, "time_mode", None) == "arrive_by") or bool(getattr(request, "arrival_time", None))
 
-
-
-        dep_time_str = request.departure_time or now.strftime("%H:%M")
-
-
-
-        try:
-
-
-
-            if ":" in dep_time_str and len(dep_time_str) <= 5:
-
-
-
-                hh, mm = map(int, dep_time_str.split(":"))
-
-
-
-                base_time = now.replace(hour=hh, minute=mm, second=0)
-
-
-
-            else:
-
-
-
-                base_time = datetime.fromisoformat(dep_time_str)
-
-
-
-        except Exception:
-
-
-
+        # Compute accurate journey base_time based on planned departure or arrival schedule
+        if is_arrive_by and request.arrival_time:
+            arr_str = request.arrival_time.strip()
+            try:
+                if ":" in arr_str and len(arr_str) <= 5:
+                    hh, mm = map(int, arr_str.split(":"))
+                    target_arr = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+                else:
+                    target_arr = datetime.fromisoformat(arr_str)
+            except Exception:
+                target_arr = now + timedelta(minutes=45)
+            # Estimate transit duration: ~2.2 mins/km + 10 mins buffer for walking/access
+            est_duration_mins = max(15, min(180, int(dist_km * 2.2 + 10)))
+            base_time = target_arr - timedelta(minutes=est_duration_mins)
+        elif request.departure_time:
+            dep_time_str = request.departure_time.strip()
+            try:
+                if ":" in dep_time_str and len(dep_time_str) <= 5:
+                    hh, mm = map(int, dep_time_str.split(":"))
+                    base_time = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+                else:
+                    base_time = datetime.fromisoformat(dep_time_str)
+            except Exception:
+                base_time = now
+        else:
             base_time = now
-
-
-
-
-
-
-
-        # Straight-line distance
-
-
-
-        dist_km = haversine_km(origin_dict["lat"], origin_dict["lon"], dest_dict["lat"], dest_dict["lon"])
-
-
-
-        if dist_km < 0.2:
-
-
-
-            dist_km = 1.2
 
 
 
@@ -1559,19 +1572,10 @@ class TransitRouter:
 
 
 
-        is_night = base_time.hour >= 23 or base_time.hour < 5
-
-
-
-
-
-
-
-        # Check transit service availability based on real operating hours
-
-
-
-        metro_available = is_transit_operational("dmrc_metro", base_time.hour, base_time.minute)
+        is_night = base_time.hour >= 23 or base_time.hour < 5        # Check transit service availability based on real operating hours
+        # Note: If journey starts early morning (05:00-06:00 AM), commuters can board the 06:00 AM first train.
+        is_early_morning_metro = (base_time.hour == 5)
+        metro_available = is_transit_operational("dmrc_metro", base_time.hour, base_time.minute) or is_early_morning_metro
 
 
 
@@ -2120,16 +2124,18 @@ class TransitRouter:
 
 
                 leg.arrival_time = curr_leg_arr.strftime("%H:%M")
-
-
-
                 curr_leg_dep = curr_leg_arr
 
-
-
-                
-
-
+            # Safeguard: If the adjusted route departure falls inside regular daytime operational hours (06:00 - 23:00),
+            # ensure that it is never marked as "Metro service closed" or titled as "Night Auto (Metro Closed)".
+            if 6 <= route_dep.hour < 23:
+                if route.unavailable_reason and "metro service closed" in route.unavailable_reason.lower():
+                    route.service_available = True
+                    route.unavailable_reason = None
+                if "Night Auto (Metro Closed)" in route.title:
+                    route.title = "Direct Auto-Rickshaw (TSR)"
+                    route.service_available = True
+                    route.unavailable_reason = None
 
         return plan_resp
 
@@ -2782,6 +2788,10 @@ class TransitRouter:
 
 
             curr_time = arr_time
+        # Commuters reaching platform before 06:00 AM board the first morning train at 06:00 AM
+        if curr_time.hour < 6:
+            curr_time = curr_time.replace(hour=6, minute=0, second=0)
+
         # ----------------- MAIN RAPID METRO HAUL -----------------
         metro_legs, metro_fare_added, metro_fare_labels, line, curr_time = self._build_metro_haul_legs(
             orig_hub, dest_hub, curr_time, delays

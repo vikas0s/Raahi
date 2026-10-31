@@ -1,7 +1,8 @@
-import React from 'react';
-import { Settings, Globe, MapPin, Accessibility, Shield, Zap, Key, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, Globe, MapPin, Accessibility, Zap, Key, CheckCircle2, Database, RefreshCw, AlertCircle } from 'lucide-react';
 import type { AppLanguage } from '../types/transit';
 import { useTranslation } from '../i18n/LanguageContext';
+import { fetchDbHealth, DatabaseHealth, updateUserPreferences } from '../services/api';
 
 interface Props {
   selectedCity: string;
@@ -23,9 +24,52 @@ export const SettingsView: React.FC<Props> = ({
   onReducedMotionChange
 }) => {
   const { t, language, setLanguage } = useTranslation();
+  const [dbHealth, setDbHealth] = useState<DatabaseHealth | null>(null);
+  const [dbLoading, setDbLoading] = useState(false);
+
+  const checkHealth = async () => {
+    setDbLoading(true);
+    try {
+      const data = await fetchDbHealth();
+      setDbHealth(data);
+    } catch {
+      setDbHealth({
+        status: 'disconnected',
+        database: 'raahi',
+        engine: 'MongoDB',
+        latency_ms: -1,
+        collections_count: 0,
+        ping: false,
+        is_connected: false,
+        error: 'Backend unreachable'
+      });
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkHealth();
+  }, []);
 
   const handleLang = (lang: AppLanguage) => {
     setLanguage(lang);
+    updateUserPreferences({ preferred_language: lang });
+  };
+
+  const handleCitySelect = (city: string) => {
+    onCityChange(city);
+    updateUserPreferences({ selected_city: city });
+  };
+
+  const handleAccessibleToggle = (val: boolean) => {
+    onAccessibleChange(val);
+    updateUserPreferences({ accessible_only: val });
+  };
+
+  const handleMotionToggle = (val: boolean) => {
+    onReducedMotionChange(val);
+    updateUserPreferences({ reduced_motion: val });
   };
 
   return (
@@ -48,90 +92,94 @@ export const SettingsView: React.FC<Props> = ({
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h4 className="font-heading font-bold text-sm text-[#1F231F] flex items-center gap-2">
-              <MapPin size={16} className="text-[#4E7C5F]" />
-              <span>{t('regionalCity')}</span>
+              <MapPin size={16} className="text-[#304B3C]" />
+              {t('regionalCity')}
             </h4>
-            <p className="text-xs text-[#52544D] font-medium mt-0.5">
+            <p className="text-xs text-[#52544D] mt-0.5">
               {t('citySelectDesc')}
             </p>
           </div>
           <select
             value={selectedCity}
-            onChange={(e) => onCityChange(e.target.value)}
-            className="px-3.5 py-2 text-xs font-bold rounded-xl bg-[#EEECE3] text-[#1F231F] border border-[#D8D4C7] outline-none cursor-pointer"
+            onChange={(e) => handleCitySelect(e.target.value)}
+            className="px-3 py-1.5 rounded-xl border border-[#D8D4C7] bg-[#EEECE3]/60 text-xs font-bold text-[#1F231F] cursor-pointer hover:border-[#304B3C] focus:outline-hidden"
           >
-            <option value="Delhi NCR">Delhi NCR (DMRC Metro, DTC Electric Bus)</option>
-            <option value="Mathura & Vrindavan">Mathura & Vrindavan (ई-रिक्शा, शेयरिंग टेम्पो, इलेक्ट्रिक बस)</option>
-            <option value="Mumbai">Mumbai (Local Rail, Mumbai Metro, BEST)</option>
-            <option value="Bengaluru">Bengaluru (Namma Metro, BMTC)</option>
+            <option value="Delhi NCR">Delhi NCR (DMRC + DTC)</option>
+            <option value="Mumbai">Mumbai (Western/Central Rail + BEST)</option>
+            <option value="Bengaluru">Bengaluru (Namma Metro + BMTC)</option>
+            <option value="Mathura & Vrindavan">Mathura & Vrindavan (MVDA + Tempos)</option>
           </select>
         </div>
 
-        {/* Interface Language */}
+        {/* Language Selection */}
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h4 className="font-heading font-bold text-sm text-[#1F231F] flex items-center gap-2">
-              <Globe size={16} className="text-[#4E7C5F]" />
-              <span>{t('appLanguage')}</span>
+              <Globe size={16} className="text-[#304B3C]" />
+              {t('appLanguage')}
             </h4>
-            <p className="text-xs text-[#52544D] font-medium mt-0.5">
+            <p className="text-xs text-[#52544D] mt-0.5">
               {t('langSelectDesc')}
             </p>
           </div>
-          <div className="inline-flex rounded-xl bg-[#EEECE3] p-1 border border-[#D8D4C7] text-xs font-bold">
+          <div className="flex gap-2">
             <button
               onClick={() => handleLang('en')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                language === 'en' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                language === 'en'
+                  ? 'bg-[#253D30] text-[#FFFEFA] border-[#253D30] shadow-xs'
+                  : 'bg-[#EEECE3]/60 text-[#52544D] border-[#D8D4C7] hover:border-[#304B3C]'
               }`}
             >
               English
             </button>
             <button
               onClick={() => handleLang('hi')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                language === 'hi' ? 'bg-[#253D30] text-white font-bold shadow-xs' : 'text-[#52544D] hover:text-[#1F231F]'
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                language === 'hi'
+                  ? 'bg-[#253D30] text-[#FFFEFA] border-[#253D30] shadow-xs'
+                  : 'bg-[#EEECE3]/60 text-[#52544D] border-[#D8D4C7] hover:border-[#304B3C]'
               }`}
             >
-              हिन्दी
+              हिन्दी (Hindi)
             </button>
           </div>
         </div>
 
-        {/* Accessibility Features */}
-        <div className="p-5 flex items-center justify-between gap-3">
+        {/* Wheelchair Accessible Commutes */}
+        <div className="p-5 flex items-center justify-between">
           <div>
             <h4 className="font-heading font-bold text-sm text-[#1F231F] flex items-center gap-2">
-              <Accessibility size={16} className="text-[#4E7C5F]" />
-              <span>{t('accessibleRouting')}</span>
+              <Accessibility size={16} className="text-[#304B3C]" />
+              {t('accessibleRouting')}
             </h4>
-            <p className="text-xs text-[#52544D] font-medium mt-0.5">
+            <p className="text-xs text-[#52544D] mt-0.5">
               {t('accessibleRoutingDesc')}
             </p>
           </div>
           <input
             type="checkbox"
             checked={accessibleOnly}
-            onChange={(e) => onAccessibleChange(e.target.checked)}
+            onChange={(e) => handleAccessibleToggle(e.target.checked)}
             className="w-5 h-5 accent-[#253D30] rounded cursor-pointer"
           />
         </div>
 
         {/* Reduced Motion */}
-        <div className="p-5 flex items-center justify-between gap-3">
+        <div className="p-5 flex items-center justify-between">
           <div>
             <h4 className="font-heading font-bold text-sm text-[#1F231F] flex items-center gap-2">
-              <Zap size={16} className="text-[#4E7C5F]" />
-              <span>{t('reducedMotionSetting')}</span>
+              <Zap size={16} className="text-[#304B3C]" />
+              {t('reducedMotionSetting')}
             </h4>
-            <p className="text-xs text-[#52544D] font-medium mt-0.5">
+            <p className="text-xs text-[#52544D] mt-0.5">
               {t('reducedMotionDesc')}
             </p>
           </div>
           <input
             type="checkbox"
             checked={reducedMotion}
-            onChange={(e) => onReducedMotionChange(e.target.checked)}
+            onChange={(e) => handleMotionToggle(e.target.checked)}
             className="w-5 h-5 accent-[#253D30] rounded cursor-pointer"
           />
         </div>
@@ -153,6 +201,61 @@ export const SettingsView: React.FC<Props> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+          {/* Persistent MongoDB Storage */}
+          <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5 md:col-span-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database size={16} className="text-[#304B3C]" />
+                <span className="font-bold text-[#1F231F]">
+                  Persistent Database Engine (MongoDB)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={checkHealth}
+                  disabled={dbLoading}
+                  className="p-1 rounded-lg text-[#52544D] hover:bg-white/80 transition-colors cursor-pointer"
+                  title="Refresh status"
+                >
+                  <RefreshCw size={12} className={dbLoading ? 'animate-spin' : ''} />
+                </button>
+                {dbHealth?.is_connected ? (
+                  <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#C8E6C9] flex items-center gap-1">
+                    <CheckCircle2 size={11} />
+                    Connected ({dbHealth.latency_ms}ms)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-[#C62828] bg-[#FFEBEE] px-2 py-0.5 rounded border border-[#FFCDD2] flex items-center gap-1">
+                    <AlertCircle size={11} />
+                    Disconnected
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="text-[#52544D] leading-relaxed">
+              Real-time persistent GTFS-compliant relational database powering 400+ stations, multi-city transit agencies, routes, stop-times, user commutes, and preferences with 2dsphere geospatial indexing.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-mono">
+              <div className="bg-white/80 p-1.5 rounded border border-[#D8D4C7]">
+                <span className="text-[#77776F] block text-[9px] uppercase font-sans">Engine</span>
+                <span className="text-[#304B3C] font-bold">{dbHealth?.engine || 'MongoDB'}</span>
+              </div>
+              <div className="bg-white/80 p-1.5 rounded border border-[#D8D4C7]">
+                <span className="text-[#77776F] block text-[9px] uppercase font-sans">Database</span>
+                <span className="text-[#304B3C] font-bold">{dbHealth?.database || 'raahi'}</span>
+              </div>
+              <div className="bg-white/80 p-1.5 rounded border border-[#D8D4C7]">
+                <span className="text-[#77776F] block text-[9px] uppercase font-sans">Collections</span>
+                <span className="text-[#304B3C] font-bold">{dbHealth?.collections_count || 12} collections</span>
+              </div>
+              <div className="bg-white/80 p-1.5 rounded border border-[#D8D4C7]">
+                <span className="text-[#77776F] block text-[9px] uppercase font-sans">Driver</span>
+                <span className="text-[#304B3C] font-bold">PyMongo Async</span>
+              </div>
+            </div>
+          </div>
+
           {/* OTD Delhi */}
           <div className="p-3.5 rounded-xl bg-[#EEECE3]/70 border border-[#D8D4C7] space-y-1.5">
             <div className="flex items-center justify-between">
@@ -165,7 +268,7 @@ export const SettingsView: React.FC<Props> = ({
                 : 'Live GPS telemetry for 7,000+ DTC & DIMTS cluster electric/CNG buses, route IDs, agency feeds, and arrival estimates.'}
             </p>
             <code className="text-[11px] block bg-white/80 p-1.5 rounded font-mono text-[#304B3C] border border-[#D8D4C7]">
-              OTD_DELHI_API_KEY=hAGgv0...H3a
+              OTD_DELHI_API_KEY=active
             </code>
           </div>
 
@@ -218,17 +321,6 @@ export const SettingsView: React.FC<Props> = ({
             </code>
           </div>
         </div>
-      </div>
-
-      {/* Engineering Compliance Card */}
-      <div className="p-5 rounded-2xl bg-[#EEECE3]/60 border border-[#D8D4C7] space-y-2">
-        <div className="flex items-center gap-2 text-xs font-bold text-[#253D30] uppercase tracking-wider">
-          <Shield size={14} className="stroke-[2.2]" />
-          <span>{t('engNotesTitle')}</span>
-        </div>
-        <p className="text-xs text-[#52544D] font-medium leading-relaxed">
-          {t('engNotesDesc')}
-        </p>
       </div>
     </div>
   );

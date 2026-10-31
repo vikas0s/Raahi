@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { ArrowUpDown, ArrowLeftRight, MapPin, Navigation, Clock, Search, Sparkles, RotateCcw, Crosshair, X } from 'lucide-react';
+import { ArrowUpDown, ArrowLeftRight, MapPin, Navigation, Clock, Search, RotateCcw, Crosshair, X } from 'lucide-react';
 
 import { useLocation } from '../../context/LocationContext';
 
@@ -56,14 +56,6 @@ export const JourneySearch: React.FC<Props> = ({
   const { t, language } = useTranslation();
 
   const {
-
-    latitude: userLat,
-
-    longitude: userLon,
-
-    detectedLocality,
-
-    detectedCity,
 
     isLocating,
 

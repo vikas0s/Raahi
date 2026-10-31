@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Bookmark, Plus } from 'lucide-react';
+import { Bookmark, Plus, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { SavedRouteCard } from '../components/saved/SavedRouteCard';
 import type { SavedRoute } from '../types/transit';
 import { createSavedRoute } from '../services/api';
@@ -11,6 +12,7 @@ interface Props {
   onReplan: (route: SavedRoute) => void;
   onDelete: (id: string) => void;
   onRefresh: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const SavedRoutesView: React.FC<Props> = ({
@@ -18,8 +20,10 @@ export const SavedRoutesView: React.FC<Props> = ({
   city,
   onReplan,
   onDelete,
-  onRefresh
+  onRefresh,
+  onOpenAuth
 }) => {
+  const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState('');
@@ -71,6 +75,34 @@ export const SavedRoutesView: React.FC<Props> = ({
           <span>{t('addCustomCommute')}</span>
         </button>
       </div>
+
+            {/* Cloud Sync Auth Banner if not authenticated */}
+      {!isAuthenticated && (
+        <div className="bg-[#EEECE3]/90 border border-[#D8D4C7] rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#4E7C5F]/20 text-[#253D30] flex items-center justify-center shrink-0">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#1F231F]">
+                {t('cloudSyncTitle') || 'Sync your commutes across devices'}
+              </h4>
+              <p className="text-[11px] text-[#52544D] font-medium">
+                {t('cloudSyncDesc') || 'Sign in to automatically back up your daily saved trips and access them securely anywhere.'}
+              </p>
+            </div>
+          </div>
+          {onOpenAuth && (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="px-3.5 py-1.5 rounded-xl bg-[#253D30] text-[#FFFEFA] text-xs font-bold hover:bg-[#1A2E24] transition-all cursor-pointer shrink-0 shadow-2xs"
+            >
+              {t('signIn') || 'Sign In'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Routes Grid */}
       {savedRoutes.length === 0 ? (

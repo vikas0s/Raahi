@@ -1,5 +1,5 @@
 import React from 'react';
-import { Footprints, Train, Bus, Landmark, CarTaxiFront, Car, Zap } from 'lucide-react';
+import { Footprints, Train, Bus, CarTaxiFront, Car, Zap } from 'lucide-react';
 import { TransitMode } from '../../types/transit';
 
 interface Props {
