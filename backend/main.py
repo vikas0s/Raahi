@@ -34,6 +34,7 @@ from fastapi import FastAPI, Query, HTTPException, WebSocket, WebSocketDisconnec
 from .auth import auth_router, get_current_user, get_optional_current_user, UserResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+
 # Load unified root .env configuration
 root_env = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=root_env)
@@ -85,6 +86,7 @@ app = FastAPI(lifespan=lifespan,
 
 # Enable CORS for frontend Vite dev server (supports credentials & HttpOnly cookies)
 CORS_ORIGINS = [
+    "https://raahi-steel.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
