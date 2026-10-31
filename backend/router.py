@@ -1627,62 +1627,18 @@ class TransitRouter:
 
 
 
-        if metro_available:
+        # Always provide the primary Metro route so users can plan journeys, view fares, and inspect transfer stations
+        r1 = self._build_fastest_multimodal_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
+        if not metro_available:
+            r1.service_available = True
+            r1.tag_reason = "DMRC Metro: First morning service departs at 06:00 AM. 24/7 Auto and Cab available."
+        routes.append(r1)
 
-
-
-            r1 = self._build_fastest_multimodal_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
-
-
-
-            routes.append(r1)
-
-
-
-
-
-
-
-            # 1B. OPTION 1B (BUDGET MULTI-TRANSPORT): SHARED E-RICKSHAW + METRO
-
-
-
-            _, fm_km = self._get_nearest_metro_node(origin_dict, city)
-
-
-
-            if fm_km >= 0.6 and fm_km <= 4.0 and dist_km > 3.0:
-
-
-
-                r1b = self._build_budget_multimodal_erickshaw_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
-
-
-
-                routes.append(r1b)
-
-
-
-        else:
-
-
-
-            # Add a "Metro Closed" placeholder so user knows why metro isn't shown
-
-
-
-            r1_closed = self._build_metro_closed_night_route(origin_dict, dest_dict, dist_km, base_time, is_night)
-
-
-
-            routes.append(r1_closed)
-
-
-
-
-
-
-
+        # 1B. OPTION 1B (BUDGET MULTI-TRANSPORT): SHARED E-RICKSHAW + METRO
+        _, fm_km = self._get_nearest_metro_node(origin_dict, city)
+        if fm_km >= 0.6 and fm_km <= 4.0 and dist_km > 3.0:
+            r1b = self._build_budget_multimodal_erickshaw_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
+            routes.append(r1b)
         # 2. OPTION 2: DTC ELECTRIC BUS (Official Delhi Govt Slabs: ₹10/₹15/₹20/₹25 + Pink Pass ₹0)
 
 
