@@ -115,7 +115,14 @@ export const RouteComparisonCard: React.FC<Props> = ({ route, isSelected, onSele
           </span>
         </div>
 
-        <DelayStatusBadge delayMinutes={route.total_delay_minutes} />
+        {isUnavailable ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#EF4444]/12 text-[#991B1B] border border-[#EF4444]/30 shadow-2xs">
+            <Ban size={12} className="stroke-[2.5]" />
+            <span>{language === 'hi' ? 'सेवा बंद' : 'Closed'}</span>
+          </span>
+        ) : (
+          <DelayStatusBadge delayMinutes={route.total_delay_minutes} />
+        )}
       </div>
 
       {/* Main Metric Row: Duration & Total Fare */}

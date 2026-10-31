@@ -1627,17 +1627,28 @@ class TransitRouter:
 
 
 
-        # Always provide the primary Metro route so users can plan journeys, view fares, and inspect transfer stations
+        # Primary Metro route - respects real-world operational hours (06:00 - 23:00)
         r1 = self._build_fastest_multimodal_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
         if not metro_available:
-            r1.service_available = True
-            r1.tag_reason = "DMRC Metro: First morning service departs at 06:00 AM. 24/7 Auto and Cab available."
+            r1.service_available = False
+            r1.tag = "Metro Closed"
+            r1.unavailable_reason = "DMRC Metro service is closed for the night (11:00 PM – 06:00 AM). First morning train departs at 06:00 AM."
+            r1.departure_time = "06:00"
+            first_morn = base_time.replace(hour=6, minute=0, second=0)
+            r1.arrival_time = (first_morn + timedelta(minutes=r1.total_duration_minutes)).strftime("%H:%M")
         routes.append(r1)
 
         # 1B. OPTION 1B (BUDGET MULTI-TRANSPORT): SHARED E-RICKSHAW + METRO
         _, fm_km = self._get_nearest_metro_node(origin_dict, city)
         if fm_km >= 0.6 and fm_km <= 4.0 and dist_km > 3.0:
             r1b = self._build_budget_multimodal_erickshaw_route(origin_dict, dest_dict, dist_km, base_time, simulated_delays, city)
+            if not metro_available:
+                r1b.service_available = False
+                r1b.tag = "Metro Closed"
+                r1b.unavailable_reason = "DMRC Metro feeder service is closed for the night (11:00 PM – 06:00 AM). First morning train departs at 06:00 AM."
+                r1b.departure_time = "06:00"
+                first_morn = base_time.replace(hour=6, minute=0, second=0)
+                r1b.arrival_time = (first_morn + timedelta(minutes=r1b.total_duration_minutes)).strftime("%H:%M")
             routes.append(r1b)
         # 2. OPTION 2: DTC ELECTRIC BUS (Official Delhi Govt Slabs: ₹10/₹15/₹20/₹25 + Pink Pass ₹0)
 
@@ -1684,37 +1695,19 @@ class TransitRouter:
 
 
         # 3. OPTION 3: DELHI GOVT METERED AUTO (TSR - Gazetted ₹30 first 1.5km + ₹11/km)
-
-
-
-        #    Autos run 24/7 in Delhi
-
-
-
+        #    Autos run 24/7 in Delhi (with official 25% night surcharge 11 PM - 5 AM)
         r3 = self._build_direct_auto_route(origin_dict, dest_dict, dist_km, base_time, is_night)
-
-
-
+        if is_night:
+            r3.tag = "Govt Metered Auto (24/7)"
+            r3.tag_reason = "Official 24/7 Delhi Govt Metered TSR with night fare surcharge (+25% 11 PM - 5 AM). Available round-the-clock while Metro is closed."
         routes.append(r3)
 
-
-
-
-
-
-
         # 4. OPTION 4: DIRECT CAB / TAXI (BluSmart EV / Ride-Hailing Cab)
-
-
-
         #    Cabs run 24/7
-
-
-
         r4 = self._build_direct_cab_route(origin_dict, dest_dict, dist_km, base_time)
-
-
-
+        if is_night:
+            r4.tag = "Fastest Available"
+            r4.tag_reason = "24/7 Direct Cab / Taxi service with zero waiting at night. Recommended fastest door-to-door option while Metro is closed."
         routes.append(r4)
 
 
@@ -2051,36 +2044,28 @@ class TransitRouter:
 
 
 
-            route.departure_time = route_dep.strftime("%H:%M")
+            is_night_time = target_dt.hour >= 23 or target_dt.hour < 6
+            is_closed_metro = not route.service_available and ("metro" in route.title.lower() or "metro" in (route.tag or "").lower() or "metro" in (route.unavailable_reason or "").lower())
 
-
-
-            route.arrival_time = route_arr.strftime("%H:%M")
-
-
-
-            
-
-
-
-            curr_leg_dep = route_dep
-
-
-
-            for leg in route.legs:
-
-
-
-                leg.departure_time = curr_leg_dep.strftime("%H:%M")
-
-
-
-                curr_leg_arr = curr_leg_dep + timedelta(minutes=leg.duration_minutes)
-
-
-
-                leg.arrival_time = curr_leg_arr.strftime("%H:%M")
-                curr_leg_dep = curr_leg_arr
+            if is_night_time and is_closed_metro:
+                route.departure_time = "06:00"
+                morn_dt = target_dt.replace(hour=6, minute=0, second=0)
+                route.arrival_time = (morn_dt + timedelta(minutes=dur)).strftime("%H:%M")
+                curr_leg_dep = morn_dt
+                for leg in route.legs:
+                    leg.departure_time = curr_leg_dep.strftime("%H:%M")
+                    curr_leg_arr = curr_leg_dep + timedelta(minutes=leg.duration_minutes)
+                    leg.arrival_time = curr_leg_arr.strftime("%H:%M")
+                    curr_leg_dep = curr_leg_arr
+            else:
+                route.departure_time = route_dep.strftime("%H:%M")
+                route.arrival_time = route_arr.strftime("%H:%M")
+                curr_leg_dep = route_dep
+                for leg in route.legs:
+                    leg.departure_time = curr_leg_dep.strftime("%H:%M")
+                    curr_leg_arr = curr_leg_dep + timedelta(minutes=leg.duration_minutes)
+                    leg.arrival_time = curr_leg_arr.strftime("%H:%M")
+                    curr_leg_dep = curr_leg_arr
 
             # Safeguard: If the adjusted route departure falls inside regular daytime operational hours (06:00 - 23:00),
             # ensure that it is never marked as "Metro service closed" or titled as "Night Auto (Metro Closed)".
@@ -2088,11 +2073,15 @@ class TransitRouter:
                 if route.unavailable_reason and "metro service closed" in route.unavailable_reason.lower():
                     route.service_available = True
                     route.unavailable_reason = None
+                    if route.tag == "Metro Closed":
+                        route.tag = "Fastest"
                 if "Night Auto (Metro Closed)" in route.title:
                     route.title = "Direct Auto-Rickshaw (TSR)"
                     route.service_available = True
                     route.unavailable_reason = None
 
+        # Always sort unavailable routes to the bottom:
+        plan_resp.routes.sort(key=lambda r: (0 if r.service_available else 1, r.total_duration_minutes))
         return plan_resp
 
 
@@ -10054,29 +10043,21 @@ class TransitRouter:
 
 
         # 3. Mumbai Suburban Railway (Local Trains - Lifeline of Mumbai)
-
-
-
         r_local = self._build_mumbai_local_train_route(origin_dict, dest_dict, dist_km, base_time)
-
-
-
+        if not is_transit_operational("mumbai_local", base_time.hour, base_time.minute):
+            r_local.service_available = False
+            r_local.tag = "Local Closed"
+            r_local.unavailable_reason = get_closed_message("mumbai_local")
+            r_local.departure_time = "04:00"
         routes.append(r_local)
 
-
-
-
-
-
-
         # 4. Maha Mumbai Metro (Line 3 Aqua Line / Line 1 / Line 2A & 7)
-
-
-
         r_metro = self._build_mumbai_metro_route(origin_dict, dest_dict, dist_km, base_time)
-
-
-
+        if not is_transit_operational("mumbai_metro", base_time.hour, base_time.minute):
+            r_metro.service_available = False
+            r_metro.tag = "Metro Closed"
+            r_metro.unavailable_reason = get_closed_message("mumbai_metro")
+            r_metro.departure_time = "05:30"
         routes.append(r_metro)
 
 

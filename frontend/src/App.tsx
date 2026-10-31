@@ -473,9 +473,14 @@ export const App: React.FC = () => {
       if (res.routes.length > 0) {
 
         setSelectedRoute(prev => {
-          if (!prev) return res.routes[0];
-          const matched = res.routes.find(r => r.id === prev.id || r.title === prev.title || r.tag === prev.tag);
-          return matched || res.routes[0];
+          if (!prev) {
+            const firstAvail = res.routes.find(r => r.service_available !== false);
+            return firstAvail || res.routes[0];
+          }
+          const matched = res.routes.find(r => (r.id === prev.id || r.title === prev.title || r.tag === prev.tag) && r.service_available !== false);
+          if (matched) return matched;
+          const firstAvail = res.routes.find(r => r.service_available !== false);
+          return firstAvail || res.routes[0];
         });
 
       }
